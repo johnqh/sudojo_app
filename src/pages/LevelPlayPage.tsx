@@ -6,12 +6,16 @@ import { useSudojoRandomBoard, useSudojoLevel } from 'sudojo_client';
 import { useQueryClient } from '@tanstack/react-query';
 import { SudokuGame } from '@/components/sudoku';
 import { useSudojoClient } from '@/hooks/useSudojoClient';
+import { useProgress } from '@/context/ProgressContext';
+import { useSettings } from '@/context/SettingsContext';
 
 export default function LevelPlayPage() {
   const { levelId } = useParams<{ levelId: string }>();
   const { t } = useTranslation();
   const { networkClient, config } = useSudojoClient();
   const queryClient = useQueryClient();
+  const { markCompleted } = useProgress();
+  const { settings } = useSettings();
   const [completed, setCompleted] = useState(false);
 
   // Fetch level info for the title
@@ -33,8 +37,10 @@ export default function LevelPlayPage() {
 
   const handleComplete = useCallback(() => {
     setCompleted(true);
-    console.log(`Level ${levelId} completed!`);
-  }, [levelId]);
+    if (levelId) {
+      markCompleted({ type: 'level', id: levelId });
+    }
+  }, [levelId, markCompleted]);
 
   const handleNextPuzzle = useCallback(() => {
     setCompleted(false);
@@ -74,7 +80,7 @@ export default function LevelPlayPage() {
             key={board.uuid}
             puzzle={board.board}
             solution={board.solution}
-            showErrors={true}
+            showErrors={settings.showErrors}
             onComplete={handleComplete}
           />
 

@@ -53,6 +53,13 @@
   },
   "settings": {
     "title": "设置",
+    "progress": {
+      "title": "你的进度",
+      "completed": "已完成",
+      "streak": "连续天数",
+      "levels": "关卡"
+    },
+    "gameSettings": "游戏设置",
     "showErrors": "显示错误",
     "showErrorsDesc": "高亮显示错误输入",
     "symmetrical": "对称谜题",

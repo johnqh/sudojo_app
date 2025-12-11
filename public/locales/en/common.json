@@ -53,6 +53,13 @@
   },
   "settings": {
     "title": "Settings",
+    "progress": {
+      "title": "Your Progress",
+      "completed": "Completed",
+      "streak": "Day Streak",
+      "levels": "Levels"
+    },
+    "gameSettings": "Game Settings",
     "showErrors": "Show Errors",
     "showErrorsDesc": "Highlight incorrect entries",
     "symmetrical": "Symmetrical Puzzles",

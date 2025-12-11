@@ -1,21 +1,29 @@
+import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Heading, Text } from '@sudobility/components';
 import { useSudojoTodayDaily } from 'sudojo_client';
 import { SudokuGame } from '@/components/sudoku';
 import { useSudojoClient } from '@/hooks/useSudojoClient';
+import { useProgress } from '@/context/ProgressContext';
+import { useSettings } from '@/context/SettingsContext';
 
 export default function DailyPage() {
   const { t } = useTranslation();
   const { networkClient, config } = useSudojoClient();
+  const { markCompleted, isCompleted } = useProgress();
+  const { settings } = useSettings();
 
   const { data, isLoading, error } = useSudojoTodayDaily(networkClient, config);
 
   const daily = data?.data;
+  const dailyDate = daily?.date ? new Date(daily.date).toISOString().split('T')[0] : null;
+  const alreadyCompleted = dailyDate ? isCompleted('daily', dailyDate) : false;
 
-  const handleComplete = () => {
-    // TODO: Save completion to user progress
-    console.log('Daily puzzle completed!');
-  };
+  const handleComplete = useCallback(() => {
+    if (dailyDate && !alreadyCompleted) {
+      markCompleted({ type: 'daily', id: dailyDate });
+    }
+  }, [dailyDate, alreadyCompleted, markCompleted]);
 
   return (
     <div className="py-8">
@@ -49,7 +57,7 @@ export default function DailyPage() {
         <SudokuGame
           puzzle={daily.board}
           solution={daily.solution}
-          showErrors={true}
+          showErrors={settings.showErrors}
           onComplete={handleComplete}
         />
       )}

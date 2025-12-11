@@ -1,52 +1,12 @@
 import { useTranslation } from 'react-i18next';
-import { useState, useCallback } from 'react';
 import { Heading, Text, Card, CardContent, Switch, Select } from '@sudobility/components';
-import { getStorageService } from '@sudobility/di';
-
-interface AppSettings {
-  showErrors: boolean;
-  symmetrical: boolean;
-  display: 'numeric' | 'kanji' | 'emojis';
-}
-
-const DEFAULT_SETTINGS: AppSettings = {
-  showErrors: true,
-  symmetrical: true,
-  display: 'numeric',
-};
-
-const SETTINGS_KEY = 'sudojo-settings';
-
-function getInitialSettings(): AppSettings {
-  try {
-    const storage = getStorageService();
-    const saved = storage.getItem(SETTINGS_KEY);
-    if (saved && typeof saved === 'string') {
-      return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) };
-    }
-  } catch {
-    // Storage not available
-  }
-  return DEFAULT_SETTINGS;
-}
+import { useSettings, type AppSettings } from '@/context/SettingsContext';
+import { useProgress } from '@/context/ProgressContext';
 
 export default function SettingsPage() {
   const { t } = useTranslation();
-  const [settings, setSettings] = useState<AppSettings>(getInitialSettings);
-
-  // Save settings to storage
-  const updateSetting = useCallback(<K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
-    setSettings(prev => {
-      const newSettings = { ...prev, [key]: value };
-      try {
-        const storage = getStorageService();
-        storage.setItem(SETTINGS_KEY, JSON.stringify(newSettings));
-      } catch {
-        // Storage not available
-      }
-      return newSettings;
-    });
-  }, []);
+  const { settings, updateSetting } = useSettings();
+  const { progress } = useProgress();
 
   const displayOptions = [
     { value: 'numeric', label: t('settings.displayOptions.numeric') },
@@ -62,62 +22,107 @@ export default function SettingsPage() {
         </Heading>
       </header>
 
-      <div className="space-y-4">
-        {/* Show Errors */}
-        <Card>
-          <CardContent className="flex items-center justify-between py-4">
-            <div>
-              <Text weight="medium">{t('settings.showErrors')}</Text>
-              <Text size="sm" color="muted">
-                {t('settings.showErrorsDesc')}
-              </Text>
-            </div>
-            <Switch
-              checked={settings.showErrors}
-              onCheckedChange={checked => updateSetting('showErrors', checked)}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Symmetrical Puzzles */}
-        <Card>
-          <CardContent className="flex items-center justify-between py-4">
-            <div>
-              <Text weight="medium">{t('settings.symmetrical')}</Text>
-              <Text size="sm" color="muted">
-                {t('settings.symmetricalDesc')}
-              </Text>
-            </div>
-            <Switch
-              checked={settings.symmetrical}
-              onCheckedChange={checked => updateSetting('symmetrical', checked)}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Display Format */}
-        <Card>
-          <CardContent className="py-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <Text weight="medium">{t('settings.display')}</Text>
-                <Text size="sm" color="muted">
-                  {t('settings.displayDesc')}
-                </Text>
+      <div className="space-y-6">
+        {/* Progress Stats */}
+        <section>
+          <Heading level={2} size="lg" className="mb-3">
+            {t('settings.progress.title')}
+          </Heading>
+          <Card>
+            <CardContent className="py-4">
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <Text size="2xl" weight="bold" className="text-blue-600 dark:text-blue-400">
+                    {progress.totalCompleted}
+                  </Text>
+                  <Text size="sm" color="muted">
+                    {t('settings.progress.completed')}
+                  </Text>
+                </div>
+                <div>
+                  <Text size="2xl" weight="bold" className="text-green-600 dark:text-green-400">
+                    {progress.dailyStreak}
+                  </Text>
+                  <Text size="sm" color="muted">
+                    {t('settings.progress.streak')}
+                  </Text>
+                </div>
+                <div>
+                  <Text size="2xl" weight="bold" className="text-purple-600 dark:text-purple-400">
+                    {progress.completedPuzzles.filter(p => p.type === 'level').length}
+                  </Text>
+                  <Text size="sm" color="muted">
+                    {t('settings.progress.levels')}
+                  </Text>
+                </div>
               </div>
-              <Select
-                value={settings.display}
-                onValueChange={value => updateSetting('display', value as AppSettings['display'])}
-              >
-                {displayOptions.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </section>
+
+        {/* Game Settings */}
+        <section>
+          <Heading level={2} size="lg" className="mb-3">
+            {t('settings.gameSettings')}
+          </Heading>
+          <div className="space-y-4">
+            {/* Show Errors */}
+            <Card>
+              <CardContent className="flex items-center justify-between py-4">
+                <div>
+                  <Text weight="medium">{t('settings.showErrors')}</Text>
+                  <Text size="sm" color="muted">
+                    {t('settings.showErrorsDesc')}
+                  </Text>
+                </div>
+                <Switch
+                  checked={settings.showErrors}
+                  onCheckedChange={checked => updateSetting('showErrors', checked)}
+                />
+              </CardContent>
+            </Card>
+
+            {/* Symmetrical Puzzles */}
+            <Card>
+              <CardContent className="flex items-center justify-between py-4">
+                <div>
+                  <Text weight="medium">{t('settings.symmetrical')}</Text>
+                  <Text size="sm" color="muted">
+                    {t('settings.symmetricalDesc')}
+                  </Text>
+                </div>
+                <Switch
+                  checked={settings.symmetrical}
+                  onCheckedChange={checked => updateSetting('symmetrical', checked)}
+                />
+              </CardContent>
+            </Card>
+
+            {/* Display Format */}
+            <Card>
+              <CardContent className="py-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Text weight="medium">{t('settings.display')}</Text>
+                    <Text size="sm" color="muted">
+                      {t('settings.displayDesc')}
+                    </Text>
+                  </div>
+                  <Select
+                    value={settings.display}
+                    onValueChange={value => updateSetting('display', value as AppSettings['display'])}
+                  >
+                    {displayOptions.map(option => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
       </div>
     </div>
   );

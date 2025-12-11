@@ -5,6 +5,8 @@ import { I18nextProvider, useTranslation } from 'react-i18next';
 import i18n, { isLanguageSupported } from './i18n';
 import ThemeProvider from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
+import { SettingsProvider } from './context/SettingsContext';
+import { ProgressProvider } from './context/ProgressContext';
 
 // Pages (lazy loaded)
 import { lazy, Suspense, useEffect } from 'react';
@@ -95,9 +97,11 @@ function App() {
     <HelmetProvider>
       <I18nextProvider i18n={i18n}>
         <ThemeProvider>
-          <QueryClientProvider client={queryClient}>
-            <AuthProvider>
-              <BrowserRouter>
+          <SettingsProvider>
+            <ProgressProvider>
+              <QueryClientProvider client={queryClient}>
+                <AuthProvider>
+                  <BrowserRouter>
               <Routes>
                 {/* Root redirect */}
                 <Route path="/" element={<LanguageRedirect />} />
@@ -117,9 +121,11 @@ function App() {
                 {/* Catch-all */}
                 <Route path="*" element={<LanguageRedirect />} />
               </Routes>
-              </BrowserRouter>
-            </AuthProvider>
-          </QueryClientProvider>
+                  </BrowserRouter>
+                </AuthProvider>
+              </QueryClientProvider>
+            </ProgressProvider>
+          </SettingsProvider>
         </ThemeProvider>
       </I18nextProvider>
     </HelmetProvider>
