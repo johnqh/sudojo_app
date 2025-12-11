@@ -4,6 +4,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { I18nextProvider, useTranslation } from 'react-i18next';
 import i18n, { isLanguageSupported } from './i18n';
 import ThemeProvider from './context/ThemeContext';
+import { AuthProvider } from './context/AuthContext';
 
 // Pages (lazy loaded)
 import { lazy, Suspense, useEffect } from 'react';
@@ -95,7 +96,8 @@ function App() {
       <I18nextProvider i18n={i18n}>
         <ThemeProvider>
           <QueryClientProvider client={queryClient}>
-            <BrowserRouter>
+            <AuthProvider>
+              <BrowserRouter>
               <Routes>
                 {/* Root redirect */}
                 <Route path="/" element={<LanguageRedirect />} />
@@ -115,7 +117,8 @@ function App() {
                 {/* Catch-all */}
                 <Route path="*" element={<LanguageRedirect />} />
               </Routes>
-            </BrowserRouter>
+              </BrowserRouter>
+            </AuthProvider>
           </QueryClientProvider>
         </ThemeProvider>
       </I18nextProvider>

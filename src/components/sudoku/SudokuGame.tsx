@@ -1,9 +1,10 @@
-import { useEffect, useCallback, useMemo } from 'react';
+import { useEffect, useCallback, useMemo, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSudoku } from 'sudojo_lib';
 import { Card, CardContent, Text } from '@sudobility/components';
 import SudokuCanvas from './SudokuCanvas';
 import SudokuControls from './SudokuControls';
+import CompletionCelebration from './CompletionCelebration';
 
 interface SudokuGameProps {
   puzzle: string;
@@ -14,6 +15,8 @@ interface SudokuGameProps {
 
 export default function SudokuGame({ puzzle, solution, showErrors = true, onComplete }: SudokuGameProps) {
   const { t } = useTranslation();
+  const [showCelebration, setShowCelebration] = useState(false);
+  const prevCompletedRef = useRef(false);
 
   const {
     board,
@@ -37,10 +40,15 @@ export default function SudokuGame({ puzzle, solution, showErrors = true, onComp
     loadBoard(puzzle, solution);
   }, [puzzle, solution, loadBoard]);
 
-  // Handle completion
+  // Handle completion - trigger celebration when puzzle is first completed
   useEffect(() => {
-    if (isCompleted && onComplete) {
-      onComplete();
+    if (isCompleted && !prevCompletedRef.current) {
+      prevCompletedRef.current = true;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setShowCelebration(true);
+      onComplete?.();
+    } else if (!isCompleted) {
+      prevCompletedRef.current = false;
     }
   }, [isCompleted, onComplete]);
 
@@ -133,6 +141,12 @@ export default function SudokuGame({ puzzle, solution, showErrors = true, onComp
 
   return (
     <div className="space-y-6">
+      {/* Celebration animation */}
+      <CompletionCelebration
+        show={showCelebration}
+        onComplete={() => setShowCelebration(false)}
+      />
+
       {/* Progress indicator */}
       {progress > 0 && (
         <div className="text-center">

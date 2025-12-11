@@ -11,6 +11,7 @@ import {
   type TopbarNavItem,
 } from '@sudobility/components';
 import { useLocalizedNavigate } from '@/hooks/useLocalizedNavigate';
+import { useAuth } from '@/context/AuthContext';
 import { LanguageSelector } from './LanguageSelector';
 import { LocalizedLink } from './LocalizedLink';
 
@@ -18,6 +19,7 @@ export default function TopBar() {
   const { t } = useTranslation();
   const { navigate, currentLanguage } = useLocalizedNavigate();
   const location = useLocation();
+  const { user, loading, signInWithGoogle, signOut } = useAuth();
 
   // Check if current route is active
   const currentPath = location.pathname.replace(`/${currentLanguage}`, '');
@@ -67,6 +69,14 @@ export default function TopBar() {
     );
   }
 
+  const handleAuthClick = () => {
+    if (user) {
+      signOut();
+    } else {
+      signInWithGoogle();
+    }
+  };
+
   return (
     <TopbarProvider sticky>
       <Topbar sticky zIndex="highest">
@@ -83,15 +93,33 @@ export default function TopBar() {
         <TopbarRight>
           <TopbarActions gap="md">
             <LanguageSelector />
-            <button
-              onClick={() => {
-                // TODO: Implement Firebase Auth
-                console.log('Login clicked');
-              }}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              {t('auth.login')}
-            </button>
+
+            {/* User Avatar or Login Button */}
+            {user ? (
+              <div className="flex items-center gap-2">
+                {user.photoURL && (
+                  <img
+                    src={user.photoURL}
+                    alt={user.displayName || 'User'}
+                    className="w-8 h-8 rounded-full"
+                  />
+                )}
+                <button
+                  onClick={handleAuthClick}
+                  className="px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                >
+                  {t('auth.logout')}
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={handleAuthClick}
+                disabled={loading}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {loading ? '...' : t('auth.login')}
+              </button>
+            )}
           </TopbarActions>
         </TopbarRight>
       </Topbar>
