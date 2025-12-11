@@ -1,33 +1,50 @@
+import { useMemo, useCallback, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useState, useCallback } from 'react';
 import { MasterDetailLayout, MasterListItem, Heading, Text, Card, CardContent } from '@sudobility/components';
+import { useSudojoTechniques, useSudojoLearning } from 'sudojo_client';
 import { useLocalizedNavigate } from '@/hooks/useLocalizedNavigate';
-
-// TODO: Replace with actual API calls
-const MOCK_TECHNIQUES = [
-  { uuid: '1', title: 'Naked Singles', text: 'Find cells with only one possible value' },
-  { uuid: '2', title: 'Hidden Singles', text: 'Find values that can only go in one cell' },
-  { uuid: '3', title: 'Naked Pairs', text: 'Two cells in a unit with the same two candidates' },
-  { uuid: '4', title: 'Pointing Pairs', text: 'Candidates restricted to one box' },
-  { uuid: '5', title: 'Box/Line Reduction', text: 'Candidates restricted to one row or column' },
-];
+import { useSudojoClient } from '@/hooks/useSudojoClient';
 
 export default function TechniquesPage() {
   const { techniqueId } = useParams<{ techniqueId: string }>();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { navigate } = useLocalizedNavigate();
+  const { networkClient, config } = useSudojoClient();
 
   // Mobile view state - show content when techniqueId is present
   const [mobileViewOverride, setMobileViewOverride] = useState<'navigation' | 'content' | null>(null);
   const mobileView = mobileViewOverride ?? (techniqueId ? 'content' : 'navigation');
 
-  const selectedTechnique = MOCK_TECHNIQUES.find(tech => tech.uuid === techniqueId);
+  // Fetch techniques list
+  const { data: techniquesData, isLoading: techniquesLoading } = useSudojoTechniques(networkClient, config);
+  const techniques = techniquesData?.data ?? [];
 
-  const handleTechniqueSelect = useCallback((uuid: string) => {
-    setMobileViewOverride('content');
-    navigate(`/techniques/${uuid}`);
-  }, [navigate]);
+  // Fetch learning content for selected technique
+  const learningParams = useMemo(
+    () => ({
+      technique_uuid: techniqueId,
+      language_code: i18n.language,
+    }),
+    [techniqueId, i18n.language]
+  );
+  const { data: learningData, isLoading: learningLoading } = useSudojoLearning(
+    networkClient,
+    config,
+    learningParams,
+    { enabled: !!techniqueId }
+  );
+  const learningItems = learningData?.data ?? [];
+
+  const selectedTechnique = techniques.find(tech => tech.uuid === techniqueId);
+
+  const handleTechniqueSelect = useCallback(
+    (uuid: string) => {
+      setMobileViewOverride('content');
+      navigate(`/techniques/${uuid}`);
+    },
+    [navigate]
+  );
 
   const handleBackToNavigation = useCallback(() => {
     setMobileViewOverride('navigation');
@@ -36,15 +53,25 @@ export default function TechniquesPage() {
 
   const masterContent = (
     <div className="space-y-1">
-      {MOCK_TECHNIQUES.map(technique => (
+      {techniquesLoading && (
+        <div className="p-4 text-center">
+          <Text color="muted">{t('common.loading')}</Text>
+        </div>
+      )}
+      {techniques.map(technique => (
         <MasterListItem
           key={technique.uuid}
           isSelected={technique.uuid === techniqueId}
           onClick={() => handleTechniqueSelect(technique.uuid)}
           label={technique.title}
-          description={technique.text}
+          description={technique.text ?? undefined}
         />
       ))}
+      {!techniquesLoading && techniques.length === 0 && (
+        <div className="p-4 text-center">
+          <Text color="muted">{t('techniques.empty')}</Text>
+        </div>
+      )}
     </div>
   );
 
@@ -53,15 +80,45 @@ export default function TechniquesPage() {
       <Heading level={2} size="xl" className="mb-4">
         {selectedTechnique.title}
       </Heading>
-      <Card>
-        <CardContent>
-          <Text>{selectedTechnique.text}</Text>
-          {/* TODO: Add learning content from API */}
-          <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <Text color="muted">Detailed learning content will appear here...</Text>
-          </div>
-        </CardContent>
-      </Card>
+
+      {selectedTechnique.text && (
+        <Text className="mb-6">{selectedTechnique.text}</Text>
+      )}
+
+      {learningLoading && (
+        <div className="p-4 text-center">
+          <Text color="muted">{t('common.loading')}</Text>
+        </div>
+      )}
+
+      {learningItems.length > 0 ? (
+        <div className="space-y-4">
+          {learningItems
+            .sort((a, b) => a.index - b.index)
+            .map(item => (
+              <Card key={item.uuid}>
+                <CardContent className="py-4">
+                  {item.text && <Text>{item.text}</Text>}
+                  {item.image_url && (
+                    <img
+                      src={item.image_url}
+                      alt={`Learning step ${item.index}`}
+                      className="mt-4 rounded-lg max-w-full"
+                    />
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+        </div>
+      ) : (
+        !learningLoading && (
+          <Card>
+            <CardContent className="py-4">
+              <Text color="muted">{t('techniques.noContent')}</Text>
+            </CardContent>
+          </Card>
+        )
+      )}
     </div>
   ) : (
     <div className="flex items-center justify-center h-full text-center">

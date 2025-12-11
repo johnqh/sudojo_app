@@ -1,18 +1,16 @@
 import { useTranslation } from 'react-i18next';
 import { Heading, Text, Card, CardContent } from '@sudobility/components';
+import { useSudojoLevels } from 'sudojo_client';
 import { LocalizedLink } from '@/components/layout/LocalizedLink';
-
-// TODO: Replace with actual API call using useSudojoLevels
-const MOCK_LEVELS = [
-  { uuid: '1', index: 1, title: 'Beginner' },
-  { uuid: '2', index: 2, title: 'Easy' },
-  { uuid: '3', index: 3, title: 'Medium' },
-  { uuid: '4', index: 4, title: 'Hard' },
-  { uuid: '5', index: 5, title: 'Expert' },
-];
+import { useSudojoClient } from '@/hooks/useSudojoClient';
 
 export default function LevelsPage() {
   const { t } = useTranslation();
+  const { networkClient, config } = useSudojoClient();
+
+  const { data, isLoading, error } = useSudojoLevels(networkClient, config);
+
+  const levels = data?.data ?? [];
 
   return (
     <div className="py-8">
@@ -22,8 +20,28 @@ export default function LevelsPage() {
         </Heading>
       </header>
 
+      {isLoading && (
+        <div className="text-center py-12">
+          <Text color="muted">{t('common.loading')}</Text>
+        </div>
+      )}
+
+      {error && (
+        <div className="text-center py-12">
+          <Text color="muted" className="text-red-500">
+            {t('common.error')}
+          </Text>
+        </div>
+      )}
+
+      {!isLoading && !error && levels.length === 0 && (
+        <div className="text-center py-12">
+          <Text color="muted">{t('levels.empty')}</Text>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {MOCK_LEVELS.map(level => (
+        {levels.map(level => (
           <LocalizedLink key={level.uuid} to={`/levels/${level.uuid}`} className="block">
             <Card variant="elevated" className="hover:shadow-lg transition-shadow">
               <CardContent className="py-6">
@@ -33,6 +51,11 @@ export default function LevelsPage() {
                 <Heading level={3} size="lg">
                   {level.title}
                 </Heading>
+                {level.text && (
+                  <Text size="sm" color="muted" className="mt-2">
+                    {level.text}
+                  </Text>
+                )}
               </CardContent>
             </Card>
           </LocalizedLink>

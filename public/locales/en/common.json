@@ -3,6 +3,10 @@
     "name": "Sudojo",
     "tagline": "Master Sudoku, One Technique at a Time"
   },
+  "common": {
+    "loading": "Loading...",
+    "error": "Something went wrong. Please try again."
+  },
   "nav": {
     "daily": "Daily",
     "levels": "Levels",
@@ -39,6 +43,7 @@
     "autoPencil": "Auto Notes",
     "hint": "Hint",
     "newGame": "New Game",
+    "nextPuzzle": "Next Puzzle",
     "completed": "Congratulations! You solved it!",
     "progress": "{{percent}}% Complete"
   },
@@ -58,11 +63,14 @@
   },
   "levels": {
     "title": "Levels",
-    "level": "Level {{number}}"
+    "level": "Level {{number}}",
+    "empty": "No levels available yet."
   },
   "techniques": {
     "title": "Techniques",
-    "selectTechnique": "Select a technique to learn"
+    "selectTechnique": "Select a technique to learn",
+    "empty": "No techniques available yet.",
+    "noContent": "No learning content available for this technique yet."
   },
   "daily": {
     "title": "Daily Puzzle",

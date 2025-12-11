@@ -3,6 +3,10 @@
     "name": "数独道场",
     "tagline": "一步一技，精通数独"
   },
+  "common": {
+    "loading": "加载中...",
+    "error": "出错了，请重试。"
+  },
   "nav": {
     "daily": "每日",
     "levels": "级别",
@@ -39,6 +43,7 @@
     "autoPencil": "自动笔记",
     "hint": "提示",
     "newGame": "新游戏",
+    "nextPuzzle": "下一题",
     "completed": "恭喜！你解开了！",
     "progress": "完成 {{percent}}%"
   },
@@ -58,11 +63,14 @@
   },
   "levels": {
     "title": "级别",
-    "level": "第 {{number}} 级"
+    "level": "第 {{number}} 级",
+    "empty": "暂无级别。"
   },
   "techniques": {
     "title": "技巧",
-    "selectTechnique": "选择要学习的技巧"
+    "selectTechnique": "选择要学习的技巧",
+    "empty": "暂无技巧。",
+    "noContent": "该技巧暂无学习内容。"
   },
   "daily": {
     "title": "每日谜题",

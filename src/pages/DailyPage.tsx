@@ -1,13 +1,16 @@
 import { useTranslation } from 'react-i18next';
 import { Heading, Text } from '@sudobility/components';
+import { useSudojoTodayDaily } from 'sudojo_client';
 import { SudokuGame } from '@/components/sudoku';
-
-// TODO: Replace with actual API call to get daily puzzle
-const SAMPLE_PUZZLE = '530070000600195000098000060800060003400803001700020006060000280000419005000080079';
-const SAMPLE_SOLUTION = '534678912672195348198342567859761423426853791713924856961537284287419635345286179';
+import { useSudojoClient } from '@/hooks/useSudojoClient';
 
 export default function DailyPage() {
   const { t } = useTranslation();
+  const { networkClient, config } = useSudojoClient();
+
+  const { data, isLoading, error } = useSudojoTodayDaily(networkClient, config);
+
+  const daily = data?.data;
 
   const handleComplete = () => {
     // TODO: Save completion to user progress
@@ -21,14 +24,35 @@ export default function DailyPage() {
           {t('daily.title')}
         </Heading>
         <Text color="muted">{t('daily.subtitle')}</Text>
+        {daily?.date && (
+          <Text size="sm" color="muted" className="mt-1">
+            {new Date(daily.date).toLocaleDateString()}
+          </Text>
+        )}
       </header>
 
-      <SudokuGame
-        puzzle={SAMPLE_PUZZLE}
-        solution={SAMPLE_SOLUTION}
-        showErrors={true}
-        onComplete={handleComplete}
-      />
+      {isLoading && (
+        <div className="text-center py-12">
+          <Text color="muted">{t('common.loading')}</Text>
+        </div>
+      )}
+
+      {error && (
+        <div className="text-center py-12">
+          <Text color="muted" className="text-red-500">
+            {t('common.error')}
+          </Text>
+        </div>
+      )}
+
+      {daily && (
+        <SudokuGame
+          puzzle={daily.board}
+          solution={daily.solution}
+          showErrors={true}
+          onComplete={handleComplete}
+        />
+      )}
     </div>
   );
 }
