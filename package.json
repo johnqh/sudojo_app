@@ -41,7 +41,7 @@
     "react-router-dom": "^7.9.4",
     "sudojo_client": "file:../sudojo_client",
     "sudojo_lib": "file:../sudojo_lib",
-    "sudojo_solver_client": "file:../sudojo_solver_client",
+    "@sudobility/sudojo_solver_client": "file:../sudojo_solver_client",
     "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {

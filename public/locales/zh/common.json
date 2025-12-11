@@ -34,11 +34,13 @@
     "undo": "撤销",
     "erase": "擦除",
     "pencil": "笔记",
+    "pencilOn": "笔记开",
+    "pencilOff": "笔记",
     "autoPencil": "自动笔记",
     "hint": "提示",
     "newGame": "新游戏",
     "completed": "恭喜！你解开了！",
-    "progress": "完成 {{progress}}%"
+    "progress": "完成 {{percent}}%"
   },
   "settings": {
     "title": "设置",

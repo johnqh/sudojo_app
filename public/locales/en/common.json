@@ -34,11 +34,13 @@
     "undo": "Undo",
     "erase": "Erase",
     "pencil": "Notes",
+    "pencilOn": "Notes On",
+    "pencilOff": "Notes",
     "autoPencil": "Auto Notes",
     "hint": "Hint",
     "newGame": "New Game",
     "completed": "Congratulations! You solved it!",
-    "progress": "{{progress}}% Complete"
+    "progress": "{{percent}}% Complete"
   },
   "settings": {
     "title": "Settings",
