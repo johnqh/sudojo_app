@@ -16,6 +16,17 @@ export interface CompletedPuzzle {
   timeSeconds?: number;
 }
 
+export interface GameStats {
+  /** Best time in seconds for daily puzzles */
+  bestDailyTime: number | null;
+  /** Best time in seconds for level puzzles */
+  bestLevelTime: number | null;
+  /** Average time in seconds */
+  averageTime: number | null;
+  /** Total time played in seconds */
+  totalTimePlayed: number;
+}
+
 export interface UserProgress {
   /** List of completed puzzles */
   completedPuzzles: CompletedPuzzle[];
@@ -25,6 +36,8 @@ export interface UserProgress {
   lastDailyDate: string | null;
   /** Total puzzles completed */
   totalCompleted: number;
+  /** Game statistics */
+  stats: GameStats;
 }
 
 const DEFAULT_PROGRESS: UserProgress = {
@@ -32,6 +45,12 @@ const DEFAULT_PROGRESS: UserProgress = {
   dailyStreak: 0,
   lastDailyDate: null,
   totalCompleted: 0,
+  stats: {
+    bestDailyTime: null,
+    bestLevelTime: null,
+    averageTime: null,
+    totalTimePlayed: 0,
+  },
 };
 
 const PROGRESS_KEY = 'sudojo-progress';
@@ -54,6 +73,38 @@ const ProgressContext = createContext<ProgressContextType | undefined>(undefined
 
 interface ProgressProviderProps {
   children: ReactNode;
+}
+
+/**
+ * Calculate game statistics from completed puzzles
+ */
+function calculateStats(completedPuzzles: CompletedPuzzle[], newTime?: number): GameStats {
+  const puzzlesWithTime = completedPuzzles.filter(p => p.timeSeconds !== undefined);
+
+  // Calculate total time
+  const totalTimePlayed = puzzlesWithTime.reduce((sum, p) => sum + (p.timeSeconds ?? 0), 0) + (newTime ?? 0);
+
+  // Calculate average time
+  const count = puzzlesWithTime.length + (newTime !== undefined ? 1 : 0);
+  const averageTime = count > 0 ? Math.round(totalTimePlayed / count) : null;
+
+  // Calculate best times by type
+  const dailyTimes = completedPuzzles
+    .filter(p => p.type === 'daily' && p.timeSeconds !== undefined)
+    .map(p => p.timeSeconds!);
+  const levelTimes = completedPuzzles
+    .filter(p => p.type === 'level' && p.timeSeconds !== undefined)
+    .map(p => p.timeSeconds!);
+
+  const bestDailyTime = dailyTimes.length > 0 ? Math.min(...dailyTimes) : null;
+  const bestLevelTime = levelTimes.length > 0 ? Math.min(...levelTimes) : null;
+
+  return {
+    bestDailyTime,
+    bestLevelTime,
+    averageTime,
+    totalTimePlayed,
+  };
 }
 
 /**
@@ -124,12 +175,14 @@ export function ProgressProvider({ children }: ProgressProviderProps) {
         }
 
         const newStreak = calculateStreak(newCompletedPuzzles, newLastDailyDate);
+        const newStats = calculateStats(newCompletedPuzzles, puzzle.timeSeconds);
 
         return {
           completedPuzzles: newCompletedPuzzles,
           dailyStreak: newStreak,
           lastDailyDate: newLastDailyDate,
           totalCompleted: prev.totalCompleted + 1,
+          stats: newStats,
         };
       });
     },

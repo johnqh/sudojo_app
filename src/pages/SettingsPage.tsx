@@ -3,6 +3,22 @@ import { Heading, Text, Card, CardContent, Switch, Select } from '@sudobility/co
 import { useSettings, type AppSettings } from '@/context/SettingsContext';
 import { useProgress } from '@/context/ProgressContext';
 
+/**
+ * Format seconds into MM:SS or HH:MM:SS string
+ */
+function formatTime(seconds: number | null): string {
+  if (seconds === null) return '--:--';
+
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+
+  if (hours > 0) {
+    return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }
+  return `${minutes}:${secs.toString().padStart(2, '0')}`;
+}
+
 export default function SettingsPage() {
   const { t } = useTranslation();
   const { settings, updateSetting } = useSettings();
@@ -53,6 +69,43 @@ export default function SettingsPage() {
                   </Text>
                   <Text size="sm" color="muted">
                     {t('settings.progress.levels')}
+                  </Text>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
+        {/* Time Statistics */}
+        <section>
+          <Heading level={2} size="lg" className="mb-3">
+            {t('settings.stats.title')}
+          </Heading>
+          <Card>
+            <CardContent className="py-4">
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <Text size="2xl" weight="bold" className="font-mono text-orange-600 dark:text-orange-400">
+                    {formatTime(progress.stats?.bestDailyTime ?? null)}
+                  </Text>
+                  <Text size="sm" color="muted">
+                    {t('settings.stats.bestDaily')}
+                  </Text>
+                </div>
+                <div>
+                  <Text size="2xl" weight="bold" className="font-mono text-teal-600 dark:text-teal-400">
+                    {formatTime(progress.stats?.bestLevelTime ?? null)}
+                  </Text>
+                  <Text size="sm" color="muted">
+                    {t('settings.stats.bestLevel')}
+                  </Text>
+                </div>
+                <div>
+                  <Text size="2xl" weight="bold" className="font-mono text-indigo-600 dark:text-indigo-400">
+                    {formatTime(progress.stats?.averageTime ?? null)}
+                  </Text>
+                  <Text size="sm" color="muted">
+                    {t('settings.stats.average')}
                   </Text>
                 </div>
               </div>

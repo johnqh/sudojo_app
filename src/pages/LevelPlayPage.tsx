@@ -35,10 +35,10 @@ export default function LevelPlayPage() {
   const level = levelData?.data;
   const board = boardData?.data;
 
-  const handleComplete = useCallback(() => {
+  const handleComplete = useCallback((timeSeconds: number) => {
     setCompleted(true);
     if (levelId) {
-      markCompleted({ type: 'level', id: levelId });
+      markCompleted({ type: 'level', id: levelId, timeSeconds });
     }
   }, [levelId, markCompleted]);
 

@@ -19,9 +19,9 @@ export default function DailyPage() {
   const dailyDate = daily?.date ? new Date(daily.date).toISOString().split('T')[0] : null;
   const alreadyCompleted = dailyDate ? isCompleted('daily', dailyDate) : false;
 
-  const handleComplete = useCallback(() => {
+  const handleComplete = useCallback((timeSeconds: number) => {
     if (dailyDate && !alreadyCompleted) {
-      markCompleted({ type: 'daily', id: dailyDate });
+      markCompleted({ type: 'daily', id: dailyDate, timeSeconds });
     }
   }, [dailyDate, alreadyCompleted, markCompleted]);
 

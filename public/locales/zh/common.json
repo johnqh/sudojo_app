@@ -49,7 +49,9 @@
     "newGame": "新游戏",
     "nextPuzzle": "下一题",
     "completed": "恭喜！你解开了！",
-    "progress": "完成 {{percent}}%"
+    "completedTime": "用时：{{time}}",
+    "progress": "完成 {{percent}}%",
+    "timer": "时间"
   },
   "settings": {
     "title": "设置",
@@ -58,6 +60,12 @@
       "completed": "已完成",
       "streak": "连续天数",
       "levels": "关卡"
+    },
+    "stats": {
+      "title": "时间统计",
+      "bestDaily": "每日最佳",
+      "bestLevel": "关卡最佳",
+      "average": "平均用时"
     },
     "gameSettings": "游戏设置",
     "showErrors": "显示错误",

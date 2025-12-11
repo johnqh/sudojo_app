@@ -49,7 +49,9 @@
     "newGame": "New Game",
     "nextPuzzle": "Next Puzzle",
     "completed": "Congratulations! You solved it!",
-    "progress": "{{percent}}% Complete"
+    "completedTime": "Time: {{time}}",
+    "progress": "{{percent}}% Complete",
+    "timer": "Time"
   },
   "settings": {
     "title": "Settings",
@@ -58,6 +60,12 @@
       "completed": "Completed",
       "streak": "Day Streak",
       "levels": "Levels"
+    },
+    "stats": {
+      "title": "Time Statistics",
+      "bestDaily": "Best Daily",
+      "bestLevel": "Best Level",
+      "average": "Average"
     },
     "gameSettings": "Game Settings",
     "showErrors": "Show Errors",

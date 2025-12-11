@@ -6,19 +6,25 @@ import SudokuCanvas from './SudokuCanvas';
 import SudokuControls from './SudokuControls';
 import CompletionCelebration from './CompletionCelebration';
 import HintPanel from './HintPanel';
+import GameTimer from './GameTimer';
 import { useHint } from '@/hooks/useHint';
+import { useGameTimer } from '@/hooks/useGameTimer';
 
 interface SudokuGameProps {
   puzzle: string;
   solution: string;
   showErrors?: boolean;
-  onComplete?: () => void;
+  showTimer?: boolean;
+  onComplete?: (timeSeconds: number) => void;
 }
 
-export default function SudokuGame({ puzzle, solution, showErrors = true, onComplete }: SudokuGameProps) {
+export default function SudokuGame({ puzzle, solution, showErrors = true, showTimer = true, onComplete }: SudokuGameProps) {
   const { t } = useTranslation();
   const [showCelebration, setShowCelebration] = useState(false);
   const prevCompletedRef = useRef(false);
+
+  // Game timer
+  const { formattedTime, isRunning, stop: stopTimer } = useGameTimer({ autoStart: true });
 
   const {
     board,
@@ -46,13 +52,14 @@ export default function SudokuGame({ puzzle, solution, showErrors = true, onComp
   useEffect(() => {
     if (isCompleted && !prevCompletedRef.current) {
       prevCompletedRef.current = true;
+      const finalTime = stopTimer();
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowCelebration(true);
-      onComplete?.();
+      onComplete?.(finalTime);
     } else if (!isCompleted) {
       prevCompletedRef.current = false;
     }
-  }, [isCompleted, onComplete]);
+  }, [isCompleted, onComplete, stopTimer]);
 
   // Handle number input
   const handleNumberInput = useCallback(
@@ -170,18 +177,29 @@ export default function SudokuGame({ puzzle, solution, showErrors = true, onComp
         onComplete={() => setShowCelebration(false)}
       />
 
-      {/* Progress indicator */}
-      {progress > 0 && (
-        <div className="text-center">
+      {/* Timer and Progress */}
+      <div className="flex items-center justify-between max-w-[500px] mx-auto">
+        {/* Timer */}
+        {showTimer && (
+          <GameTimer time={formattedTime} isRunning={isRunning && !isCompleted} />
+        )}
+        {!showTimer && <div />}
+
+        {/* Progress indicator */}
+        {progress > 0 && (
           <Text size="sm" color="muted">
             {t('game.progress', { percent: progress })}
           </Text>
-          <div className="mt-1 h-2 bg-[var(--color-bg-tertiary)] rounded-full overflow-hidden max-w-[500px] mx-auto">
-            <div
-              className="h-full bg-[var(--color-primary-500)] transition-all duration-300"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
+        )}
+      </div>
+
+      {/* Progress bar */}
+      {progress > 0 && (
+        <div className="h-2 bg-[var(--color-bg-tertiary)] rounded-full overflow-hidden max-w-[500px] mx-auto">
+          <div
+            className="h-full bg-[var(--color-primary-500)] transition-all duration-300"
+            style={{ width: `${progress}%` }}
+          />
         </div>
       )}
 
@@ -192,6 +210,11 @@ export default function SudokuGame({ puzzle, solution, showErrors = true, onComp
             <Text weight="medium" className="text-green-600 dark:text-green-400">
               {t('game.completed')}
             </Text>
+            {showTimer && (
+              <Text size="sm" color="muted" className="mt-1">
+                {t('game.completedTime', { time: formattedTime })}
+              </Text>
+            )}
           </CardContent>
         </Card>
       )}
