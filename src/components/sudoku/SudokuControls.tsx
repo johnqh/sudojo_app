@@ -39,7 +39,7 @@ export default function SudokuControls({
             key={num}
             onClick={() => onNumberInput(num)}
             disabled={disabled}
-            className="aspect-square text-lg sm:text-xl font-semibold rounded-lg bg-[var(--color-bg-secondary)] hover:bg-[var(--color-bg-tertiary)] text-[var(--color-text-primary)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="aspect-square min-h-[44px] text-lg sm:text-xl font-semibold rounded-lg bg-[var(--color-bg-secondary)] hover:bg-[var(--color-bg-tertiary)] active:bg-[var(--color-bg-tertiary)] text-[var(--color-text-primary)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {num}
           </button>
