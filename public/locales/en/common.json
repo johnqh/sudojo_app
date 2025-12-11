@@ -41,7 +41,11 @@
     "pencilOn": "Notes On",
     "pencilOff": "Notes",
     "autoPencil": "Auto Notes",
-    "hint": "Hint",
+    "hint": {
+      "get": "Hint",
+      "loading": "Loading...",
+      "dismiss": "Dismiss"
+    },
     "newGame": "New Game",
     "nextPuzzle": "Next Puzzle",
     "completed": "Congratulations! You solved it!",

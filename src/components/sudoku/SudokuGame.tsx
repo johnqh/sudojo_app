@@ -5,6 +5,8 @@ import { Card, CardContent, Text } from '@sudobility/components';
 import SudokuCanvas from './SudokuCanvas';
 import SudokuControls from './SudokuControls';
 import CompletionCelebration from './CompletionCelebration';
+import HintPanel from './HintPanel';
+import { useHint } from '@/hooks/useHint';
 
 interface SudokuGameProps {
   puzzle: string;
@@ -139,6 +141,27 @@ export default function SudokuGame({ puzzle, solution, showErrors = true, onComp
   // Get cells array from board (empty array if no board)
   const cells = board?.cells ?? [];
 
+  // Generate user input string from current board state (given + input values)
+  const userInputString = useMemo(() => {
+    if (!board?.cells) return '0'.repeat(81);
+    return board.cells.map(cell => {
+      const value = cell.given ?? cell.input;
+      return value?.toString() ?? '0';
+    }).join('');
+  }, [board]);
+
+  // Hints system
+  const {
+    hint,
+    isLoading: isHintLoading,
+    error: hintError,
+    getHint,
+    clearHint,
+  } = useHint({
+    puzzle,
+    userInput: userInputString,
+  });
+
   return (
     <div className="space-y-6">
       {/* Celebration animation */}
@@ -173,6 +196,20 @@ export default function SudokuGame({ puzzle, solution, showErrors = true, onComp
         </Card>
       )}
 
+      {/* Hint panel */}
+      {hint && <HintPanel hint={hint} onDismiss={clearHint} />}
+
+      {/* Hint error */}
+      {hintError && (
+        <Card className="max-w-[500px] mx-auto border-l-4 border-l-red-500">
+          <CardContent className="py-3">
+            <Text size="sm" className="text-red-600 dark:text-red-400">
+              {hintError}
+            </Text>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Sudoku board */}
       <SudokuCanvas
         board={cells}
@@ -189,8 +226,10 @@ export default function SudokuGame({ puzzle, solution, showErrors = true, onComp
         onUndo={undo}
         onTogglePencil={togglePencilMode}
         onAutoPencil={autoPencilmarks}
+        onHint={getHint}
         isPencilMode={isPencilMode}
         canUndo={canUndo}
+        isHintLoading={isHintLoading}
         disabled={isCompleted}
       />
     </div>

@@ -7,8 +7,10 @@ interface SudokuControlsProps {
   onUndo: () => void;
   onTogglePencil: () => void;
   onAutoPencil?: () => void;
+  onHint?: () => void;
   isPencilMode: boolean;
   canUndo: boolean;
+  isHintLoading?: boolean;
   disabled?: boolean;
 }
 
@@ -18,8 +20,10 @@ export default function SudokuControls({
   onUndo,
   onTogglePencil,
   onAutoPencil,
+  onHint,
   isPencilMode,
   canUndo,
+  isHintLoading = false,
   disabled = false,
 }: SudokuControlsProps) {
   const { t } = useTranslation();
@@ -64,6 +68,17 @@ export default function SudokuControls({
         {onAutoPencil && (
           <Button variant="outline" size="sm" onClick={onAutoPencil} disabled={disabled}>
             {t('game.autoPencil')}
+          </Button>
+        )}
+
+        {onHint && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onHint}
+            disabled={disabled || isHintLoading}
+          >
+            {isHintLoading ? t('game.hint.loading') : t('game.hint.get')}
           </Button>
         )}
       </div>

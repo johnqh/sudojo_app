@@ -41,7 +41,11 @@
     "pencilOn": "笔记开",
     "pencilOff": "笔记",
     "autoPencil": "自动笔记",
-    "hint": "提示",
+    "hint": {
+      "get": "提示",
+      "loading": "加载中...",
+      "dismiss": "关闭"
+    },
     "newGame": "新游戏",
     "nextPuzzle": "下一题",
     "completed": "恭喜！你解开了！",
