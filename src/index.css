@@ -1,0 +1,97 @@
+@import "tailwindcss";
+
+/* Theme Variables */
+:root {
+  /* Light theme colors */
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #f9fafb;
+  --color-bg-tertiary: #f3f4f6;
+  --color-text-primary: #111827;
+  --color-text-secondary: #6b7280;
+  --color-text-tertiary: #9ca3af;
+  --color-border: #e5e7eb;
+  --color-border-light: #f3f4f6;
+  --color-hover-bg: rgba(0, 0, 0, 0.05);
+  --color-hover-border: #d1d5db;
+
+  /* Sudoku-specific colors (light mode) */
+  --sudoku-bg: #ffffff;
+  --sudoku-grid-line: #e5e7eb;
+  --sudoku-block-border: #111827;
+  --sudoku-cell-selected: #bfdbfe;
+  --sudoku-cell-related: #f3f4f6;
+  --sudoku-cell-error: #fecaca;
+  --sudoku-text-given: #111827;
+  --sudoku-text-input: #3b82f6;
+  --sudoku-text-error: #ef4444;
+  --sudoku-pencilmark: #6b7280;
+}
+
+.dark {
+  /* Dark theme colors */
+  --color-bg-primary: #0f172a;
+  --color-bg-secondary: #1e293b;
+  --color-bg-tertiary: #334155;
+  --color-text-primary: #f1f5f9;
+  --color-text-secondary: #cbd5e1;
+  --color-text-tertiary: #94a3b8;
+  --color-border: #475569;
+  --color-border-light: #334155;
+  --color-hover-bg: rgba(255, 255, 255, 0.1);
+  --color-hover-border: #64748b;
+
+  /* Sudoku-specific colors (dark mode) */
+  --sudoku-bg: #1e293b;
+  --sudoku-grid-line: #334155;
+  --sudoku-block-border: #e2e8f0;
+  --sudoku-cell-selected: #1e40af;
+  --sudoku-cell-related: #334155;
+  --sudoku-cell-error: #7f1d1d;
+  --sudoku-text-given: #f1f5f9;
+  --sudoku-text-input: #60a5fa;
+  --sudoku-text-error: #f87171;
+  --sudoku-pencilmark: #94a3b8;
+}
+
+/* Base styles */
+body {
+  margin: 0;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell',
+    'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
+}
+
+#root {
+  min-height: 100vh;
+  background-color: var(--color-bg-primary);
+}
+
+/* Utility for max-width container */
+.container-app {
+  max-width: 80rem; /* 1280px */
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .container-app {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container-app {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}

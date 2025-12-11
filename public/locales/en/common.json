@@ -1,0 +1,69 @@
+{
+  "app": {
+    "name": "Sudojo",
+    "tagline": "Master Sudoku, One Technique at a Time"
+  },
+  "nav": {
+    "daily": "Daily",
+    "levels": "Levels",
+    "techniques": "Techniques",
+    "settings": "Settings"
+  },
+  "auth": {
+    "login": "Log In",
+    "logout": "Log Out",
+    "welcome": "Welcome, {{name}}"
+  },
+  "footer": {
+    "copyright": "© {{year}} Sudojo. All rights reserved.",
+    "privacy": "Privacy",
+    "terms": "Terms"
+  },
+  "home": {
+    "hero": {
+      "title": "Master Sudoku",
+      "subtitle": "Learn solving techniques and challenge yourself with daily puzzles"
+    },
+    "cta": {
+      "daily": "Play Today's Puzzle",
+      "levels": "Browse Levels",
+      "techniques": "Learn Techniques"
+    }
+  },
+  "game": {
+    "undo": "Undo",
+    "erase": "Erase",
+    "pencil": "Notes",
+    "autoPencil": "Auto Notes",
+    "hint": "Hint",
+    "newGame": "New Game",
+    "completed": "Congratulations! You solved it!",
+    "progress": "{{progress}}% Complete"
+  },
+  "settings": {
+    "title": "Settings",
+    "showErrors": "Show Errors",
+    "showErrorsDesc": "Highlight incorrect entries",
+    "symmetrical": "Symmetrical Puzzles",
+    "symmetricalDesc": "Generate symmetrical puzzles",
+    "display": "Display Format",
+    "displayDesc": "Choose how numbers are displayed",
+    "displayOptions": {
+      "numeric": "Numbers (1-9)",
+      "kanji": "Kanji (一-九)",
+      "emojis": "Emojis"
+    }
+  },
+  "levels": {
+    "title": "Levels",
+    "level": "Level {{number}}"
+  },
+  "techniques": {
+    "title": "Techniques",
+    "selectTechnique": "Select a technique to learn"
+  },
+  "daily": {
+    "title": "Daily Puzzle",
+    "subtitle": "A new challenge every day"
+  }
+}

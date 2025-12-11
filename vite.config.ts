@@ -1,0 +1,80 @@
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
+import path from 'path';
+
+export default defineConfig({
+  resolve: {
+    dedupe: ['react', 'react-dom', '@tanstack/react-query'],
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
+  plugins: [
+    tailwindcss(),
+    react(),
+  ],
+  build: {
+    target: 'esnext',
+    rollupOptions: {
+      output: {
+        manualChunks: id => {
+          // React core
+          if (
+            id.includes('node_modules/react/') ||
+            id.includes('node_modules/react-dom/') ||
+            id.includes('node_modules/scheduler/')
+          ) {
+            return 'react-vendor';
+          }
+
+          // React Router
+          if (id.includes('node_modules/react-router')) {
+            return 'react-router';
+          }
+
+          // React Query
+          if (id.includes('node_modules/@tanstack/')) {
+            return 'query';
+          }
+
+          // Radix UI
+          if (id.includes('node_modules/@radix-ui/')) {
+            return 'radix-ui';
+          }
+
+          // Firebase
+          if (id.includes('node_modules/firebase/')) {
+            return 'firebase';
+          }
+
+          // i18next
+          if (id.includes('node_modules/i18next')) {
+            return 'i18n';
+          }
+
+          // UI utilities
+          if (
+            id.includes('node_modules/class-variance-authority') ||
+            id.includes('node_modules/clsx') ||
+            id.includes('node_modules/tailwind-merge')
+          ) {
+            return 'ui-utils';
+          }
+
+          // Icons
+          if (id.includes('node_modules/@heroicons/') || id.includes('node_modules/lucide-react')) {
+            return 'icons';
+          }
+        },
+      },
+    },
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-router-dom', '@sudobility/components'],
+  },
+  server: {
+    host: true,
+    port: 5193,
+  },
+});

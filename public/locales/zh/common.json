@@ -1,0 +1,69 @@
+{
+  "app": {
+    "name": "数独道场",
+    "tagline": "一步一技，精通数独"
+  },
+  "nav": {
+    "daily": "每日",
+    "levels": "级别",
+    "techniques": "技巧",
+    "settings": "设置"
+  },
+  "auth": {
+    "login": "登录",
+    "logout": "退出",
+    "welcome": "欢迎，{{name}}"
+  },
+  "footer": {
+    "copyright": "© {{year}} 数独道场。保留所有权利。",
+    "privacy": "隐私政策",
+    "terms": "服务条款"
+  },
+  "home": {
+    "hero": {
+      "title": "精通数独",
+      "subtitle": "学习解题技巧，挑战每日谜题"
+    },
+    "cta": {
+      "daily": "玩今日谜题",
+      "levels": "浏览级别",
+      "techniques": "学习技巧"
+    }
+  },
+  "game": {
+    "undo": "撤销",
+    "erase": "擦除",
+    "pencil": "笔记",
+    "autoPencil": "自动笔记",
+    "hint": "提示",
+    "newGame": "新游戏",
+    "completed": "恭喜！你解开了！",
+    "progress": "完成 {{progress}}%"
+  },
+  "settings": {
+    "title": "设置",
+    "showErrors": "显示错误",
+    "showErrorsDesc": "高亮显示错误输入",
+    "symmetrical": "对称谜题",
+    "symmetricalDesc": "生成对称谜题",
+    "display": "显示格式",
+    "displayDesc": "选择数字显示方式",
+    "displayOptions": {
+      "numeric": "数字 (1-9)",
+      "kanji": "汉字 (一-九)",
+      "emojis": "表情符号"
+    }
+  },
+  "levels": {
+    "title": "级别",
+    "level": "第 {{number}} 级"
+  },
+  "techniques": {
+    "title": "技巧",
+    "selectTechnique": "选择要学习的技巧"
+  },
+  "daily": {
+    "title": "每日谜题",
+    "subtitle": "每天一个新挑战"
+  }
+}
