@@ -21,6 +21,9 @@ const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 // Layout
 import ScreenContainer from './components/layout/ScreenContainer';
 
+// PWA
+import { InstallPrompt } from './components/pwa';
+
 // Query client
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -102,7 +105,8 @@ function App() {
               <QueryClientProvider client={queryClient}>
                 <AuthProvider>
                   <BrowserRouter>
-              <Routes>
+                    <InstallPrompt />
+                    <Routes>
                 {/* Root redirect */}
                 <Route path="/" element={<LanguageRedirect />} />
 

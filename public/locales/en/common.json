@@ -86,5 +86,17 @@
   "daily": {
     "title": "Daily Puzzle",
     "subtitle": "A new challenge every day"
+  },
+  "pwa": {
+    "installTitle": "Install Sudojo",
+    "installDescription": "Add to your home screen for the best experience",
+    "install": "Install",
+    "notNow": "Not Now",
+    "updateAvailable": "Update Available",
+    "updateDescription": "A new version is ready to install",
+    "update": "Update",
+    "later": "Later",
+    "dismiss": "Dismiss",
+    "offlineReady": "App ready for offline use"
   }
 }
