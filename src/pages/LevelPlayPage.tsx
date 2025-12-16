@@ -2,7 +2,7 @@ import { useMemo, useCallback, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Heading, Text, Button } from '@sudobility/components';
-import { useSudojoRandomBoard, useSudojoLevel } from 'sudojo_client';
+import { useSudojoRandomBoard, useSudojoLevel } from '@sudobility/sudojo_client';
 import { useQueryClient } from '@tanstack/react-query';
 import { SudokuGame } from '@/components/sudoku';
 import { useSudojoClient } from '@/hooks/useSudojoClient';

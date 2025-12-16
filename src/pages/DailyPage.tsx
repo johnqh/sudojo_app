@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Heading, Text } from '@sudobility/components';
-import { useSudojoTodayDaily } from 'sudojo_client';
+import { useSudojoTodayDaily } from '@sudobility/sudojo_client';
 import { SudokuGame } from '@/components/sudoku';
 import { useSudojoClient } from '@/hooks/useSudojoClient';
 import { useProgress } from '@/context/ProgressContext';

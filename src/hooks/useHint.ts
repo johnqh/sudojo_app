@@ -14,6 +14,8 @@ export interface UseHintOptions {
   userInput: string;
   /** Current pencilmarks (comma-separated or empty) */
   pencilmarks?: string;
+  /** Whether auto-pencilmarks were generated */
+  autoPencilmarks?: boolean;
 }
 
 export interface UseHintResult {
@@ -48,7 +50,7 @@ export interface UseHintResult {
  * {hint && <HintPanel hint={hint} onDismiss={clearHint} />}
  * ```
  */
-export function useHint({ puzzle, userInput, pencilmarks }: UseHintOptions): UseHintResult {
+export function useHint({ puzzle, userInput, pencilmarks, autoPencilmarks = false }: UseHintOptions): UseHintResult {
   const { networkClient, config } = useSolverClient();
   const [hint, setHint] = useState<HintStep | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -63,7 +65,7 @@ export function useHint({ puzzle, userInput, pencilmarks }: UseHintOptions): Use
       const response: SolveResponse = await client.solve({
         original: puzzle,
         user: userInput,
-        autoPencilmarks: !pencilmarks, // Use auto if no manual pencilmarks
+        autoPencilmarks,
         pencilmarks,
       });
 
@@ -80,7 +82,7 @@ export function useHint({ puzzle, userInput, pencilmarks }: UseHintOptions): Use
     } finally {
       setIsLoading(false);
     }
-  }, [networkClient, config, puzzle, userInput, pencilmarks]);
+  }, [networkClient, config, puzzle, userInput, pencilmarks, autoPencilmarks]);
 
   const clearHint = useCallback(() => {
     setHint(null);

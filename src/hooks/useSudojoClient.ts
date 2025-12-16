@@ -5,7 +5,7 @@
 import { useMemo } from 'react';
 import { getNetworkService } from '@sudobility/di';
 import type { NetworkClient, NetworkResponse, NetworkRequestOptions, Optional } from '@sudobility/types';
-import type { SudojoConfig } from 'sudojo_client';
+import type { SudojoConfig } from '@sudobility/sudojo_client';
 
 const config: SudojoConfig = {
   baseUrl: import.meta.env.VITE_SUDOJO_API_URL || 'https://api.sudojo.com',

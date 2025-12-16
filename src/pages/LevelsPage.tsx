@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Heading, Text, Card, CardContent } from '@sudobility/components';
-import { useSudojoLevels } from 'sudojo_client';
+import { useSudojoLevels } from '@sudobility/sudojo_client';
 import { LocalizedLink } from '@/components/layout/LocalizedLink';
 import { useSudojoClient } from '@/hooks/useSudojoClient';
 

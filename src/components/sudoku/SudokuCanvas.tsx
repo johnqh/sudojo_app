@@ -1,5 +1,5 @@
 import { useRef, useEffect, useCallback } from 'react';
-import type { SudokuCell } from 'sudojo_lib';
+import type { SudokuCell } from '@sudobility/sudojo_lib';
 
 interface SudokuCanvasProps {
   board: SudokuCell[];

@@ -1,6 +1,6 @@
 import { useEffect, useCallback, useMemo, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSudoku } from 'sudojo_lib';
+import { useSudoku } from '@sudobility/sudojo_lib';
 import { Card, CardContent, Text } from '@sudobility/components';
 import SudokuCanvas from './SudokuCanvas';
 import SudokuControls from './SudokuControls';
@@ -28,6 +28,7 @@ export default function SudokuGame({ puzzle, solution, showErrors = true, showTi
 
   const {
     board,
+    play,
     selectedIndex,
     isPencilMode,
     isCompleted,
@@ -41,11 +42,13 @@ export default function SudokuGame({ puzzle, solution, showErrors = true, showTi
     togglePencilMode,
     undo,
     autoPencilmarks,
+    getInputString,
+    getPencilmarksString,
   } = useSudoku();
 
   // Load the puzzle on mount
   useEffect(() => {
-    loadBoard(puzzle, solution);
+    loadBoard(puzzle, solution, { scramble: false });
   }, [puzzle, solution, loadBoard]);
 
   // Handle completion - trigger celebration when puzzle is first completed
@@ -148,15 +151,6 @@ export default function SudokuGame({ puzzle, solution, showErrors = true, showTi
   // Get cells array from board (empty array if no board)
   const cells = board?.cells ?? [];
 
-  // Generate user input string from current board state (given + input values)
-  const userInputString = useMemo(() => {
-    if (!board?.cells) return '0'.repeat(81);
-    return board.cells.map(cell => {
-      const value = cell.given ?? cell.input;
-      return value?.toString() ?? '0';
-    }).join('');
-  }, [board]);
-
   // Hints system
   const {
     hint,
@@ -166,7 +160,9 @@ export default function SudokuGame({ puzzle, solution, showErrors = true, showTi
     clearHint,
   } = useHint({
     puzzle,
-    userInput: userInputString,
+    userInput: getInputString(),
+    pencilmarks: getPencilmarksString(),
+    autoPencilmarks: play?.settings.autoPencilmarks ?? false,
   });
 
   return (

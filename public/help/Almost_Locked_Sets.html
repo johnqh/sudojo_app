@@ -1,0 +1,71 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta http-equiv="Content-Style-Type" content="text/css">
+    <title>College of Sudobility</title>
+    <meta name="Generator" content="Cocoa HTML Writer">
+    <meta name="CocoaVersion" content="949.35">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style type="text/css">
+    p.p1 {margin: 0.0px 0.0px 12.0px 0.0px; font: 13.0px}
+    p.p2 {margin: 0.0px 0.0px 8.0px 0.0px; font: 8.0px}
+    td.td1 {padding: 2.0px 2.0px 2.0px 2.0px}
+    ul.ul1 {list-style-type: disc}
+  </style>
+</head>
+<body>
+    <table cellspacing="0" cellpadding="0">
+        <tbody>
+            <tr>
+                <td class="td1" style="font-size: smaller; text-align: right" valign="middle">
+                    Back to <a href="index.html">Course Catalog</a></td>
+            </tr>
+            <tr>
+                <td valign="middle" class="td1">
+                    <p class="p1">
+                        <b>Almost Locked Sets(ALS)</b></p>
+                </td>
+            </tr>
+            <tr>
+                <td valign="middle" class="td1">
+                    <p style="margin: 0.0px 0.0px 12.0px 0.0px; font: 13.0px Courier New">
+                        An Almost Locked Set is a group of N cells in a single house with candidates for
+                        N+1 digits. In other words, it is one cell short from being a locked set.</p>
+                    <p style="margin: 0px 0px 12px; font: 13px Courier New">
+                        A Common Restricted Candidate between two ALS's is a candidate which cannot exist
+                        in both ALS's, thus, its existence in one ALS will force the other ALS to become
+                        a locked set.</p>
+                    <p style="margin: 0px 0px 12px; font: 13px Courier New">
+                        When solving Sudoku, you are looking for two ALS's with a common restricted candidate,
+                        then look for a candidate in another cell which is visible to all the cells in the
+                        two ALS's with that candidate.</p>
+                    <p style="margin: 0px 0px 12px; font: 13px Courier New">
+                        Let's look at the following example:</p>
+                    <p style="text-align: center">
+                        <img id="IMG1" src="als_1.png" />&nbsp;</p>
+                    <p style="margin: 0px 0px 12px; font: 13px Courier New">
+                        The green cells form one ALS. The blue cells form the second ALS. 5 is the common
+                        restricted value.</p>
+                    <p style="margin: 0px 0px 12px; font: 13px Courier New">
+                        Candidate 1 exists at R1C2 and R4C6, in those two ALS's. R1C6 is visible to both
+                        cells. You can elimiate 1 from R1C2.</p>
+                    <p style="margin: 0px 0px 12px; font: 13px Courier New">
+                        The logic is that if the green ALS contains 1 at R1C2, the the highlighted cell at R1C6 cannot be
+                        1.&nbsp;</p>
+                    <p style="margin: 0px 0px 12px; font: 13px Courier New">
+                        If the green ALS does not contain 1, then it is a locked set of 3, 4 and 5, forcing
+                        the blue ALS to a locked set of 1, 4 and 9. Then, the blue ALS contains 1 at R4C6.
+                        R1C6 cannot be 1 either.</p>
+                </td>
+            </tr>
+            <tr>
+                <td class="td1" style="font-size: smaller; text-align: right" valign="middle">
+                    Back to <a href="index.html">Course Catalog</a></td>
+            </tr>
+        </tbody>
+    </table>
+    <p class="p2">
+        &nbsp;&nbsp;&nbsp;</p>
+</body>
+</html>

@@ -2,7 +2,7 @@ import { useMemo, useCallback, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { MasterDetailLayout, MasterListItem, Heading, Text, Card, CardContent } from '@sudobility/components';
-import { useSudojoTechniques, useSudojoLearning } from 'sudojo_client';
+import { useSudojoTechniques, useSudojoLearning } from '@sudobility/sudojo_client';
 import { useLocalizedNavigate } from '@/hooks/useLocalizedNavigate';
 import { useSudojoClient } from '@/hooks/useSudojoClient';
 
