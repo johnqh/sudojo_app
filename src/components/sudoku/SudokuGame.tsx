@@ -226,22 +226,6 @@ export default function SudokuGame({ puzzle, solution, showErrors = true, showTi
         </Card>
       )}
 
-      {/* Hint panel */}
-      {hint && (
-        <HintPanel
-          hint={hint}
-          stepIndex={stepIndex}
-          totalSteps={totalSteps}
-          hasNextStep={hasNextStep}
-          hasPreviousStep={hasPreviousStep}
-          canApply={canApply}
-          onNextStep={nextStep}
-          onPreviousStep={previousStep}
-          onApply={handleApplyHint}
-          onDismiss={clearHint}
-        />
-      )}
-
       {/* Hint error */}
       {hintError && (
         <Card className="max-w-[500px] mx-auto border-l-4 border-l-red-500">
@@ -262,19 +246,37 @@ export default function SudokuGame({ puzzle, solution, showErrors = true, showTi
         hint={hint}
       />
 
-      {/* Controls */}
-      <SudokuControls
-        onNumberInput={handleNumberInput}
-        onErase={erase}
-        onUndo={undo}
-        onTogglePencil={togglePencilMode}
-        onAutoPencil={autoPencilmarks}
-        onHint={getHint}
-        isPencilMode={isPencilMode}
-        canUndo={canUndo}
-        isHintLoading={isHintLoading}
-        disabled={isCompleted}
-      />
+      {/* Hint panel - shown below grid, hides controls */}
+      {hint && (
+        <HintPanel
+          hint={hint}
+          stepIndex={stepIndex}
+          totalSteps={totalSteps}
+          hasNextStep={hasNextStep}
+          hasPreviousStep={hasPreviousStep}
+          canApply={canApply}
+          onNextStep={nextStep}
+          onPreviousStep={previousStep}
+          onApply={handleApplyHint}
+          onDismiss={clearHint}
+        />
+      )}
+
+      {/* Controls - hidden during hint mode */}
+      {!hint && (
+        <SudokuControls
+          onNumberInput={handleNumberInput}
+          onErase={erase}
+          onUndo={undo}
+          onTogglePencil={togglePencilMode}
+          onAutoPencil={autoPencilmarks}
+          onHint={getHint}
+          isPencilMode={isPencilMode}
+          canUndo={canUndo}
+          isHintLoading={isHintLoading}
+          disabled={isCompleted}
+        />
+      )}
     </div>
   );
 }
