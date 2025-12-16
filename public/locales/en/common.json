@@ -47,7 +47,8 @@
       "dismiss": "Dismiss",
       "step": "Step {{current}} of {{total}}",
       "previous": "Previous",
-      "next": "Next"
+      "next": "Next",
+      "apply": "Apply"
     },
     "newGame": "New Game",
     "nextPuzzle": "Next Puzzle",

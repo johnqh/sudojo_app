@@ -11,8 +11,18 @@
 
 import { useState, useCallback, useRef } from 'react';
 import { createSudojoSolverClient } from '@sudobility/sudojo_solver_client';
-import type { HintStep, HintsPayload, SolveResponse } from '@sudobility/sudojo_solver_client';
+import type { HintStep, HintsPayload, SolveResponse, Board } from '@sudobility/sudojo_solver_client';
 import { useSolverClient } from './useSolverClient';
+
+/** Board data returned when applying a hint */
+export interface HintBoardData {
+  /** 81-character user input string */
+  user: string;
+  /** Pencilmarks string (comma-separated) */
+  pencilmarks: string | null;
+  /** Whether auto-pencilmarks are enabled */
+  autoPencilmarks: boolean;
+}
 
 export interface UseHintOptions {
   /** Original puzzle string (81 chars) */
@@ -46,10 +56,14 @@ export interface UseHintResult {
   previousStep: () => void;
   /** Clear all hints */
   clearHint: () => void;
+  /** Apply the hint to the board - returns board data and clears hint */
+  applyHint: () => HintBoardData | null;
   /** Whether there are more steps after current */
   hasNextStep: boolean;
   /** Whether there are steps before current */
   hasPreviousStep: boolean;
+  /** Whether the hint can be applied (on last step) */
+  canApply: boolean;
 }
 
 /**
@@ -79,11 +93,16 @@ export function useHint({
   // Track puzzle state to detect when we need to re-fetch
   const lastPuzzleStateRef = useRef<string>('');
 
+  // Store board data from API response for applying hint
+  const boardDataRef = useRef<Board | null>(null);
+
   // Compute current hint step
   const hint = hints?.steps?.[stepIndex] ?? null;
   const totalSteps = hints?.steps?.length ?? 0;
   const hasNextStep = stepIndex < totalSteps - 1;
   const hasPreviousStep = stepIndex > 0;
+  // Can apply when on last step and have board data
+  const canApply = hints !== null && stepIndex === totalSteps - 1 && boardDataRef.current !== null;
 
   // Fetch hints from API
   const fetchHints = useCallback(async () => {
@@ -102,18 +121,23 @@ export function useHint({
       if (response.success && response.data?.hints?.steps?.length) {
         setHints(response.data.hints);
         setStepIndex(0);
+        // Store board data for applying hint later
+        boardDataRef.current = response.data.board?.board ?? null;
         // Track the puzzle state we fetched for
         lastPuzzleStateRef.current = `${puzzle}|${userInput}|${pencilmarks ?? ''}`;
       } else if (response.error) {
         setError(response.error.message);
         setHints(null);
+        boardDataRef.current = null;
       } else {
         setError('No hints available');
         setHints(null);
+        boardDataRef.current = null;
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to get hint');
       setHints(null);
+      boardDataRef.current = null;
     } finally {
       setIsLoading(false);
     }
@@ -153,6 +177,30 @@ export function useHint({
     setStepIndex(0);
     setError(null);
     lastPuzzleStateRef.current = '';
+    boardDataRef.current = null;
+  }, []);
+
+  // Apply the hint to the board - returns board data and clears hint
+  const applyHint = useCallback((): HintBoardData | null => {
+    const board = boardDataRef.current;
+    if (!board || !board.user) {
+      return null;
+    }
+
+    const result: HintBoardData = {
+      user: board.user,
+      pencilmarks: board.pencilmarks?.pencilmarks ?? null,
+      autoPencilmarks: board.pencilmarks?.auto ?? false,
+    };
+
+    // Clear hints after applying (matches Kotlin: result = null)
+    setHints(null);
+    setStepIndex(0);
+    setError(null);
+    lastPuzzleStateRef.current = '';
+    boardDataRef.current = null;
+
+    return result;
   }, []);
 
   return {
@@ -166,7 +214,9 @@ export function useHint({
     nextStep,
     previousStep,
     clearHint,
+    applyHint,
     hasNextStep,
     hasPreviousStep,
+    canApply,
   };
 }

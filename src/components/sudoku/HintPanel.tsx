@@ -8,8 +8,10 @@ interface HintPanelProps {
   totalSteps: number;
   hasNextStep: boolean;
   hasPreviousStep: boolean;
+  canApply: boolean;
   onNextStep: () => void;
   onPreviousStep: () => void;
+  onApply: () => void;
   onDismiss: () => void;
 }
 
@@ -19,8 +21,10 @@ export default function HintPanel({
   totalSteps,
   hasNextStep,
   hasPreviousStep,
+  canApply,
   onNextStep,
   onPreviousStep,
+  onApply,
   onDismiss,
 }: HintPanelProps) {
   const { t } = useTranslation();
@@ -43,8 +47,8 @@ export default function HintPanel({
               {hint.text}
             </Text>
             {/* Navigation buttons */}
-            {totalSteps > 1 && (
-              <div className="flex gap-2 pt-2">
+            <div className="flex gap-2 pt-2">
+              {totalSteps > 1 && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -53,16 +57,26 @@ export default function HintPanel({
                 >
                   {t('game.hint.previous')}
                 </Button>
+              )}
+              {hasNextStep ? (
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={onNextStep}
-                  disabled={!hasNextStep}
                 >
                   {t('game.hint.next')}
                 </Button>
-              </div>
-            )}
+              ) : (
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={onApply}
+                  disabled={!canApply}
+                >
+                  {t('game.hint.apply')}
+                </Button>
+              )}
+            </div>
           </div>
           <Button
             variant="ghost"

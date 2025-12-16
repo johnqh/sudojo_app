@@ -41,6 +41,7 @@ export default function SudokuGame({ puzzle, solution, showErrors = true, showTi
     togglePencilMode,
     undo,
     autoPencilmarks,
+    applyHintData,
     getInputString,
     getPencilmarksString,
   } = useSudoku();
@@ -152,18 +153,28 @@ export default function SudokuGame({ puzzle, solution, showErrors = true, showTi
     totalSteps,
     hasNextStep,
     hasPreviousStep,
+    canApply,
     isLoading: isHintLoading,
     error: hintError,
     getHint,
     nextStep,
     previousStep,
     clearHint,
+    applyHint,
   } = useHint({
     puzzle,
     userInput: getInputString(),
     pencilmarks: getPencilmarksString(),
     autoPencilmarks: play?.settings.autoPencilmarks ?? false,
   });
+
+  // Handle applying hint to the board
+  const handleApplyHint = useCallback(() => {
+    const hintData = applyHint();
+    if (hintData) {
+      applyHintData(hintData.user, hintData.pencilmarks, hintData.autoPencilmarks);
+    }
+  }, [applyHint, applyHintData]);
 
   return (
     <div className="space-y-6">
@@ -223,8 +234,10 @@ export default function SudokuGame({ puzzle, solution, showErrors = true, showTi
           totalSteps={totalSteps}
           hasNextStep={hasNextStep}
           hasPreviousStep={hasPreviousStep}
+          canApply={canApply}
           onNextStep={nextStep}
           onPreviousStep={previousStep}
+          onApply={handleApplyHint}
           onDismiss={clearHint}
         />
       )}
