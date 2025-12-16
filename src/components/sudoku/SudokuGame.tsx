@@ -7,6 +7,7 @@ import SudokuControls from './SudokuControls';
 import CompletionCelebration from './CompletionCelebration';
 import HintPanel from './HintPanel';
 import GameTimer from './GameTimer';
+import ProgressPie from './ProgressPie';
 import { useHint } from '@/hooks/useHint';
 import { useGameTimer } from '@/hooks/useGameTimer';
 
@@ -192,23 +193,9 @@ export default function SudokuGame({ puzzle, solution, showErrors = true, showTi
         )}
         {!showTimer && <div />}
 
-        {/* Progress indicator */}
-        {progress > 0 && (
-          <Text size="sm" color="muted">
-            {t('game.progress', { percent: progress })}
-          </Text>
-        )}
+        {/* Progress pie chart */}
+        {progress > 0 && <ProgressPie progress={progress} />}
       </div>
-
-      {/* Progress bar */}
-      {progress > 0 && (
-        <div className="h-2 bg-[var(--color-bg-tertiary)] rounded-full overflow-hidden max-w-[500px] mx-auto">
-          <div
-            className="h-full bg-[var(--color-primary-500)] transition-all duration-300"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      )}
 
       {/* Completion message */}
       {isCompleted && (
