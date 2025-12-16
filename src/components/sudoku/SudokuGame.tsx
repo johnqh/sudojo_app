@@ -193,8 +193,8 @@ export default function SudokuGame({ puzzle, solution, showErrors = true, showTi
         )}
         {!showTimer && <div />}
 
-        {/* Progress pie chart */}
-        {progress > 0 && <ProgressPie progress={progress} />}
+        {/* Progress pie chart - always rendered to prevent layout shift */}
+        <ProgressPie progress={progress} />
       </div>
 
       {/* Completion message */}
