@@ -1,35 +1,105 @@
-import { useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect, useCallback, useMemo } from 'react';
 import type { SudokuCell } from '@sudobility/sudojo_lib';
+import type { HintStep } from '@sudobility/sudojo_solver_client';
+import {
+  presentBoard,
+  themeColorToCSS,
+  getColorPalette,
+  computeSelectedDigitCells,
+  ThemeColor,
+  type CellDisplayState,
+} from '@sudobility/sudojo_lib';
 
 interface SudokuCanvasProps {
   board: SudokuCell[];
   selectedIndex: number | null;
-  errorCells: Set<number>;
   onCellSelect: (index: number) => void;
   showErrors?: boolean;
+  hint?: HintStep | null;
+  isDarkMode?: boolean;
+}
+
+/**
+ * Convert HintStep from solver client to display format
+ * The solver client uses string actions, but the presenter expects numbers/arrays
+ */
+function convertHintStep(hint: HintStep | null | undefined): Parameters<typeof presentBoard>[0]['hintStep'] {
+  if (!hint) return null;
+
+  return {
+    title: hint.title,
+    text: hint.text,
+    areas: hint.areas?.map(area => ({
+      type: area.type,
+      color: area.color as Parameters<typeof presentBoard>[0]['hintStep'] extends { areas?: infer A }
+        ? A extends Array<{ color: infer C }> ? C : never : never,
+      index: area.index,
+    })) ?? null,
+    cells: hint.cells?.map(cell => ({
+      index: cell.row * 9 + cell.column,
+      color: cell.color as Parameters<typeof presentBoard>[0]['hintStep'] extends { cells?: infer C }
+        ? C extends Array<{ color: infer CO }> ? CO : never : never,
+      fill: cell.fill,
+      actions: cell.actions ? {
+        select: cell.actions.select ? parseInt(cell.actions.select, 10) : null,
+        unselect: cell.actions.unselect ? parseInt(cell.actions.unselect, 10) : null,
+        add: cell.actions.add ? cell.actions.add.split('').map(d => parseInt(d, 10)).filter(n => !isNaN(n)) : null,
+        remove: cell.actions.remove ? cell.actions.remove.split('').map(d => parseInt(d, 10)).filter(n => !isNaN(n)) : null,
+        highlight: cell.actions.highlight ? cell.actions.highlight.split('').map(d => parseInt(d, 10)).filter(n => !isNaN(n)) : null,
+      } : undefined,
+    })) ?? null,
+  };
 }
 
 export default function SudokuCanvas({
   board,
   selectedIndex,
-  errorCells,
   onCellSelect,
   showErrors = true,
+  hint = null,
+  isDarkMode = false,
 }: SudokuCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Get computed color value from CSS variable
-  const getComputedColor = useCallback((cssVar: string): string => {
-    if (!containerRef.current) return '#000';
-    const computed = getComputedStyle(containerRef.current).getPropertyValue(cssVar.replace('var(', '').replace(')', ''));
-    return computed.trim() || '#000';
-  }, []);
+  // Get color palette
+  const palette = useMemo(() => getColorPalette(isDarkMode), [isDarkMode]);
+
+  // Convert hint to display format
+  const displayHint = useMemo(() => convertHintStep(hint), [hint]);
+
+  // Compute selectedDigitCells - cells that have the same digit as selected cell
+  // Only computed when selected cell has a given or correct input
+  const selectedDigitCells = useMemo(() => {
+    if (board.length !== 81) return null;
+    return computeSelectedDigitCells(board, selectedIndex);
+  }, [board, selectedIndex]);
+
+  // Generate display states using the presenter
+  const displayStates = useMemo(() => {
+    if (board.length !== 81) return [];
+    return presentBoard({
+      cells: board,
+      selectedIndex,
+      showErrors,
+      hintStep: displayHint,
+      selectedDigitCells,
+    });
+  }, [board, selectedIndex, showErrors, displayHint, selectedDigitCells]);
+
+  // Get CSS color from ThemeColor
+  const getColor = useCallback(
+    (themeColor: ThemeColor | null, fallback: string): string => {
+      const color = themeColorToCSS(palette, themeColor);
+      return color ?? fallback;
+    },
+    [palette]
+  );
 
   // Draw the Sudoku board
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
-    if (!canvas || board.length !== 81) return;
+    if (!canvas || displayStates.length !== 81) return;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -38,85 +108,70 @@ export default function SudokuCanvas({
     const cellSize = size / 9;
     const boxSize = size / 3;
 
-    // Get actual colors
-    const colors = {
-      background: getComputedColor('var(--color-bg-primary)') || '#ffffff',
-      gridLight: getComputedColor('var(--color-border)') || '#e5e7eb',
-      gridDark: getComputedColor('var(--color-text-primary)') || '#1f2937',
-      selectedBg: '#dbeafe',
-      highlightBg: '#eff6ff',
-      errorBg: '#fee2e2',
-      givenText: getComputedColor('var(--color-text-primary)') || '#1f2937',
-      inputText: '#2563eb',
-      errorText: '#dc2626',
-      pencilText: getComputedColor('var(--color-text-muted)') || '#6b7280',
-    };
+    // Grid colors
+    const gridLightColor = palette.secondaryLabel;
+    const gridDarkColor = palette.label;
 
     // Clear canvas
-    ctx.fillStyle = colors.background;
+    ctx.fillStyle = palette.systemBackground;
     ctx.fillRect(0, 0, size, size);
 
-    // Get selected cell value for highlighting
-    const selectedValue = selectedIndex !== null ? (board[selectedIndex].input ?? board[selectedIndex].given) : null;
-
     // Draw cells
-    board.forEach((cell, index) => {
-      const row = Math.floor(index / 9);
-      const col = index % 9;
+    displayStates.forEach((state: CellDisplayState) => {
+      const row = Math.floor(state.index / 9);
+      const col = state.index % 9;
       const x = col * cellSize;
       const y = row * cellSize;
 
       // Cell background
-      let bgColor = colors.background;
-      const cellValue = cell.input ?? cell.given;
-
-      if (index === selectedIndex) {
-        bgColor = colors.selectedBg;
-      } else if (showErrors && errorCells.has(index)) {
-        bgColor = colors.errorBg;
-      } else if (selectedValue && cellValue === selectedValue) {
-        bgColor = colors.highlightBg;
-      }
-
-      if (bgColor !== colors.background) {
+      const bgColor = getColor(state.backgroundColor, palette.systemBackground);
+      if (bgColor !== palette.systemBackground) {
         ctx.fillStyle = bgColor;
         ctx.fillRect(x, y, cellSize, cellSize);
       }
 
+      // Cell border (if present)
+      if (state.borderColor) {
+        const borderColor = getColor(state.borderColor, '');
+        if (borderColor) {
+          ctx.strokeStyle = borderColor;
+          ctx.lineWidth = 3;
+          ctx.strokeRect(x + 1.5, y + 1.5, cellSize - 3, cellSize - 3);
+        }
+      }
+
       // Draw cell content
-      if (cell.given) {
-        // Given number (bold)
-        ctx.fillStyle = colors.givenText;
-        ctx.font = `bold ${cellSize * 0.6}px system-ui, sans-serif`;
+      if (state.digit !== null) {
+        // Draw digit
+        const textColor = getColor(state.textColor, palette.label);
+        ctx.fillStyle = textColor;
+        ctx.font = state.isGiven
+          ? `bold ${cellSize * 0.6}px system-ui, sans-serif`
+          : `${cellSize * 0.6}px system-ui, sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(String(cell.given), x + cellSize / 2, y + cellSize / 2);
-      } else if (cell.input) {
-        // User input
-        ctx.fillStyle = showErrors && errorCells.has(index) ? colors.errorText : colors.inputText;
-        ctx.font = `${cellSize * 0.6}px system-ui, sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(String(cell.input), x + cellSize / 2, y + cellSize / 2);
-      } else if (cell.pencilmarks && cell.pencilmarks.length > 0) {
-        // Pencilmarks (small numbers in 3x3 grid)
-        ctx.fillStyle = colors.pencilText;
+        ctx.fillText(String(state.digit), x + cellSize / 2, y + cellSize / 2);
+      } else if (state.pencilmarks.length > 0) {
+        // Draw pencilmarks (small numbers in 3x3 grid)
         ctx.font = `${cellSize * 0.25}px system-ui, sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
-        cell.pencilmarks.forEach(mark => {
-          const markRow = Math.floor((mark - 1) / 3);
-          const markCol = (mark - 1) % 3;
+        state.pencilmarks.forEach((pm) => {
+          const pmColor = getColor(pm.color, palette.secondaryLabel);
+          ctx.fillStyle = pmColor;
+
+          const markRow = Math.floor((pm.digit - 1) / 3);
+          const markCol = (pm.digit - 1) % 3;
           const markX = x + (markCol + 0.5) * (cellSize / 3);
           const markY = y + (markRow + 0.5) * (cellSize / 3);
-          ctx.fillText(String(mark), markX, markY);
+          ctx.fillText(String(pm.digit), markX, markY);
         });
       }
     });
 
     // Draw grid lines
-    ctx.strokeStyle = colors.gridLight;
+    ctx.strokeStyle = gridLightColor;
     ctx.lineWidth = 1;
 
     // Thin lines for cells
@@ -136,7 +191,7 @@ export default function SudokuCanvas({
     }
 
     // Thick lines for boxes
-    ctx.strokeStyle = colors.gridDark;
+    ctx.strokeStyle = gridDarkColor;
     ctx.lineWidth = 2;
 
     for (let i = 0; i <= 3; i++) {
@@ -151,7 +206,7 @@ export default function SudokuCanvas({
       ctx.lineTo(size, i * boxSize);
       ctx.stroke();
     }
-  }, [board, selectedIndex, errorCells, showErrors, getComputedColor]);
+  }, [displayStates, palette, getColor]);
 
   // Handle canvas resize
   useEffect(() => {
@@ -159,7 +214,7 @@ export default function SudokuCanvas({
     const canvas = canvasRef.current;
     if (!container || !canvas) return;
 
-    const resizeObserver = new ResizeObserver(entries => {
+    const resizeObserver = new ResizeObserver((entries) => {
       const entry = entries[0];
       if (entry) {
         const size = Math.min(entry.contentRect.width, entry.contentRect.height);

@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useMemo, useState, useRef } from 'react';
+import { useEffect, useCallback, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSudoku } from '@sudobility/sudojo_lib';
 import { Card, CardContent, Text } from '@sudobility/components';
@@ -32,7 +32,6 @@ export default function SudokuGame({ puzzle, solution, showErrors = true, showTi
     selectedIndex,
     isPencilMode,
     isCompleted,
-    errorCells,
     progress,
     canUndo,
     loadBoard,
@@ -143,11 +142,6 @@ export default function SudokuGame({ puzzle, solution, showErrors = true, showTi
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedIndex, input, erase, undo, togglePencilMode, selectCell]);
 
-  // Convert errorCells (SudokuCell[]) to Set<number> of indices
-  const errorIndices = useMemo(() => {
-    return new Set(errorCells.map(cell => cell.index));
-  }, [errorCells]);
-
   // Get cells array from board (empty array if no board)
   const cells = board?.cells ?? [];
 
@@ -233,9 +227,9 @@ export default function SudokuGame({ puzzle, solution, showErrors = true, showTi
       <SudokuCanvas
         board={cells}
         selectedIndex={selectedIndex}
-        errorCells={errorIndices}
         onCellSelect={handleCellSelect}
         showErrors={showErrors}
+        hint={hint}
       />
 
       {/* Controls */}
