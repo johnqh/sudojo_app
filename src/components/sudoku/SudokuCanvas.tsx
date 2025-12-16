@@ -41,11 +41,12 @@ function convertHintStep(hint: HintStep | null | undefined): Parameters<typeof p
         ? C extends Array<{ color: infer CO }> ? CO : never : never,
       fill: cell.fill,
       actions: cell.actions ? {
-        select: cell.actions.select ? parseInt(cell.actions.select, 10) : null,
-        unselect: cell.actions.unselect ? parseInt(cell.actions.unselect, 10) : null,
-        add: cell.actions.add ? cell.actions.add.split('').map(d => parseInt(d, 10)).filter(n => !isNaN(n)) : null,
-        remove: cell.actions.remove ? cell.actions.remove.split('').map(d => parseInt(d, 10)).filter(n => !isNaN(n)) : null,
-        highlight: cell.actions.highlight ? cell.actions.highlight.split('').map(d => parseInt(d, 10)).filter(n => !isNaN(n)) : null,
+        // Matches Kotlin: select = if (select != 0) select else null
+        select: cell.actions.select ? (parseInt(cell.actions.select, 10) || null) : null,
+        unselect: cell.actions.unselect ? (parseInt(cell.actions.unselect, 10) || null) : null,
+        add: cell.actions.add ? cell.actions.add.split('').map(d => parseInt(d, 10)).filter(n => !isNaN(n) && n !== 0) : null,
+        remove: cell.actions.remove ? cell.actions.remove.split('').map(d => parseInt(d, 10)).filter(n => !isNaN(n) && n !== 0) : null,
+        highlight: cell.actions.highlight ? cell.actions.highlight.split('').map(d => parseInt(d, 10)).filter(n => !isNaN(n) && n !== 0) : null,
       } : undefined,
     })) ?? null,
   };

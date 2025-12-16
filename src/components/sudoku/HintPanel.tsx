@@ -4,10 +4,25 @@ import type { HintStep } from '@sudobility/sudojo_solver_client';
 
 interface HintPanelProps {
   hint: HintStep;
+  stepIndex: number;
+  totalSteps: number;
+  hasNextStep: boolean;
+  hasPreviousStep: boolean;
+  onNextStep: () => void;
+  onPreviousStep: () => void;
   onDismiss: () => void;
 }
 
-export default function HintPanel({ hint, onDismiss }: HintPanelProps) {
+export default function HintPanel({
+  hint,
+  stepIndex,
+  totalSteps,
+  hasNextStep,
+  hasPreviousStep,
+  onNextStep,
+  onPreviousStep,
+  onDismiss,
+}: HintPanelProps) {
   const { t } = useTranslation();
 
   return (
@@ -15,12 +30,39 @@ export default function HintPanel({ hint, onDismiss }: HintPanelProps) {
       <CardContent className="py-4">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 space-y-2">
+            {/* Step progress indicator */}
+            {totalSteps > 1 && (
+              <Text size="xs" color="muted">
+                {t('game.hint.step', { current: stepIndex + 1, total: totalSteps })}
+              </Text>
+            )}
             <Text weight="semibold" className="text-blue-600 dark:text-blue-400">
               {hint.title}
             </Text>
             <Text size="sm" color="muted">
               {hint.text}
             </Text>
+            {/* Navigation buttons */}
+            {totalSteps > 1 && (
+              <div className="flex gap-2 pt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onPreviousStep}
+                  disabled={!hasPreviousStep}
+                >
+                  {t('game.hint.previous')}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onNextStep}
+                  disabled={!hasNextStep}
+                >
+                  {t('game.hint.next')}
+                </Button>
+              </div>
+            )}
           </div>
           <Button
             variant="ghost"

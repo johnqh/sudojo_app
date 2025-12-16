@@ -44,7 +44,10 @@
     "hint": {
       "get": "Hint",
       "loading": "Loading...",
-      "dismiss": "Dismiss"
+      "dismiss": "Dismiss",
+      "step": "Step {{current}} of {{total}}",
+      "previous": "Previous",
+      "next": "Next"
     },
     "newGame": "New Game",
     "nextPuzzle": "Next Puzzle",

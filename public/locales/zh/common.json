@@ -44,7 +44,10 @@
     "hint": {
       "get": "提示",
       "loading": "加载中...",
-      "dismiss": "关闭"
+      "dismiss": "关闭",
+      "step": "第 {{current}} 步，共 {{total}} 步",
+      "previous": "上一步",
+      "next": "下一步"
     },
     "newGame": "新游戏",
     "nextPuzzle": "下一题",

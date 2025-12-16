@@ -1,10 +1,17 @@
 /**
  * Hook for getting hints from the Sudoku solver
+ *
+ * Matches Kotlin HintInteractor behavior:
+ * - Stores all hint steps from the API response
+ * - Tracks current step index
+ * - next() advances to next step (if available)
+ * - previous() goes back to previous step
+ * - getHint() fetches new hints OR advances to next step if hints exist
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { createSudojoSolverClient } from '@sudobility/sudojo_solver_client';
-import type { HintStep, SolveResponse } from '@sudobility/sudojo_solver_client';
+import type { HintStep, HintsPayload, SolveResponse } from '@sudobility/sudojo_solver_client';
 import { useSolverClient } from './useSolverClient';
 
 export interface UseHintOptions {
@@ -19,44 +26,67 @@ export interface UseHintOptions {
 }
 
 export interface UseHintResult {
-  /** Current hint being displayed */
+  /** Current hint step being displayed */
   hint: HintStep | null;
+  /** All hint steps (for showing progress like "Step 1 of 3") */
+  hints: HintsPayload | null;
+  /** Current step index (0-based) */
+  stepIndex: number;
+  /** Total number of steps */
+  totalSteps: number;
   /** Whether a hint request is in progress */
   isLoading: boolean;
   /** Error message if hint request failed */
   error: string | null;
-  /** Request a new hint */
+  /** Request hints or advance to next step */
   getHint: () => Promise<void>;
-  /** Clear the current hint */
+  /** Go to next hint step */
+  nextStep: () => void;
+  /** Go to previous hint step */
+  previousStep: () => void;
+  /** Clear all hints */
   clearHint: () => void;
+  /** Whether there are more steps after current */
+  hasNextStep: boolean;
+  /** Whether there are steps before current */
+  hasPreviousStep: boolean;
 }
 
 /**
- * Hook for getting hints from the solver API on demand
+ * Hook for getting hints from the solver API
+ *
+ * Matches Kotlin HintInteractor behavior:
+ * - First call to getHint() fetches hints from API
+ * - Subsequent calls advance to next step (if available)
+ * - Use nextStep()/previousStep() to navigate manually
+ * - clearHint() resets everything
  *
  * @param options - Puzzle state for hint generation
  * @returns Hint state and controls
- *
- * @example
- * ```tsx
- * const { hint, isLoading, error, getHint, clearHint } = useHint({
- *   puzzle: originalPuzzle,
- *   userInput: currentBoard,
- * });
- *
- * <button onClick={getHint} disabled={isLoading}>
- *   {isLoading ? 'Loading...' : 'Get Hint'}
- * </button>
- * {hint && <HintPanel hint={hint} onDismiss={clearHint} />}
- * ```
  */
-export function useHint({ puzzle, userInput, pencilmarks, autoPencilmarks = false }: UseHintOptions): UseHintResult {
+export function useHint({
+  puzzle,
+  userInput,
+  pencilmarks,
+  autoPencilmarks = false,
+}: UseHintOptions): UseHintResult {
   const { networkClient, config } = useSolverClient();
-  const [hint, setHint] = useState<HintStep | null>(null);
+  const [hints, setHints] = useState<HintsPayload | null>(null);
+  const [stepIndex, setStepIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const getHint = useCallback(async () => {
+  // Track puzzle state to detect when we need to re-fetch
+  const lastPuzzleStateRef = useRef<string>('');
+
+  // Compute current hint step
+  const hint = hints?.steps?.[stepIndex] ?? null;
+  const totalSteps = hints?.steps?.length ?? 0;
+  const hasNextStep = stepIndex < totalSteps - 1;
+  const hasPreviousStep = stepIndex > 0;
+
+  // Fetch hints from API
+  const fetchHints = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
@@ -70,30 +100,73 @@ export function useHint({ puzzle, userInput, pencilmarks, autoPencilmarks = fals
       });
 
       if (response.success && response.data?.hints?.steps?.length) {
-        // Get the first hint step
-        setHint(response.data.hints.steps[0]);
+        setHints(response.data.hints);
+        setStepIndex(0);
+        // Track the puzzle state we fetched for
+        lastPuzzleStateRef.current = `${puzzle}|${userInput}|${pencilmarks ?? ''}`;
       } else if (response.error) {
         setError(response.error.message);
+        setHints(null);
       } else {
         setError('No hints available');
+        setHints(null);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to get hint');
+      setHints(null);
     } finally {
       setIsLoading(false);
     }
   }, [networkClient, config, puzzle, userInput, pencilmarks, autoPencilmarks]);
 
+  // Get hint: fetch if no hints or puzzle changed, otherwise advance
+  const getHint = useCallback(async () => {
+    const currentPuzzleState = `${puzzle}|${userInput}|${pencilmarks ?? ''}`;
+
+    if (hints === null || lastPuzzleStateRef.current !== currentPuzzleState) {
+      // No hints or puzzle state changed - fetch new hints
+      await fetchHints();
+    } else if (hasNextStep) {
+      // Have hints and more steps - advance to next
+      setStepIndex((prev) => prev + 1);
+    }
+    // If at last step and hints exist, do nothing (stay on last step)
+  }, [hints, hasNextStep, fetchHints, puzzle, userInput, pencilmarks]);
+
+  // Navigate to next step
+  const nextStep = useCallback(() => {
+    if (hasNextStep) {
+      setStepIndex((prev) => prev + 1);
+    }
+  }, [hasNextStep]);
+
+  // Navigate to previous step
+  const previousStep = useCallback(() => {
+    if (hasPreviousStep) {
+      setStepIndex((prev) => prev - 1);
+    }
+  }, [hasPreviousStep]);
+
+  // Clear all hints
   const clearHint = useCallback(() => {
-    setHint(null);
+    setHints(null);
+    setStepIndex(0);
     setError(null);
+    lastPuzzleStateRef.current = '';
   }, []);
 
   return {
     hint,
+    hints,
+    stepIndex,
+    totalSteps,
     isLoading,
     error,
     getHint,
+    nextStep,
+    previousStep,
     clearHint,
+    hasNextStep,
+    hasPreviousStep,
   };
 }

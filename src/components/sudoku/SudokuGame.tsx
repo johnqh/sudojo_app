@@ -148,9 +148,15 @@ export default function SudokuGame({ puzzle, solution, showErrors = true, showTi
   // Hints system
   const {
     hint,
+    stepIndex,
+    totalSteps,
+    hasNextStep,
+    hasPreviousStep,
     isLoading: isHintLoading,
     error: hintError,
     getHint,
+    nextStep,
+    previousStep,
     clearHint,
   } = useHint({
     puzzle,
@@ -210,7 +216,18 @@ export default function SudokuGame({ puzzle, solution, showErrors = true, showTi
       )}
 
       {/* Hint panel */}
-      {hint && <HintPanel hint={hint} onDismiss={clearHint} />}
+      {hint && (
+        <HintPanel
+          hint={hint}
+          stepIndex={stepIndex}
+          totalSteps={totalSteps}
+          hasNextStep={hasNextStep}
+          hasPreviousStep={hasPreviousStep}
+          onNextStep={nextStep}
+          onPreviousStep={previousStep}
+          onDismiss={clearHint}
+        />
+      )}
 
       {/* Hint error */}
       {hintError && (
