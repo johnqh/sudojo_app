@@ -5,7 +5,9 @@
   },
   "common": {
     "loading": "Loading...",
-    "error": "Something went wrong. Please try again."
+    "error": "Something went wrong. Please try again.",
+    "close": "Close",
+    "cancel": "Cancel"
   },
   "nav": {
     "daily": "Daily",
@@ -16,7 +18,36 @@
   "auth": {
     "login": "Log In",
     "logout": "Log Out",
-    "welcome": "Welcome, {{name}}"
+    "welcome": "Welcome, {{name}}",
+    "accountRequired": "Account Required",
+    "accountRequiredMessage": "Please log in or create an account to access sudoku puzzles.",
+    "signInTitle": "Sign In",
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "signInWithEmail": "Sign In with Email",
+    "createAccount": "Create Account",
+    "resetPassword": "Reset Password",
+    "continueWithGoogle": "Continue with Google",
+    "continueWithEmail": "Continue with Email",
+    "or": "or",
+    "email": "Email",
+    "emailPlaceholder": "Enter your email",
+    "password": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "confirmPassword": "Confirm Password",
+    "confirmPasswordPlaceholder": "Confirm your password",
+    "displayName": "Display Name",
+    "displayNamePlaceholder": "Enter your name (optional)",
+    "forgotPassword": "Forgot password?",
+    "forgotPasswordDesc": "Enter your email address and we'll send you a link to reset your password.",
+    "sendResetLink": "Send Reset Link",
+    "resetEmailSent": "Check Your Email",
+    "resetEmailSentDesc": "We've sent a password reset link to {{email}}.",
+    "backToSignIn": "Back to Sign In",
+    "noAccount": "Don't have an account?",
+    "haveAccount": "Already have an account?",
+    "passwordMismatch": "Passwords don't match",
+    "passwordTooShort": "Password must be at least 6 characters"
   },
   "footer": {
     "copyright": "© {{year}} Sudojo. All rights reserved.",
@@ -110,5 +141,26 @@
     "later": "Later",
     "dismiss": "Dismiss",
     "offlineReady": "App ready for offline use"
+  },
+  "subscription": {
+    "title": "Unlock Unlimited Puzzles",
+    "message": "Subscribe to unlock unlimited puzzles and support the app.",
+    "limitReached": "Daily Limit Reached",
+    "limitReachedMessage": "You've reached your daily puzzle limit. Subscribe to unlock unlimited puzzles.",
+    "subscribe": "Subscribe",
+    "restorePurchase": "Restore Purchase",
+    "bestValue": "Best Value",
+    "savePercent": "Save {{percent}}%",
+    "terms": "Subscription automatically renews unless cancelled. Cancel anytime in account settings.",
+    "features": {
+      "unlimitedPuzzles": "Unlimited puzzles",
+      "allDifficulties": "All difficulty levels",
+      "hints": "Unlimited hints",
+      "noAds": "Ad-free experience"
+    },
+    "periods": {
+      "month": "month",
+      "year": "year"
+    }
   }
 }

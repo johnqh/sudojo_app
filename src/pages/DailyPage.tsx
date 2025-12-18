@@ -9,11 +9,11 @@ import { useSettings } from '@/context/SettingsContext';
 
 export default function DailyPage() {
   const { t } = useTranslation();
-  const { networkClient, config } = useSudojoClient();
+  const { networkClient, config, auth } = useSudojoClient();
   const { markCompleted, isCompleted } = useProgress();
   const { settings } = useSettings();
 
-  const { data, isLoading, error } = useSudojoTodayDaily(networkClient, config);
+  const { data, isLoading, error } = useSudojoTodayDaily(networkClient, config, auth);
 
   const daily = data?.data;
   const dailyDate = daily?.date ? new Date(daily.date).toISOString().split('T')[0] : null;

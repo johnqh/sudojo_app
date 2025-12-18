@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import {
@@ -14,12 +15,49 @@ import { useLocalizedNavigate } from '@/hooks/useLocalizedNavigate';
 import { useAuth } from '@/context/AuthContext';
 import { LanguageSelector } from './LanguageSelector';
 import { LocalizedLink } from './LocalizedLink';
+import { AuthModal } from '@/components/auth';
+
+// Get initials from display name or email
+function getInitials(name?: string | null, email?: string | null): string {
+  if (name) {
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
+  }
+  if (email) {
+    return email.slice(0, 2).toUpperCase();
+  }
+  return '?';
+}
 
 export default function TopBar() {
   const { t } = useTranslation();
   const { navigate, currentLanguage } = useLocalizedNavigate();
   const location = useLocation();
-  const { user, loading, signInWithGoogle, signOut } = useAuth();
+  const { user, loading, signOut, openAuthModal } = useAuth();
+  const [imageError, setImageError] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Reset image error state when user or photo URL changes
+  useEffect(() => {
+    setImageError(false);
+  }, [user?.photoURL]);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    if (menuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [menuOpen]);
 
   // Check if current route is active
   const currentPath = location.pathname.replace(`/${currentLanguage}`, '');
@@ -69,15 +107,8 @@ export default function TopBar() {
     );
   }
 
-  const handleAuthClick = () => {
-    if (user) {
-      signOut();
-    } else {
-      signInWithGoogle();
-    }
-  };
-
   return (
+    <>
     <TopbarProvider sticky>
       <Topbar sticky zIndex="highest">
         <TopbarLeft>
@@ -96,24 +127,58 @@ export default function TopBar() {
 
             {/* User Avatar or Login Button */}
             {user ? (
-              <div className="flex items-center gap-2">
-                {user.photoURL && (
-                  <img
-                    src={user.photoURL}
-                    alt={user.displayName || 'User'}
-                    className="w-8 h-8 rounded-full"
-                  />
-                )}
+              <div className="relative" ref={menuRef}>
                 <button
-                  onClick={handleAuthClick}
-                  className="px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                  onClick={() => setMenuOpen(!menuOpen)}
+                  className="flex items-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-full"
+                  aria-expanded={menuOpen}
+                  aria-haspopup="true"
                 >
-                  {t('auth.logout')}
+                  {user.photoURL && !imageError ? (
+                    <img
+                      src={user.photoURL}
+                      alt={user.displayName || 'User'}
+                      className="w-8 h-8 rounded-full cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all"
+                      onError={() => setImageError(true)}
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-medium cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all">
+                      {getInitials(user.displayName, user.email)}
+                    </div>
+                  )}
                 </button>
+
+                {/* Dropdown Menu */}
+                {menuOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50">
+                    {/* User Info */}
+                    <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                        {user.displayName || user.email}
+                      </p>
+                      {user.displayName && user.email && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                          {user.email}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Menu Items */}
+                    <button
+                      onClick={() => {
+                        setMenuOpen(false);
+                        signOut();
+                      }}
+                      className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      {t('auth.logout')}
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <button
-                onClick={handleAuthClick}
+                onClick={openAuthModal}
                 disabled={loading}
                 className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
@@ -124,5 +189,9 @@ export default function TopBar() {
         </TopbarRight>
       </Topbar>
     </TopbarProvider>
+
+      {/* Auth Modal */}
+      <AuthModal />
+    </>
   );
 }

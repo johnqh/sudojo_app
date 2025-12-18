@@ -10,6 +10,7 @@ import GameTimer from './GameTimer';
 import ProgressPie from './ProgressPie';
 import { useHint } from '@/hooks/useHint';
 import { useGameTimer } from '@/hooks/useGameTimer';
+import { useTheme } from '@/hooks/useTheme';
 
 interface SudokuGameProps {
   puzzle: string;
@@ -21,6 +22,8 @@ interface SudokuGameProps {
 
 export default function SudokuGame({ puzzle, solution, showErrors = true, showTimer = true, onComplete }: SudokuGameProps) {
   const { t } = useTranslation();
+  const { resolvedTheme } = useTheme();
+  const isDarkMode = resolvedTheme === 'dark';
   const [showCelebration, setShowCelebration] = useState(false);
   const prevCompletedRef = useRef(false);
 
@@ -231,6 +234,7 @@ export default function SudokuGame({ puzzle, solution, showErrors = true, showTi
         onCellSelect={handleCellSelect}
         showErrors={showErrors}
         hint={hint}
+        isDarkMode={isDarkMode}
       />
 
       {/* Hint panel - shown below grid, hides controls */}

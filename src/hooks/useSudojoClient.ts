@@ -2,10 +2,11 @@
  * Hook to provide configured Sudojo API client
  */
 
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { getNetworkService } from '@sudobility/di';
 import type { NetworkClient, NetworkResponse, NetworkRequestOptions, Optional } from '@sudobility/types';
-import type { SudojoConfig } from '@sudobility/sudojo_client';
+import type { SudojoConfig, SudojoAuth } from '@sudobility/sudojo_client';
+import { useAuth } from '@/context/AuthContext';
 
 const config: SudojoConfig = {
   baseUrl: import.meta.env.VITE_SUDOJO_API_URL || 'https://api.sudojo.com',
@@ -102,13 +103,47 @@ function createNetworkClientAdapter(): NetworkClient {
 }
 
 /**
- * Hook to get the network client and config for Sudojo API hooks
+ * Hook to get the network client, config, and auth for Sudojo API hooks
  */
 export function useSudojoClient() {
   const networkClient = useMemo(() => createNetworkClientAdapter(), []);
+  const { user } = useAuth();
+  const [auth, setAuth] = useState<SudojoAuth>({ accessToken: '' });
+
+  // Get Firebase ID token when user changes
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchToken = async () => {
+      if (user) {
+        try {
+          const token = await user.getIdToken();
+          if (isMounted) {
+            setAuth({ accessToken: token });
+          }
+        } catch (err) {
+          console.error('Failed to get ID token:', err);
+          if (isMounted) {
+            setAuth({ accessToken: '' });
+          }
+        }
+      } else {
+        if (isMounted) {
+          setAuth({ accessToken: '' });
+        }
+      }
+    };
+
+    fetchToken();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user]);
 
   return {
     networkClient,
     config,
+    auth,
   };
 }

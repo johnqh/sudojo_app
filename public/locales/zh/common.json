@@ -5,7 +5,9 @@
   },
   "common": {
     "loading": "加载中...",
-    "error": "出错了，请重试。"
+    "error": "出错了，请重试。",
+    "close": "关闭",
+    "cancel": "取消"
   },
   "nav": {
     "daily": "每日",
@@ -16,7 +18,36 @@
   "auth": {
     "login": "登录",
     "logout": "退出",
-    "welcome": "欢迎，{{name}}"
+    "welcome": "欢迎，{{name}}",
+    "accountRequired": "需要账号",
+    "accountRequiredMessage": "请登录或创建账号以访问数独谜题。",
+    "signInTitle": "登录",
+    "signIn": "登录",
+    "signUp": "注册",
+    "signInWithEmail": "使用邮箱登录",
+    "createAccount": "创建账号",
+    "resetPassword": "重置密码",
+    "continueWithGoogle": "使用 Google 继续",
+    "continueWithEmail": "使用邮箱继续",
+    "or": "或",
+    "email": "邮箱",
+    "emailPlaceholder": "输入邮箱地址",
+    "password": "密码",
+    "passwordPlaceholder": "输入密码",
+    "confirmPassword": "确认密码",
+    "confirmPasswordPlaceholder": "再次输入密码",
+    "displayName": "显示名称",
+    "displayNamePlaceholder": "输入您的名字（可选）",
+    "forgotPassword": "忘记密码？",
+    "forgotPasswordDesc": "输入您的邮箱地址，我们将发送重置链接。",
+    "sendResetLink": "发送重置链接",
+    "resetEmailSent": "请查收邮件",
+    "resetEmailSentDesc": "我们已将密码重置链接发送至 {{email}}。",
+    "backToSignIn": "返回登录",
+    "noAccount": "没有账号？",
+    "haveAccount": "已有账号？",
+    "passwordMismatch": "两次密码不一致",
+    "passwordTooShort": "密码至少需要6个字符"
   },
   "footer": {
     "copyright": "© {{year}} 数独道场。保留所有权利。",
@@ -110,5 +141,26 @@
     "later": "稍后",
     "dismiss": "关闭",
     "offlineReady": "应用已可离线使用"
+  },
+  "subscription": {
+    "title": "解锁无限谜题",
+    "message": "订阅以解锁无限谜题并支持应用开发。",
+    "limitReached": "今日次数已用完",
+    "limitReachedMessage": "您已达到今日谜题限制。订阅解锁无限谜题。",
+    "subscribe": "订阅",
+    "restorePurchase": "恢复购买",
+    "bestValue": "最超值",
+    "savePercent": "节省 {{percent}}%",
+    "terms": "订阅将自动续费，除非取消。可随时在账户设置中取消。",
+    "features": {
+      "unlimitedPuzzles": "无限谜题",
+      "allDifficulties": "所有难度级别",
+      "hints": "无限提示",
+      "noAds": "无广告体验"
+    },
+    "periods": {
+      "month": "月",
+      "year": "年"
+    }
   }
 }

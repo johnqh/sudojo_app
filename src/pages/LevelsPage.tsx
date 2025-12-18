@@ -6,9 +6,9 @@ import { useSudojoClient } from '@/hooks/useSudojoClient';
 
 export default function LevelsPage() {
   const { t } = useTranslation();
-  const { networkClient, config } = useSudojoClient();
+  const { networkClient, config, auth } = useSudojoClient();
 
-  const { data, isLoading, error } = useSudojoLevels(networkClient, config);
+  const { data, isLoading, error } = useSudojoLevels(networkClient, config, auth);
 
   const levels = data?.data ?? [];
 

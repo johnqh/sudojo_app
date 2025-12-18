@@ -1,10 +1,43 @@
-import { useMemo, useCallback, useState, useEffect } from 'react';
+import React, { useMemo, useCallback, useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { MasterDetailLayout, MasterListItem, Text, Card, CardContent } from '@sudobility/components';
 import { useSudojoTechniques, useSudojoLearning } from '@sudobility/sudojo_client';
 import { useLocalizedNavigate } from '@/hooks/useLocalizedNavigate';
 import { useSudojoClient } from '@/hooks/useSudojoClient';
+
+// Convert technique title to icon filename
+// e.g., "Full House" -> "/technique.full.house.svg"
+//       "X-Wing" -> "/technique.x.wing.svg"
+//       "XY-Wing" -> "/technique.xy.wing.svg"
+function getTechniqueIconUrl(title: string): string {
+  const normalized = title
+    .toLowerCase()
+    .replace(/\s+/g, '.')  // spaces to dots
+    .replace(/-/g, '.');   // hyphens to dots
+  return `/technique.${normalized}.svg`;
+}
+
+// Cache for memoized icon components
+const techniqueIconCache = new Map<string, React.ComponentType<{ className?: string }>>();
+
+// Create an icon component for a technique (memoized)
+function getTechniqueIcon(title: string): React.ComponentType<{ className?: string }> {
+  if (!techniqueIconCache.has(title)) {
+    const iconUrl = getTechniqueIconUrl(title);
+    const TechniqueIcon = ({ className }: { className?: string }) => (
+      <img
+        src={iconUrl}
+        alt=""
+        className={className}
+        style={{ width: '24px', height: '24px' }}
+      />
+    );
+    TechniqueIcon.displayName = `TechniqueIcon(${title})`;
+    techniqueIconCache.set(title, TechniqueIcon);
+  }
+  return techniqueIconCache.get(title)!;
+}
 
 // Map technique titles to HTML help file paths
 const techniqueToHelpFile: Record<string, string> = {
@@ -119,14 +152,18 @@ export default function TechniquesPage() {
   const { techniqueId } = useParams<{ techniqueId: string }>();
   const { t, i18n } = useTranslation();
   const { navigate } = useLocalizedNavigate();
-  const { networkClient, config } = useSudojoClient();
+  const { networkClient, config, auth } = useSudojoClient();
 
   // Mobile view state - show content when techniqueId is present
   const [mobileViewOverride, setMobileViewOverride] = useState<'navigation' | 'content' | null>(null);
   const mobileView = mobileViewOverride ?? (techniqueId ? 'content' : 'navigation');
 
   // Fetch techniques list
-  const { data: techniquesData, isLoading: techniquesLoading } = useSudojoTechniques(networkClient, config);
+  const { data: techniquesData, isLoading: techniquesLoading } = useSudojoTechniques(
+    networkClient,
+    config,
+    auth
+  );
   const techniques = techniquesData?.data ?? [];
 
   // Fetch learning content for selected technique
@@ -140,6 +177,7 @@ export default function TechniquesPage() {
   const { data: learningData, isLoading: learningLoading } = useSudojoLearning(
     networkClient,
     config,
+    auth,
     learningParams,
     { enabled: !!techniqueId }
   );
@@ -203,6 +241,7 @@ export default function TechniquesPage() {
           key={technique.uuid}
           isSelected={technique.uuid === techniqueId}
           onClick={() => handleTechniqueSelect(technique.uuid)}
+          icon={getTechniqueIcon(technique.title)}
           label={technique.title}
           description={technique.text ?? undefined}
         />

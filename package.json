@@ -20,9 +20,12 @@
     "@radix-ui/react-switch": "^1.2.5",
     "@radix-ui/react-tabs": "^1.1.12",
     "@radix-ui/react-tooltip": "^1.2.8",
+    "@revenuecat/purchases-js": "^1.22.0",
     "@sudobility/components": "^4.0.84",
     "@sudobility/design": "^1.1.15",
     "@sudobility/di": "^1.5.5",
+    "@sudobility/sudojo_client": "file:../sudojo_client",
+    "@sudobility/sudojo_lib": "file:../sudojo_lib",
     "@sudobility/sudojo_solver_client": "file:../sudojo_solver_client",
     "@sudobility/sudojo_types": "^1.0.0",
     "@sudobility/types": "^1.9.31",
@@ -39,8 +42,6 @@
     "react-helmet-async": "^2.0.5",
     "react-i18next": "^16.2.1",
     "react-router-dom": "^7.9.4",
-    "@sudobility/sudojo_client": "file:../sudojo_client",
-    "@sudobility/sudojo_lib": "file:../sudojo_lib",
     "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {

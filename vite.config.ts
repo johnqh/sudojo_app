@@ -137,9 +137,13 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router-dom', '@sudobility/components'],
+    exclude: ['@sudobility/sudojo_client'],
   },
   server: {
     host: true,
     port: 5193,
+    watch: {
+      ignored: ['!**/node_modules/@sudobility/**'],
+    },
   },
 });
