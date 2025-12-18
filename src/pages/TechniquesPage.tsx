@@ -1,10 +1,119 @@
-import { useMemo, useCallback, useState } from 'react';
+import { useMemo, useCallback, useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { MasterDetailLayout, MasterListItem, Heading, Text, Card, CardContent } from '@sudobility/components';
+import { MasterDetailLayout, MasterListItem, Text, Card, CardContent } from '@sudobility/components';
 import { useSudojoTechniques, useSudojoLearning } from '@sudobility/sudojo_client';
 import { useLocalizedNavigate } from '@/hooks/useLocalizedNavigate';
 import { useSudojoClient } from '@/hooks/useSudojoClient';
+
+// Map technique titles to HTML help file paths
+const techniqueToHelpFile: Record<string, string> = {
+  'Full House': 'Full_House.html',
+  'Naked Single': 'Naked_Single.html',
+  'Hidden Single': 'Hidden_Single.html',
+  'Naked Pair': 'Naked_Pair.html',
+  'Hidden Pair': 'Hidden_Pair.html',
+  'Locked Candidates': 'Locked_Candidates.html',
+  'Naked Triple': 'Naked_Triple.html',
+  'Hidden Triple': 'Hidden_Triple.html',
+  'Naked Quad': 'Nakded_Quad.html', // Note: typo in original file name
+  'Hidden Quad': 'Hidden_Quad.html',
+  'X-Wing': 'X-Wing.html',
+  'Swordfish': 'Swordfish.html',
+  'Jellyfish': 'Jellyfish.html',
+  'Squirmbag': 'Squirmbag.html',
+  'XY-Wing': 'XY-Wing.html',
+  'XYZ-Wing': 'XYZ-Wing.html',
+  'WXYZ-Wing': 'WXYZ-Wing.html',
+  'Finned X-Wing': 'Finned_X-Wing.html',
+  'Finned Swordfish': 'Finned_Swordfish.html',
+  'Finned Jellyfish': 'Finned_Jellyfish.html',
+  'Finned Squirmbag': 'Finned_Squirmbag.html',
+  'Almost Locked Sets': 'Almost_Locked_Sets.html',
+  'ALS Chain': 'ALS-Chain.html',
+  'ALS-Chain': 'ALS-Chain.html',
+};
+
+// Reverse mapping: HTML file name (lowercase) -> technique title
+const helpFileToTechnique: Record<string, string> = Object.entries(techniqueToHelpFile).reduce(
+  (acc, [title, file]) => {
+    acc[file.toLowerCase()] = title;
+    return acc;
+  },
+  {} as Record<string, string>
+);
+
+function getHelpFileUrl(techniqueTitle: string): string | null {
+  const fileName = techniqueToHelpFile[techniqueTitle];
+  if (fileName) {
+    return `/help/${fileName}`;
+  }
+  // Try to generate file name from title (spaces to underscores, preserve hyphens)
+  const generatedFileName = techniqueTitle.replace(/\s+/g, '_') + '.html';
+  return `/help/${generatedFileName}`;
+}
+
+// Extract body content from HTML and clean up navigation links
+function extractBodyContent(html: string): string {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+
+  // Remove "Back to Course Catalog" links
+  const links = doc.querySelectorAll('a[href="index.html"]');
+  links.forEach(link => {
+    const parent = link.closest('tr') || link.closest('td') || link.parentElement;
+    if (parent) {
+      parent.remove();
+    }
+  });
+
+  // Fix image paths - convert relative paths to absolute /help/ paths
+  const images = doc.querySelectorAll('img');
+  images.forEach(img => {
+    const src = img.getAttribute('src');
+    if (src && !src.startsWith('/') && !src.startsWith('http')) {
+      img.setAttribute('src', `/help/${src}`);
+    }
+  });
+
+  // Get the body content
+  return doc.body.innerHTML;
+}
+
+// Custom hook to fetch and parse HTML content
+function useHtmlContent(url: string | null) {
+  const [content, setContent] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    if (!url) {
+      setContent(null);
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    fetch(url)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Failed to fetch: ${response.status}`);
+        }
+        return response.text();
+      })
+      .then(html => {
+        setContent(extractBodyContent(html));
+        setIsLoading(false);
+      })
+      .catch(err => {
+        setError(err);
+        setIsLoading(false);
+      });
+  }, [url]);
+
+  return { content, isLoading, error };
+}
 
 export default function TechniquesPage() {
   const { techniqueId } = useParams<{ techniqueId: string }>();
@@ -51,6 +160,37 @@ export default function TechniquesPage() {
     navigate('/techniques');
   }, [navigate]);
 
+  // Handle clicks on links in technique content
+  const handleContentClick = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      const target = event.target as HTMLElement;
+      const anchor = target.closest('a');
+
+      if (!anchor) return;
+
+      const href = anchor.getAttribute('href');
+      if (!href) return;
+
+      // Check if it's a technique link (ends with .html)
+      if (href.endsWith('.html') && href !== 'index.html') {
+        event.preventDefault();
+
+        // Get the filename and look up the technique
+        const fileName = href.toLowerCase();
+        const techniqueTitle = helpFileToTechnique[fileName];
+
+        if (techniqueTitle) {
+          // Find the technique by title
+          const technique = techniques.find(t => t.title === techniqueTitle);
+          if (technique) {
+            handleTechniqueSelect(technique.uuid);
+          }
+        }
+      }
+    },
+    [techniques, handleTechniqueSelect]
+  );
+
   const masterContent = (
     <div className="space-y-1">
       {techniquesLoading && (
@@ -75,14 +215,24 @@ export default function TechniquesPage() {
     </div>
   );
 
-  const detailContent = selectedTechnique ? (
-    <div>
-      <Heading level={2} size="xl" className="mb-4">
-        {selectedTechnique.title}
-      </Heading>
+  const helpFileUrl = selectedTechnique ? getHelpFileUrl(selectedTechnique.title) : null;
+  const { content: htmlContent, isLoading: htmlLoading } = useHtmlContent(helpFileUrl);
 
-      {selectedTechnique.text && (
-        <Text className="mb-6">{selectedTechnique.text}</Text>
+  const detailContent = selectedTechnique ? (
+    <div className="h-full flex flex-col">
+      {/* Embedded HTML instructions */}
+      {htmlLoading && (
+        <div className="p-4 text-center">
+          <Text color="muted">{t('common.loading')}</Text>
+        </div>
+      )}
+
+      {htmlContent && (
+        <div
+          className="technique-content prose prose-sm max-w-none"
+          dangerouslySetInnerHTML={{ __html: htmlContent }}
+          onClick={handleContentClick}
+        />
       )}
 
       {learningLoading && (
@@ -91,8 +241,8 @@ export default function TechniquesPage() {
         </div>
       )}
 
-      {learningItems.length > 0 ? (
-        <div className="space-y-4">
+      {learningItems.length > 0 && (
+        <div className="space-y-4 mt-4">
           {learningItems
             .sort((a, b) => a.index - b.index)
             .map(item => (
@@ -110,14 +260,6 @@ export default function TechniquesPage() {
               </Card>
             ))}
         </div>
-      ) : (
-        !learningLoading && (
-          <Card>
-            <CardContent className="py-4">
-              <Text color="muted">{t('techniques.noContent')}</Text>
-            </CardContent>
-          </Card>
-        )
       )}
     </div>
   ) : (
