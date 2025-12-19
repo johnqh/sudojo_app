@@ -5,18 +5,12 @@ import { MasterDetailLayout, MasterListItem, Text, Card, CardContent } from '@su
 import { useSudojoTechniques, useSudojoLearning } from '@sudobility/sudojo_client';
 import { useLocalizedNavigate } from '@/hooks/useLocalizedNavigate';
 import { useSudojoClient } from '@/hooks/useSudojoClient';
-
-// Convert technique title to icon filename
-// e.g., "Full House" -> "/technique.full.house.svg"
-//       "X-Wing" -> "/technique.x.wing.svg"
-//       "XY-Wing" -> "/technique.xy.wing.svg"
-function getTechniqueIconUrl(title: string): string {
-  const normalized = title
-    .toLowerCase()
-    .replace(/\s+/g, '.')  // spaces to dots
-    .replace(/-/g, '.');   // hyphens to dots
-  return `/technique.${normalized}.svg`;
-}
+import {
+  getTechniqueIconUrl,
+  getHelpFileUrl,
+  getTechniqueFromHelpFile,
+  extractBodyContent,
+} from '@sudobility/sudojo_lib';
 
 // Cache for memoized icon components
 const techniqueIconCache = new Map<string, React.ComponentType<{ className?: string }>>();
@@ -39,94 +33,51 @@ function getTechniqueIcon(title: string): React.ComponentType<{ className?: stri
   return techniqueIconCache.get(title)!;
 }
 
-// Map technique titles to HTML help file paths
-const techniqueToHelpFile: Record<string, string> = {
-  'Full House': 'Full_House.html',
-  'Naked Single': 'Naked_Single.html',
-  'Hidden Single': 'Hidden_Single.html',
-  'Naked Pair': 'Naked_Pair.html',
-  'Hidden Pair': 'Hidden_Pair.html',
-  'Locked Candidates': 'Locked_Candidates.html',
-  'Naked Triple': 'Naked_Triple.html',
-  'Hidden Triple': 'Hidden_Triple.html',
-  'Naked Quad': 'Nakded_Quad.html', // Note: typo in original file name
-  'Hidden Quad': 'Hidden_Quad.html',
-  'X-Wing': 'X-Wing.html',
-  'Swordfish': 'Swordfish.html',
-  'Jellyfish': 'Jellyfish.html',
-  'Squirmbag': 'Squirmbag.html',
-  'XY-Wing': 'XY-Wing.html',
-  'XYZ-Wing': 'XYZ-Wing.html',
-  'WXYZ-Wing': 'WXYZ-Wing.html',
-  'Finned X-Wing': 'Finned_X-Wing.html',
-  'Finned Swordfish': 'Finned_Swordfish.html',
-  'Finned Jellyfish': 'Finned_Jellyfish.html',
-  'Finned Squirmbag': 'Finned_Squirmbag.html',
-  'Almost Locked Sets': 'Almost_Locked_Sets.html',
-  'ALS Chain': 'ALS-Chain.html',
-  'ALS-Chain': 'ALS-Chain.html',
+type HtmlContentState = {
+  contentMap: Map<string, string>;
+  loadingUrl: string | null;
+  error: Error | null;
 };
 
-// Reverse mapping: HTML file name (lowercase) -> technique title
-const helpFileToTechnique: Record<string, string> = Object.entries(techniqueToHelpFile).reduce(
-  (acc, [title, file]) => {
-    acc[file.toLowerCase()] = title;
-    return acc;
-  },
-  {} as Record<string, string>
-);
+type HtmlContentAction =
+  | { type: 'START_LOADING'; url: string }
+  | { type: 'LOAD_SUCCESS'; url: string; content: string }
+  | { type: 'LOAD_ERROR'; error: Error };
 
-function getHelpFileUrl(techniqueTitle: string): string | null {
-  const fileName = techniqueToHelpFile[techniqueTitle];
-  if (fileName) {
-    return `/help/${fileName}`;
+function htmlContentReducer(state: HtmlContentState, action: HtmlContentAction): HtmlContentState {
+  switch (action.type) {
+    case 'START_LOADING':
+      return { ...state, loadingUrl: action.url, error: null };
+    case 'LOAD_SUCCESS': {
+      const newMap = new Map(state.contentMap);
+      newMap.set(action.url, action.content);
+      return { contentMap: newMap, loadingUrl: null, error: null };
+    }
+    case 'LOAD_ERROR':
+      return { ...state, loadingUrl: null, error: action.error };
+    default:
+      return state;
   }
-  // Try to generate file name from title (spaces to underscores, preserve hyphens)
-  const generatedFileName = techniqueTitle.replace(/\s+/g, '_') + '.html';
-  return `/help/${generatedFileName}`;
-}
-
-// Extract body content from HTML and clean up navigation links
-function extractBodyContent(html: string): string {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(html, 'text/html');
-
-  // Remove "Back to Course Catalog" links
-  const links = doc.querySelectorAll('a[href="index.html"]');
-  links.forEach(link => {
-    const parent = link.closest('tr') || link.closest('td') || link.parentElement;
-    if (parent) {
-      parent.remove();
-    }
-  });
-
-  // Fix image paths - convert relative paths to absolute /help/ paths
-  const images = doc.querySelectorAll('img');
-  images.forEach(img => {
-    const src = img.getAttribute('src');
-    if (src && !src.startsWith('/') && !src.startsWith('http')) {
-      img.setAttribute('src', `/help/${src}`);
-    }
-  });
-
-  // Get the body content
-  return doc.body.innerHTML;
 }
 
 // Custom hook to fetch and parse HTML content
 function useHtmlContent(url: string | null) {
-  const [content, setContent] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const [state, dispatch] = React.useReducer(htmlContentReducer, {
+    contentMap: new Map(),
+    loadingUrl: null,
+    error: null,
+  });
+
+  const { contentMap, loadingUrl, error } = state;
+  const isCached = url ? contentMap.has(url) : false;
+  const shouldFetch = url && !isCached && loadingUrl !== url;
 
   useEffect(() => {
-    if (!url) {
-      setContent(null);
-      return;
-    }
+    if (!shouldFetch || !url) return;
 
-    setIsLoading(true);
-    setError(null);
+    dispatch({ type: 'START_LOADING', url });
+
+    let cancelled = false;
 
     fetch(url)
       .then(response => {
@@ -136,14 +87,23 @@ function useHtmlContent(url: string | null) {
         return response.text();
       })
       .then(html => {
-        setContent(extractBodyContent(html));
-        setIsLoading(false);
+        if (!cancelled) {
+          dispatch({ type: 'LOAD_SUCCESS', url, content: extractBodyContent(html) });
+        }
       })
       .catch(err => {
-        setError(err);
-        setIsLoading(false);
+        if (!cancelled) {
+          dispatch({ type: 'LOAD_ERROR', error: err });
+        }
       });
-  }, [url]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [shouldFetch, url]);
+
+  const content = url ? contentMap.get(url) ?? null : null;
+  const isLoading = loadingUrl === url;
 
   return { content, isLoading, error };
 }
@@ -164,7 +124,7 @@ export default function TechniquesPage() {
     config,
     auth
   );
-  const techniques = techniquesData?.data ?? [];
+  const techniques = useMemo(() => techniquesData?.data ?? [], [techniquesData?.data]);
 
   // Fetch learning content for selected technique
   const learningParams = useMemo(
@@ -215,7 +175,7 @@ export default function TechniquesPage() {
 
         // Get the filename and look up the technique
         const fileName = href.toLowerCase();
-        const techniqueTitle = helpFileToTechnique[fileName];
+        const techniqueTitle = getTechniqueFromHelpFile(fileName);
 
         if (techniqueTitle) {
           // Find the technique by title

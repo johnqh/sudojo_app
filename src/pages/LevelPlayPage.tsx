@@ -1,68 +1,25 @@
-import { useMemo, useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Heading, Text, Button } from '@sudobility/components';
-import { useSudojoRandomBoard, useSudojoLevel } from '@sudobility/sudojo_client';
-import { useQueryClient } from '@tanstack/react-query';
+import { useSudojoLevel } from '@sudobility/sudojo_client';
+import { useLevelGame } from '@sudobility/sudojo_lib';
 import { SudokuGame } from '@/components/sudoku';
 import { useSudojoClient } from '@/hooks/useSudojoClient';
 import { useProgress } from '@/context/ProgressContext';
 import { useSettings } from '@/context/SettingsContext';
-import { useAuth } from '@/context/AuthContext';
+import { useAuthStatus } from '@sudobility/auth-components';
+import { useSubscriptionContext } from '@sudobility/subscription-components';
 import { SubscriptionPaywall } from '@/components/subscription';
-
-// Check if the response indicates auth or subscription is required
-interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  message?: string;
-  action?: {
-    type: string;
-    options?: string[];
-  };
-}
-
-function isAuthRequiredResponse(response: ApiResponse<unknown> | null | undefined): boolean {
-  if (!response) return false;
-  return response.success === false && response.action?.type === 'auth_required';
-}
-
-function isSubscriptionRequiredResponse(response: ApiResponse<unknown> | null | undefined): boolean {
-  if (!response) return false;
-  return response.success === false && response.action?.type === 'subscription_required';
-}
-
-function isAuthRequiredError(error: unknown): boolean {
-  if (!error || typeof error !== 'object') return false;
-  const err = error as { message?: string };
-  try {
-    if (err.message?.includes('Account required')) return true;
-  } catch {
-    // ignore
-  }
-  return false;
-}
-
-function isSubscriptionRequiredError(error: unknown): boolean {
-  if (!error || typeof error !== 'object') return false;
-  const err = error as { message?: string };
-  try {
-    if (err.message?.includes('Daily limit reached') || err.message?.includes('subscription')) return true;
-  } catch {
-    // ignore
-  }
-  return false;
-}
 
 export default function LevelPlayPage() {
   const { levelId } = useParams<{ levelId: string }>();
   const { t } = useTranslation();
   const { networkClient, config, auth } = useSudojoClient();
-  const queryClient = useQueryClient();
   const { markCompleted } = useProgress();
   const { settings } = useSettings();
-  const { openAuthModal } = useAuth();
+  const { openModal: openAuthModal } = useAuthStatus();
+  const { currentSubscription } = useSubscriptionContext();
   const [completed, setCompleted] = useState(false);
 
   // Fetch level info for the title
@@ -70,24 +27,17 @@ export default function LevelPlayPage() {
     enabled: !!levelId,
   });
 
-  // Fetch a random board for this level
-  const queryParams = useMemo(() => ({ level_uuid: levelId }), [levelId]);
-  const { data: boardData, isLoading, error, refetch } = useSudojoRandomBoard(
+  // Fetch a random board for this level with auth/subscription handling
+  const { board, status, refetch, nextPuzzle } = useLevelGame({
     networkClient,
     config,
     auth,
-    queryParams,
-    { enabled: !!levelId }
-  );
+    levelId: levelId ?? '',
+    subscriptionActive: currentSubscription?.isActive ?? false,
+    enabled: !!levelId,
+  });
 
   const level = levelData?.data;
-  const board = boardData?.data;
-
-  // Check if auth is required (either from error or response)
-  const authRequired = isAuthRequiredError(error) || isAuthRequiredResponse(boardData);
-
-  // Check if subscription is required
-  const subscriptionRequired = isSubscriptionRequiredError(error) || isSubscriptionRequiredResponse(boardData);
 
   const handleComplete = useCallback((timeSeconds: number) => {
     setCompleted(true);
@@ -98,10 +48,8 @@ export default function LevelPlayPage() {
 
   const handleNextPuzzle = useCallback(() => {
     setCompleted(false);
-    // Invalidate the random board query to fetch a new one
-    queryClient.invalidateQueries({ queryKey: ['sudojo', 'boards', 'random'] });
-    refetch();
-  }, [queryClient, refetch]);
+    nextPuzzle();
+  }, [nextPuzzle]);
 
   return (
     <div className="py-8">
@@ -114,13 +62,13 @@ export default function LevelPlayPage() {
         )}
       </header>
 
-      {isLoading && (
+      {status === 'loading' && (
         <div className="text-center py-12">
           <Text color="muted">{t('common.loading')}</Text>
         </div>
       )}
 
-      {authRequired && (
+      {status === 'auth_required' && (
         <div className="text-center py-12">
           <div className="max-w-md mx-auto">
             <Heading level={2} size="xl" className="mb-4">
@@ -141,7 +89,7 @@ export default function LevelPlayPage() {
         </div>
       )}
 
-      {subscriptionRequired && (
+      {status === 'subscription_required' && (
         <div className="py-8">
           <SubscriptionPaywall
             title={t('subscription.limitReached')}
@@ -151,7 +99,7 @@ export default function LevelPlayPage() {
         </div>
       )}
 
-      {error && !authRequired && !subscriptionRequired && (
+      {status === 'error' && (
         <div className="text-center py-12">
           <Text color="muted" className="text-red-500">
             {t('common.error')}
@@ -159,7 +107,7 @@ export default function LevelPlayPage() {
         </div>
       )}
 
-      {board && (
+      {status === 'success' && board && (
         <>
           <SudokuGame
             key={board.uuid}

@@ -1,22 +1,30 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Heading, Text } from '@sudobility/components';
-import { useSudojoTodayDaily } from '@sudobility/sudojo_client';
+import { Heading, Text, Button } from '@sudobility/components';
+import { useDailyGame } from '@sudobility/sudojo_lib';
 import { SudokuGame } from '@/components/sudoku';
 import { useSudojoClient } from '@/hooks/useSudojoClient';
 import { useProgress } from '@/context/ProgressContext';
 import { useSettings } from '@/context/SettingsContext';
+import { useAuthStatus } from '@sudobility/auth-components';
+import { useSubscriptionContext } from '@sudobility/subscription-components';
+import { SubscriptionPaywall } from '@/components/subscription';
 
 export default function DailyPage() {
   const { t } = useTranslation();
   const { networkClient, config, auth } = useSudojoClient();
   const { markCompleted, isCompleted } = useProgress();
   const { settings } = useSettings();
+  const { openModal: openAuthModal } = useAuthStatus();
+  const { currentSubscription } = useSubscriptionContext();
 
-  const { data, isLoading, error } = useSudojoTodayDaily(networkClient, config, auth);
+  const { daily, dailyDate, status, refetch } = useDailyGame({
+    networkClient,
+    config,
+    auth,
+    subscriptionActive: currentSubscription?.isActive ?? false,
+  });
 
-  const daily = data?.data;
-  const dailyDate = daily?.date ? new Date(daily.date).toISOString().split('T')[0] : null;
   const alreadyCompleted = dailyDate ? isCompleted('daily', dailyDate) : false;
 
   const handleComplete = useCallback((timeSeconds: number) => {
@@ -39,13 +47,44 @@ export default function DailyPage() {
         )}
       </header>
 
-      {isLoading && (
+      {status === 'loading' && (
         <div className="text-center py-12">
           <Text color="muted">{t('common.loading')}</Text>
         </div>
       )}
 
-      {error && (
+      {status === 'auth_required' && (
+        <div className="text-center py-12">
+          <div className="max-w-md mx-auto">
+            <Heading level={2} size="xl" className="mb-4">
+              {t('auth.accountRequired')}
+            </Heading>
+            <Text color="muted" className="mb-6">
+              {t('auth.accountRequiredMessage')}
+            </Text>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button onClick={openAuthModal}>
+                {t('auth.login')}
+              </Button>
+              <Button variant="outline" onClick={openAuthModal}>
+                {t('auth.createAccount')}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {status === 'subscription_required' && (
+        <div className="py-8">
+          <SubscriptionPaywall
+            title={t('subscription.limitReached')}
+            message={t('subscription.limitReachedMessage')}
+            onSuccess={() => refetch()}
+          />
+        </div>
+      )}
+
+      {status === 'error' && (
         <div className="text-center py-12">
           <Text color="muted" className="text-red-500">
             {t('common.error')}
@@ -53,7 +92,7 @@ export default function DailyPage() {
         </div>
       )}
 
-      {daily && (
+      {status === 'success' && daily && (
         <SudokuGame
           puzzle={daily.board}
           solution={daily.solution}

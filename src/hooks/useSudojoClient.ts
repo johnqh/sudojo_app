@@ -6,7 +6,8 @@ import { useMemo, useState, useEffect } from 'react';
 import { getNetworkService } from '@sudobility/di';
 import type { NetworkClient, NetworkResponse, NetworkRequestOptions, Optional } from '@sudobility/types';
 import type { SudojoConfig, SudojoAuth } from '@sudobility/sudojo_client';
-import { useAuth } from '@/context/AuthContext';
+import { useAuthStatus } from '@sudobility/auth-components';
+import { auth as firebaseAuth } from '@/config/firebase';
 
 const config: SudojoConfig = {
   baseUrl: import.meta.env.VITE_SUDOJO_API_URL || 'https://api.sudojo.com',
@@ -107,7 +108,7 @@ function createNetworkClientAdapter(): NetworkClient {
  */
 export function useSudojoClient() {
   const networkClient = useMemo(() => createNetworkClientAdapter(), []);
-  const { user } = useAuth();
+  const { user } = useAuthStatus();
   const [auth, setAuth] = useState<SudojoAuth>({ accessToken: '' });
 
   // Get Firebase ID token when user changes
@@ -115,9 +116,11 @@ export function useSudojoClient() {
     let isMounted = true;
 
     const fetchToken = async () => {
-      if (user) {
+      // Use Firebase auth directly to get the current user's ID token
+      const currentUser = firebaseAuth?.currentUser;
+      if (currentUser) {
         try {
-          const token = await user.getIdToken();
+          const token = await currentUser.getIdToken();
           if (isMounted) {
             setAuth({ accessToken: token });
           }

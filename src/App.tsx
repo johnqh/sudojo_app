@@ -4,10 +4,10 @@ import { HelmetProvider } from 'react-helmet-async';
 import { I18nextProvider, useTranslation } from 'react-i18next';
 import i18n, { isLanguageSupported } from './i18n';
 import ThemeProvider from './context/ThemeContext';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProviderWrapper } from './components/providers/AuthProviderWrapper';
 import { SettingsProvider } from './context/SettingsContext';
 import { ProgressProvider } from './context/ProgressContext';
-import { SubscriptionProvider } from './context/SubscriptionContext';
+import { SubscriptionProviderWrapper } from './components/providers/SubscriptionProviderWrapper';
 
 // Pages (lazy loaded)
 import { lazy, Suspense, useEffect } from 'react';
@@ -104,8 +104,8 @@ function App() {
           <SettingsProvider>
             <ProgressProvider>
               <QueryClientProvider client={queryClient}>
-                <AuthProvider>
-                  <SubscriptionProvider>
+                <AuthProviderWrapper>
+                  <SubscriptionProviderWrapper>
                     <BrowserRouter>
                       <InstallPrompt />
                       <Routes>
@@ -128,8 +128,8 @@ function App() {
                 <Route path="*" element={<LanguageRedirect />} />
                     </Routes>
                     </BrowserRouter>
-                  </SubscriptionProvider>
-                </AuthProvider>
+                  </SubscriptionProviderWrapper>
+                </AuthProviderWrapper>
               </QueryClientProvider>
             </ProgressProvider>
           </SettingsProvider>

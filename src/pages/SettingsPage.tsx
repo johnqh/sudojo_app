@@ -1,22 +1,15 @@
 import { useTranslation } from 'react-i18next';
-import { Heading, Text, Card, CardContent, Switch, Select } from '@sudobility/components';
+import { Heading, Text, Card, CardContent, Switch, Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@sudobility/components';
 import { useSettings, type AppSettings } from '@/context/SettingsContext';
 import { useProgress } from '@/context/ProgressContext';
+import { formatTime as formatTimeBase } from '@sudobility/sudojo_lib';
 
 /**
- * Format seconds into MM:SS or HH:MM:SS string
+ * Format seconds into MM:SS or HH:MM:SS string, with null handling
  */
 function formatTime(seconds: number | null): string {
   if (seconds === null) return '--:--';
-
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const secs = seconds % 60;
-
-  if (hours > 0) {
-    return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  }
-  return `${minutes}:${secs.toString().padStart(2, '0')}`;
+  return formatTimeBase(seconds);
 }
 
 export default function SettingsPage() {
@@ -165,11 +158,16 @@ export default function SettingsPage() {
                     value={settings.display}
                     onValueChange={value => updateSetting('display', value as AppSettings['display'])}
                   >
-                    {displayOptions.map(option => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
+                    <SelectTrigger className="w-40">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {displayOptions.map(option => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
                 </div>
               </CardContent>

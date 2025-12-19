@@ -4,23 +4,15 @@
 
 import { createContext, useContext, useCallback, type ReactNode } from 'react';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
+import {
+  type AppSettings,
+  type DigitDisplay,
+  DEFAULT_SETTINGS,
+  SETTINGS_STORAGE_KEY,
+} from '@sudobility/sudojo_lib';
 
-export interface AppSettings {
-  /** Show errors when input doesn't match solution */
-  showErrors: boolean;
-  /** Generate symmetrical puzzles */
-  symmetrical: boolean;
-  /** Digit display format */
-  display: 'numeric' | 'kanji' | 'emojis';
-}
-
-const DEFAULT_SETTINGS: AppSettings = {
-  showErrors: true,
-  symmetrical: true,
-  display: 'numeric',
-};
-
-const SETTINGS_KEY = 'sudojo-settings';
+// Re-export types for external use
+export type { AppSettings, DigitDisplay };
 
 interface SettingsContextType {
   settings: AppSettings;
@@ -36,7 +28,7 @@ interface SettingsProviderProps {
 }
 
 export function SettingsProvider({ children }: SettingsProviderProps) {
-  const [settings, setSettings] = useLocalStorage<AppSettings>(SETTINGS_KEY, DEFAULT_SETTINGS);
+  const [settings, setSettings] = useLocalStorage<AppSettings>(SETTINGS_STORAGE_KEY, DEFAULT_SETTINGS);
 
   const updateSetting = useCallback(<K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
     setSettings(prev => ({ ...prev, [key]: value }));

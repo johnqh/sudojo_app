@@ -1,8 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, Button, Heading, Text } from '@sudobility/components';
-import { useSubscription, type Product } from '@/context/SubscriptionContext';
-import { SubscriptionTile } from './SubscriptionTile';
+import { Heading, Text, Card, CardContent } from '@sudobility/components';
+import {
+  useSubscriptionContext,
+  SubscriptionLayout,
+  SubscriptionTile,
+  type SubscriptionProduct,
+} from '@sudobility/subscription-components';
 
 interface SubscriptionPaywallProps {
   title?: string;
@@ -11,24 +15,24 @@ interface SubscriptionPaywallProps {
   onDismiss?: () => void;
 }
 
-// Helper to get period display name
-const getPeriodDisplayName = (period: string | undefined): string => {
+// Helper to get period display label
+const getPeriodLabel = (period: string | undefined, t: (key: string) => string): string => {
   switch (period) {
     case 'P1M':
-      return 'month';
+      return `/${t('subscription.periods.month')}`;
     case 'P3M':
-      return '3 months';
+      return `/${t('subscription.periods.quarter')}`;
     case 'P6M':
-      return '6 months';
+      return `/${t('subscription.periods.halfYear')}`;
     case 'P1Y':
-      return 'year';
+      return `/${t('subscription.periods.year')}`;
     default:
-      return 'period';
+      return '';
   }
 };
 
 // Helper to determine if a plan is "best value"
-const isBestValuePlan = (product: Product): boolean => {
+const isBestValuePlan = (product: SubscriptionProduct): boolean => {
   return product.period === 'P1Y' || product.identifier.includes('annual') || product.identifier.includes('yearly');
 };
 
@@ -50,35 +54,31 @@ export const SubscriptionPaywall: React.FC<SubscriptionPaywallProps> = ({
 }) => {
   const { t } = useTranslation();
   const {
-    availableProducts,
+    products,
     isLoading,
     error,
-    purchaseProduct,
-    restorePurchases,
-    initialize,
-  } = useSubscription();
+    purchase,
+    restore,
+  } = useSubscriptionContext();
 
-  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+  // Compute default product ID (prefer annual/best value plan)
+  const defaultProductId = useMemo(() => {
+    if (products.length === 0) return null;
+    const annualPlan = products.find(p => isBestValuePlan(p));
+    return annualPlan?.identifier || products[0].identifier;
+  }, [products]);
+
+  const [userSelectedProductId, setUserSelectedProductId] = useState<string | null>(null);
   const [isPurchasing, setIsPurchasing] = useState(false);
 
-  // Initialize subscription service
-  useEffect(() => {
-    initialize();
-  }, [initialize]);
-
-  // Auto-select annual plan if available
-  useEffect(() => {
-    if (availableProducts.length > 0 && !selectedProductId) {
-      const annualPlan = availableProducts.find(p => isBestValuePlan(p));
-      setSelectedProductId(annualPlan?.identifier || availableProducts[0].identifier);
-    }
-  }, [availableProducts, selectedProductId]);
+  // Use user selection if set, otherwise use default
+  const selectedProductId = userSelectedProductId ?? defaultProductId;
 
   const handlePurchase = async () => {
     if (!selectedProductId) return;
 
     setIsPurchasing(true);
-    const success = await purchaseProduct(selectedProductId);
+    const success = await purchase(selectedProductId);
     setIsPurchasing(false);
 
     if (success) {
@@ -88,7 +88,7 @@ export const SubscriptionPaywall: React.FC<SubscriptionPaywallProps> = ({
 
   const handleRestore = async () => {
     setIsPurchasing(true);
-    const success = await restorePurchases();
+    const success = await restore();
     setIsPurchasing(false);
 
     if (success) {
@@ -98,109 +98,98 @@ export const SubscriptionPaywall: React.FC<SubscriptionPaywallProps> = ({
 
   const features = getPlanFeatures(t);
 
+  // Loading state when no products yet
+  if (isLoading && products.length === 0) {
+    return (
+      <div className="max-w-2xl mx-auto">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center mb-6">
+              <Heading level={2} size="xl" className="mb-2">
+                {title || t('subscription.title')}
+              </Heading>
+              <Text color="muted">
+                {message || t('subscription.message')}
+              </Text>
+            </div>
+            <div className="text-center py-8">
+              <Text color="muted">{t('common.loading')}</Text>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-2xl mx-auto">
-      <Card>
-        <CardContent className="pt-6">
-          {/* Header */}
+      <SubscriptionLayout
+        title={title || t('subscription.title')}
+        headerContent={
           <div className="text-center mb-6">
-            <Heading level={2} size="xl" className="mb-2">
-              {title || t('subscription.title')}
-            </Heading>
             <Text color="muted">
               {message || t('subscription.message')}
             </Text>
           </div>
-
-          {/* Loading State */}
-          {isLoading && availableProducts.length === 0 && (
-            <div className="text-center py-8">
-              <Text color="muted">{t('common.loading')}</Text>
-            </div>
-          )}
-
-          {/* Subscription Tiles */}
-          {availableProducts.length > 0 && (
-            <div
-              className="grid gap-4 mb-6"
-              style={{
-                gridTemplateColumns: `repeat(auto-fit, minmax(min(100%, 240px), 1fr))`,
-              }}
-            >
-              {availableProducts.map(product => {
-                const isBestValue = isBestValuePlan(product);
-                return (
-                  <SubscriptionTile
-                    key={product.identifier}
-                    id={product.identifier}
-                    title={product.title}
-                    price={product.priceString}
-                    period={product.period}
-                    periodDisplayName={getPeriodDisplayName(product.period)}
-                    features={features}
-                    isSelected={selectedProductId === product.identifier}
-                    onSelect={() => setSelectedProductId(product.identifier)}
-                    isBestValue={isBestValue}
-                    topBadge={
-                      isBestValue
-                        ? { text: t('subscription.bestValue'), color: 'purple' }
-                        : undefined
-                    }
-                    discountBadge={
-                      isBestValue
-                        ? { text: t('subscription.savePercent', { percent: '50' }), isBestValue: true }
-                        : undefined
-                    }
-                  />
-                );
-              })}
-            </div>
-          )}
-
-          {/* Error Message */}
-          {error && (
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
-              <Text className="text-red-600 dark:text-red-400">{error}</Text>
-            </div>
-          )}
-
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            {onDismiss && (
-              <Button
-                variant="outline"
+        }
+        primaryAction={{
+          label: isPurchasing ? t('common.loading') : t('subscription.subscribe'),
+          onClick: handlePurchase,
+          disabled: !selectedProductId || isPurchasing || isLoading,
+          loading: isPurchasing,
+        }}
+        secondaryAction={{
+          label: t('subscription.restorePurchase'),
+          onClick: handleRestore,
+          disabled: isPurchasing || isLoading,
+        }}
+        error={error}
+        footerContent={
+          onDismiss ? (
+            <div className="mt-4">
+              <button
                 onClick={onDismiss}
                 disabled={isPurchasing}
-                className="sm:flex-shrink-0"
+                className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
               >
                 {t('common.cancel')}
-              </Button>
-            )}
+              </button>
+            </div>
+          ) : undefined
+        }
+      >
+        {products.map(product => {
+          const isBestValue = isBestValuePlan(product);
+          return (
+            <SubscriptionTile
+              key={product.identifier}
+              id={product.identifier}
+              title={product.title}
+              price={product.priceString}
+              periodLabel={getPeriodLabel(product.period, t)}
+              features={features}
+              isSelected={selectedProductId === product.identifier}
+              onSelect={() => setUserSelectedProductId(product.identifier)}
+              isBestValue={isBestValue}
+              topBadge={
+                isBestValue
+                  ? { text: t('subscription.bestValue'), color: 'purple' }
+                  : undefined
+              }
+              discountBadge={
+                isBestValue
+                  ? { text: t('subscription.savePercent', { percent: '50' }), isBestValue: true }
+                  : undefined
+              }
+            />
+          );
+        })}
+      </SubscriptionLayout>
 
-            <Button
-              variant="outline"
-              onClick={handleRestore}
-              disabled={isPurchasing || isLoading}
-              className="sm:flex-shrink-0"
-            >
-              {t('subscription.restorePurchase')}
-            </Button>
-
-            <Button
-              onClick={handlePurchase}
-              disabled={!selectedProductId || isPurchasing || isLoading}
-              className="flex-1"
-            >
-              {isPurchasing ? t('common.loading') : t('subscription.subscribe')}
-            </Button>
-          </div>
-
-          {/* Terms */}
-          <Text size="xs" color="muted" className="text-center mt-4">
-            {t('subscription.terms')}
-          </Text>
-        </CardContent>
-      </Card>
+      {/* Terms */}
+      <Text size="xs" color="muted" className="text-center mt-4">
+        {t('subscription.terms')}
+      </Text>
     </div>
   );
 };
