@@ -108,7 +108,7 @@ function createNetworkClientAdapter(): NetworkClient {
  */
 export function useSudojoClient() {
   const networkClient = useMemo(() => createNetworkClientAdapter(), []);
-  const { user } = useAuthStatus();
+  const { user, loading } = useAuthStatus();
   const [auth, setAuth] = useState<SudojoAuth>({ accessToken: '' });
 
   // Get Firebase ID token when user changes
@@ -116,11 +116,15 @@ export function useSudojoClient() {
     let isMounted = true;
 
     const fetchToken = async () => {
+      // Wait for auth to be ready
+      if (loading) return;
+
       // Use Firebase auth directly to get the current user's ID token
       const currentUser = firebaseAuth?.currentUser;
       if (currentUser) {
         try {
-          const token = await currentUser.getIdToken();
+          // Force refresh to ensure we have a valid token
+          const token = await currentUser.getIdToken(true);
           if (isMounted) {
             setAuth({ accessToken: token });
           }
@@ -142,7 +146,7 @@ export function useSudojoClient() {
     return () => {
       isMounted = false;
     };
-  }, [user]);
+  }, [user, loading]);
 
   return {
     networkClient,

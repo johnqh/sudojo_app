@@ -33,49 +33,16 @@ function getTechniqueIcon(title: string): React.ComponentType<{ className?: stri
   return techniqueIconCache.get(title)!;
 }
 
-type HtmlContentState = {
-  contentMap: Map<string, string>;
-  loadingUrl: string | null;
-  error: Error | null;
-};
+// Simple HTML content fetcher - derives state from fetch results, no sync setState
+type FetchResult = { content: string; error?: undefined } | { content?: undefined; error: Error };
 
-type HtmlContentAction =
-  | { type: 'START_LOADING'; url: string }
-  | { type: 'LOAD_SUCCESS'; url: string; content: string }
-  | { type: 'LOAD_ERROR'; error: Error };
-
-function htmlContentReducer(state: HtmlContentState, action: HtmlContentAction): HtmlContentState {
-  switch (action.type) {
-    case 'START_LOADING':
-      return { ...state, loadingUrl: action.url, error: null };
-    case 'LOAD_SUCCESS': {
-      const newMap = new Map(state.contentMap);
-      newMap.set(action.url, action.content);
-      return { contentMap: newMap, loadingUrl: null, error: null };
-    }
-    case 'LOAD_ERROR':
-      return { ...state, loadingUrl: null, error: action.error };
-    default:
-      return state;
-  }
-}
-
-// Custom hook to fetch and parse HTML content
 function useHtmlContent(url: string | null) {
-  const [state, dispatch] = React.useReducer(htmlContentReducer, {
-    contentMap: new Map(),
-    loadingUrl: null,
-    error: null,
-  });
-
-  const { contentMap, loadingUrl, error } = state;
-  const isCached = url ? contentMap.has(url) : false;
-  const shouldFetch = url && !isCached && loadingUrl !== url;
+  const [results, setResults] = useState<Record<string, FetchResult>>({});
 
   useEffect(() => {
-    if (!shouldFetch || !url) return;
-
-    dispatch({ type: 'START_LOADING', url });
+    if (!url || url in results) {
+      return;
+    }
 
     let cancelled = false;
 
@@ -87,25 +54,37 @@ function useHtmlContent(url: string | null) {
         return response.text();
       })
       .then(html => {
-        if (!cancelled) {
-          dispatch({ type: 'LOAD_SUCCESS', url, content: extractBodyContent(html) });
-        }
+        if (cancelled) return;
+        const extractedContent = extractBodyContent(html);
+        setResults(prev => ({ ...prev, [url]: { content: extractedContent } }));
       })
       .catch(err => {
-        if (!cancelled) {
-          dispatch({ type: 'LOAD_ERROR', error: err });
-        }
+        if (cancelled) return;
+        setResults(prev => ({
+          ...prev,
+          [url]: { error: err instanceof Error ? err : new Error(String(err)) },
+        }));
       });
 
     return () => {
       cancelled = true;
     };
-  }, [shouldFetch, url]);
+  }, [url, results]);
 
-  const content = url ? contentMap.get(url) ?? null : null;
-  const isLoading = loadingUrl === url;
-
-  return { content, isLoading, error };
+  // Derive state from results - no synchronous setState needed
+  if (!url) {
+    return { content: null, isLoading: false, error: null };
+  }
+  if (url in results) {
+    const result = results[url];
+    return {
+      content: result.content ?? null,
+      isLoading: false,
+      error: result.error ?? null,
+    };
+  }
+  // Not in results yet = loading
+  return { content: null, isLoading: true, error: null };
 }
 
 export default function TechniquesPage() {
