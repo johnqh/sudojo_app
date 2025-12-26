@@ -3,6 +3,14 @@
     "name": "数独道场",
     "tagline": "一步一技，精通数独"
   },
+  "breadcrumbs": {
+    "home": "首页",
+    "daily": "每日",
+    "enter": "输入",
+    "levels": "级别",
+    "techniques": "技巧",
+    "settings": "设置"
+  },
   "common": {
     "loading": "加载中...",
     "error": "出错了，请重试。",

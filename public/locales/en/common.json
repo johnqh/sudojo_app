@@ -3,6 +3,14 @@
     "name": "Sudojo",
     "tagline": "Master Sudoku, One Technique at a Time"
   },
+  "breadcrumbs": {
+    "home": "Home",
+    "daily": "Daily",
+    "enter": "Enter",
+    "levels": "Levels",
+    "techniques": "Techniques",
+    "settings": "Settings"
+  },
   "common": {
     "loading": "Loading...",
     "error": "Something went wrong. Please try again.",
