@@ -32,6 +32,12 @@ export default function TopBar() {
       active: isActive('/daily'),
     },
     {
+      id: 'enter',
+      label: t('nav.enter'),
+      href: '/enter',
+      active: isActive('/enter'),
+    },
+    {
       id: 'levels',
       label: t('nav.levels'),
       href: '/levels',

@@ -14,6 +14,7 @@ import { lazy, Suspense, useEffect } from 'react';
 
 const HomePage = lazy(() => import('./pages/HomePage'));
 const DailyPage = lazy(() => import('./pages/DailyPage'));
+const EnterPage = lazy(() => import('./pages/EnterPage'));
 const LevelsPage = lazy(() => import('./pages/LevelsPage'));
 const LevelPlayPage = lazy(() => import('./pages/LevelPlayPage'));
 const TechniquesPage = lazy(() => import('./pages/TechniquesPage'));
@@ -116,6 +117,7 @@ function App() {
                 <Route path="/:lang" element={<LanguageValidator />}>
                   <Route index element={<HomePage />} />
                   <Route path="daily" element={<DailyPage />} />
+                  <Route path="enter" element={<EnterPage />} />
                   <Route path="levels" element={<LevelsPage />} />
                   <Route path="levels/:levelId" element={<LevelPlayPage />} />
                   <Route path="techniques" element={<TechniquesPage />} />

@@ -1,0 +1,214 @@
+/**
+ * Hook for managing Sudoku board entry mode state
+ * Allows users to enter given clues for a custom puzzle
+ */
+
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import type { SudokuCell } from '@sudobility/sudojo_lib';
+import { useSolverValidate } from '@sudobility/sudojo_client';
+import { useSolverClient } from './useSolverClient';
+
+export interface ValidatedPuzzle {
+  puzzle: string;
+  solution: string;
+}
+
+export interface UseBoardEntryReturn {
+  /** 81 cells with given values only */
+  cells: SudokuCell[];
+  /** Currently selected cell index */
+  selectedIndex: number | null;
+  /** Whether validation is in progress */
+  isValidating: boolean;
+  /** Validation error message */
+  validationError: string | null;
+  /** Validated puzzle data (puzzle + solution) */
+  validatedPuzzle: ValidatedPuzzle | null;
+  /** Select a cell by index */
+  selectCell: (index: number) => void;
+  /** Set a given value at the selected cell */
+  setGiven: (value: number) => void;
+  /** Erase the selected cell */
+  erase: () => void;
+  /** Get the puzzle as an 81-character string */
+  getPuzzleString: () => string;
+  /** Trigger validation */
+  validate: () => void;
+  /** Reset to empty board */
+  reset: () => void;
+  /** Number of clues entered */
+  clueCount: number;
+}
+
+/**
+ * Create an empty 81-cell board for entry mode
+ */
+function createEmptyBoard(): SudokuCell[] {
+  return Array.from({ length: 81 }, (_, index) => ({
+    index,
+    solution: null,
+    given: null,
+    input: null,
+    pencilmarks: null,
+  }));
+}
+
+/**
+ * Convert cells to 81-character puzzle string
+ * '0' for empty, '1'-'9' for given values
+ */
+function cellsToPuzzleString(cells: SudokuCell[]): string {
+  return cells.map(cell => cell.given?.toString() ?? '0').join('');
+}
+
+/**
+ * Count the number of non-empty cells (clues)
+ */
+function countClues(cells: SudokuCell[]): number {
+  return cells.filter(cell => cell.given !== null).length;
+}
+
+export function useBoardEntry(): UseBoardEntryReturn {
+  const [cells, setCells] = useState<SudokuCell[]>(createEmptyBoard);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const [validatedPuzzle, setValidatedPuzzle] = useState<ValidatedPuzzle | null>(null);
+  const [shouldValidate, setShouldValidate] = useState(false);
+
+  const { networkClient, config } = useSolverClient();
+
+  // Compute puzzle string for validation
+  const puzzleString = useMemo(() => cellsToPuzzleString(cells), [cells]);
+  const clueCount = useMemo(() => countClues(cells), [cells]);
+
+  // Use the solver validate hook
+  const { data: validateData, isLoading: isValidating } = useSolverValidate(
+    networkClient,
+    config,
+    { original: puzzleString },
+    {
+      enabled: shouldValidate && clueCount >= 17,
+      retry: false,
+    }
+  );
+
+  // Track whether we've already processed this validation result
+  const processedDataRef = useRef<typeof validateData | null>(null);
+
+  // Handle validation result
+  useEffect(() => {
+    if (!shouldValidate || isValidating) return;
+    if (!validateData) return;
+    // Avoid re-processing the same result
+    if (processedDataRef.current === validateData) return;
+    processedDataRef.current = validateData;
+
+    if (validateData.success && validateData.data?.board.solution) {
+      // Validation succeeded - state updates are intentional here
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setValidatedPuzzle({
+        puzzle: puzzleString,
+        solution: validateData.data.board.solution,
+      });
+      setValidationError(null);
+    } else if (validateData.error) {
+      // Validation failed with specific error
+      const errorMsg = validateData.error.toLowerCase();
+      if (errorMsg.includes('multiple') || errorMsg.includes('not unique')) {
+        setValidationError('enter.errors.multipleSolutions');
+      } else if (errorMsg.includes('cannot solve') || errorMsg.includes('no solution')) {
+        setValidationError('enter.errors.noSolution');
+      } else {
+        setValidationError('enter.errors.validationFailed');
+      }
+      setValidatedPuzzle(null);
+    }
+    setShouldValidate(false);
+  }, [validateData, shouldValidate, isValidating, puzzleString]);
+
+  // Select a cell
+  const selectCell = useCallback((index: number) => {
+    if (index >= 0 && index < 81) {
+      setSelectedIndex(index);
+    }
+  }, []);
+
+  // Set a given value at the selected cell
+  const setGiven = useCallback((value: number) => {
+    if (selectedIndex === null || value < 1 || value > 9) return;
+
+    setCells(prevCells => {
+      const newCells = [...prevCells];
+      newCells[selectedIndex] = {
+        ...newCells[selectedIndex],
+        given: value,
+      };
+      return newCells;
+    });
+
+    // Clear validation state when board changes
+    setValidationError(null);
+    setValidatedPuzzle(null);
+  }, [selectedIndex]);
+
+  // Erase the selected cell
+  const erase = useCallback(() => {
+    if (selectedIndex === null) return;
+
+    setCells(prevCells => {
+      const newCells = [...prevCells];
+      newCells[selectedIndex] = {
+        ...newCells[selectedIndex],
+        given: null,
+      };
+      return newCells;
+    });
+
+    // Clear validation state when board changes
+    setValidationError(null);
+    setValidatedPuzzle(null);
+  }, [selectedIndex]);
+
+  // Get puzzle string
+  const getPuzzleString = useCallback(() => {
+    return puzzleString;
+  }, [puzzleString]);
+
+  // Trigger validation
+  const validate = useCallback(() => {
+    // Check minimum clues
+    if (clueCount < 17) {
+      setValidationError('enter.errors.notEnoughClues');
+      return;
+    }
+
+    // Clear previous state and trigger validation
+    setValidationError(null);
+    setValidatedPuzzle(null);
+    setShouldValidate(true);
+  }, [clueCount]);
+
+  // Reset to empty board
+  const reset = useCallback(() => {
+    setCells(createEmptyBoard());
+    setSelectedIndex(null);
+    setValidationError(null);
+    setValidatedPuzzle(null);
+    setShouldValidate(false);
+  }, []);
+
+  return {
+    cells,
+    selectedIndex,
+    isValidating,
+    validationError,
+    validatedPuzzle,
+    selectCell,
+    setGiven,
+    erase,
+    getPuzzleString,
+    validate,
+    reset,
+    clueCount,
+  };
+}

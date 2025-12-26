@@ -11,6 +11,7 @@
   },
   "nav": {
     "daily": "每日",
+    "enter": "输入",
     "levels": "级别",
     "techniques": "技巧",
     "settings": "设置"
@@ -129,6 +130,22 @@
   "daily": {
     "title": "每日谜题",
     "subtitle": "每天一个新挑战"
+  },
+  "enter": {
+    "title": "输入自定义谜题",
+    "subtitle": "点击格子输入数字来定义谜题",
+    "instructions": "点击格子并输入数字 (1-9) 设置线索。至少输入 17 个线索，然后验证开始游戏。",
+    "validate": "验证并开始",
+    "validating": "验证中...",
+    "clueCount": "已输入 {{count}} 个线索",
+    "minClues": "（至少 17 个）",
+    "backToEntry": "输入其他谜题",
+    "errors": {
+      "noSolution": "此谜题没有有效解",
+      "multipleSolutions": "此谜题有多个解",
+      "notEnoughClues": "请至少输入 17 个线索",
+      "validationFailed": "无法验证谜题，请重试。"
+    }
   },
   "pwa": {
     "installTitle": "安装数独道场",

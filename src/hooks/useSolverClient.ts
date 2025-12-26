@@ -5,7 +5,7 @@
 import { useMemo } from 'react';
 import { getNetworkService } from '@sudobility/di';
 import type { NetworkClient, NetworkResponse, NetworkRequestOptions, Optional } from '@sudobility/types';
-import type { ClientConfig } from '@sudobility/sudojo_solver_client';
+import type { ClientConfig } from '@sudobility/sudojo_client';
 
 const solverConfig: ClientConfig = {
   baseUrl: import.meta.env.VITE_SOLVER_API_URL || 'https://solver.sudojo.com',

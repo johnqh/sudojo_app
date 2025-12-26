@@ -11,6 +11,7 @@
   },
   "nav": {
     "daily": "Daily",
+    "enter": "Enter",
     "levels": "Levels",
     "techniques": "Techniques",
     "settings": "Settings"
@@ -129,6 +130,22 @@
   "daily": {
     "title": "Daily Puzzle",
     "subtitle": "A new challenge every day"
+  },
+  "enter": {
+    "title": "Enter Your Own Puzzle",
+    "subtitle": "Click cells and enter digits to define a puzzle",
+    "instructions": "Click a cell and enter a digit (1-9) to set a clue. Enter at least 17 clues, then validate to play.",
+    "validate": "Validate & Play",
+    "validating": "Validating...",
+    "clueCount": "{{count}} clues entered",
+    "minClues": "(minimum 17)",
+    "backToEntry": "Enter another puzzle",
+    "errors": {
+      "noSolution": "This puzzle has no valid solution",
+      "multipleSolutions": "This puzzle has multiple solutions",
+      "notEnoughClues": "Please enter at least 17 clues",
+      "validationFailed": "Could not validate puzzle. Please try again."
+    }
   },
   "pwa": {
     "installTitle": "Install Sudojo",

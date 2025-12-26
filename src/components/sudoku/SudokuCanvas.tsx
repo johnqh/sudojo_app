@@ -1,6 +1,6 @@
 import { useRef, useEffect, useCallback, useMemo } from 'react';
 import type { SudokuCell } from '@sudobility/sudojo_lib';
-import type { HintStep } from '@sudobility/sudojo_solver_client';
+import type { SolverHintStep } from '@sudobility/sudojo_client';
 import {
   presentBoard,
   themeColorToCSS,
@@ -15,15 +15,15 @@ interface SudokuCanvasProps {
   selectedIndex: number | null;
   onCellSelect: (index: number) => void;
   showErrors?: boolean;
-  hint?: HintStep | null;
+  hint?: SolverHintStep | null;
   isDarkMode?: boolean;
 }
 
 /**
- * Convert HintStep from solver client to display format
+ * Convert SolverHintStep from solver client to display format
  * The solver client uses string actions, but the presenter expects numbers/arrays
  */
-function convertHintStep(hint: HintStep | null | undefined): Parameters<typeof presentBoard>[0]['hintStep'] {
+function convertHintStep(hint: SolverHintStep | null | undefined): Parameters<typeof presentBoard>[0]['hintStep'] {
   if (!hint) return null;
 
   return {

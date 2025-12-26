@@ -81,6 +81,7 @@ export default defineConfig({
   ],
   build: {
     target: 'esnext',
+    chunkSizeWarningLimit: 700,
     rollupOptions: {
       output: {
         manualChunks: id => {
@@ -111,6 +112,11 @@ export default defineConfig({
           // Firebase
           if (id.includes('node_modules/firebase/')) {
             return 'firebase';
+          }
+
+          // RevenueCat Purchases
+          if (id.includes('node_modules/@revenuecat/')) {
+            return 'revenuecat';
           }
 
           // i18next

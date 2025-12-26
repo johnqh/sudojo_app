@@ -1,9 +1,9 @@
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, Text, Button } from '@sudobility/components';
-import type { HintStep } from '@sudobility/sudojo_solver_client';
+import type { SolverHintStep } from '@sudobility/sudojo_client';
 
 interface HintPanelProps {
-  hint: HintStep;
+  hint: SolverHintStep;
   stepIndex: number;
   totalSteps: number;
   hasNextStep: boolean;
