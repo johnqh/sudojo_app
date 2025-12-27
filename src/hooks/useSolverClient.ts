@@ -2,12 +2,14 @@
  * Hook to provide configured Sudojo Solver Client
  */
 
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { getNetworkService } from '@sudobility/di';
 import type { NetworkClient, NetworkResponse, NetworkRequestOptions, Optional } from '@sudobility/types';
-import type { ClientConfig } from '@sudobility/sudojo_client';
+import type { SudojoConfig, SudojoAuth } from '@sudobility/sudojo_client';
+import { useAuthStatus } from '@sudobility/auth-components';
+import { auth as firebaseAuth } from '@/config/firebase';
 
-const solverConfig: ClientConfig = {
+const solverConfig: SudojoConfig = {
   baseUrl: import.meta.env.VITE_SOLVER_API_URL || 'https://solver.sudojo.com',
 };
 
@@ -102,13 +104,53 @@ function createNetworkClientAdapter(): NetworkClient {
 }
 
 /**
- * Hook to get the network client and config for Solver API hooks
+ * Hook to get the network client, config, and auth for Solver API hooks
  */
 export function useSolverClient() {
   const networkClient = useMemo(() => createNetworkClientAdapter(), []);
+  const { user, loading } = useAuthStatus();
+  const [auth, setAuth] = useState<SudojoAuth>({ accessToken: '' });
+
+  // Get Firebase ID token when user changes
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchToken = async () => {
+      // Wait for auth to be ready
+      if (loading) return;
+
+      // Use Firebase auth directly to get the current user's ID token
+      const currentUser = firebaseAuth?.currentUser;
+      if (currentUser) {
+        try {
+          // Force refresh to ensure we have a valid token
+          const token = await currentUser.getIdToken(true);
+          if (isMounted) {
+            setAuth({ accessToken: token });
+          }
+        } catch (err) {
+          console.error('Failed to get ID token:', err);
+          if (isMounted) {
+            setAuth({ accessToken: '' });
+          }
+        }
+      } else {
+        if (isMounted) {
+          setAuth({ accessToken: '' });
+        }
+      }
+    };
+
+    fetchToken();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user, loading]);
 
   return {
     networkClient,
     config: solverConfig,
+    auth,
   };
 }

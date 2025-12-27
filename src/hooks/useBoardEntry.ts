@@ -75,7 +75,7 @@ export function useBoardEntry(): UseBoardEntryReturn {
   const [validatedPuzzle, setValidatedPuzzle] = useState<ValidatedPuzzle | null>(null);
   const [shouldValidate, setShouldValidate] = useState(false);
 
-  const { networkClient, config } = useSolverClient();
+  const { networkClient, config, auth } = useSolverClient();
 
   // Compute puzzle string for validation
   const puzzleString = useMemo(() => cellsToPuzzleString(cells), [cells]);
@@ -85,6 +85,7 @@ export function useBoardEntry(): UseBoardEntryReturn {
   const { data: validateData, isLoading: isValidating } = useSolverValidate(
     networkClient,
     config,
+    auth,
     { original: puzzleString },
     {
       enabled: shouldValidate && clueCount >= 17,

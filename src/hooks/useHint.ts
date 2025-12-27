@@ -31,11 +31,12 @@ export function useHint({
   pencilmarks,
   autoPencilmarks = false,
 }: UseHintOptions): UseHintResult {
-  const { networkClient, config } = useSolverClient();
+  const { networkClient, config, auth } = useSolverClient();
 
   return useHintBase({
     networkClient,
     config,
+    auth,
     puzzle,
     userInput,
     pencilmarks,

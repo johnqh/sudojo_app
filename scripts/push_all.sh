@@ -21,8 +21,7 @@ BASE_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 # Wait times are used for packages that need CI/CD to complete publishing
 # before dependent packages can fetch the new version from npm.
 PROJECTS=(
-    "../sudojo_types:0"
-    "../sudojo_solver_client:60"
+    "../sudojo_types:60"
     "../sudojo_api:0"
     "../sudojo_client:60"
     "../sudojo_lib:60"
