@@ -6,7 +6,7 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import type { SudokuCell } from '@sudobility/sudojo_lib';
 import { useSolverValidate } from '@sudobility/sudojo_client';
-import { useSolverClient } from './useSolverClient';
+import { useSudojoClient } from './useSudojoClient';
 
 export interface ValidatedPuzzle {
   puzzle: string;
@@ -75,7 +75,7 @@ export function useBoardEntry(): UseBoardEntryReturn {
   const [validatedPuzzle, setValidatedPuzzle] = useState<ValidatedPuzzle | null>(null);
   const [shouldValidate, setShouldValidate] = useState(false);
 
-  const { networkClient, config, auth } = useSolverClient();
+  const { networkClient, config, auth } = useSudojoClient();
 
   // Compute puzzle string for validation
   const puzzleString = useMemo(() => cellsToPuzzleString(cells), [cells]);
