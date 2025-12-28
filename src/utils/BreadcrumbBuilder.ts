@@ -12,8 +12,17 @@ export class BreadcrumbBuilder {
   private dynamicTitles: Map<string, string> = new Map();
   // Listeners for title changes
   private listeners: Set<() => void> = new Set();
+  // Version counter for useSyncExternalStore
+  private version: number = 0;
 
   private constructor() {}
+
+  /**
+   * Get the current version (for useSyncExternalStore)
+   */
+  public getVersion(): number {
+    return this.version;
+  }
 
   public static getInstance(): BreadcrumbBuilder {
     if (!BreadcrumbBuilder.instance) {
@@ -49,6 +58,7 @@ export class BreadcrumbBuilder {
   }
 
   private notifyListeners(): void {
+    this.version++;
     this.listeners.forEach(listener => listener());
   }
 

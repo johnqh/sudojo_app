@@ -11,6 +11,8 @@ import ProgressPie from './ProgressPie';
 import { useHint } from '@/hooks/useHint';
 import { useGameTimer } from '@/hooks/useGameTimer';
 import { useTheme } from '@/hooks/useTheme';
+import { getInfoService } from '@sudobility/di';
+import { InfoType } from '@sudobility/types';
 
 interface SudokuGameProps {
   puzzle: string;
@@ -172,6 +174,13 @@ export default function SudokuGame({ puzzle, solution, showErrors = true, showTi
     autoPencilmarks: play?.settings.autoPencilmarks ?? false,
   });
 
+  // Show hint error via InfoService instead of rendering on page
+  useEffect(() => {
+    if (hintError) {
+      getInfoService().show(t('game.hint.error'), hintError, InfoType.ERROR, 5000);
+    }
+  }, [hintError, t]);
+
   // Handle applying hint to the board
   const handleApplyHint = useCallback(() => {
     const hintData = applyHint();
@@ -212,17 +221,6 @@ export default function SudokuGame({ puzzle, solution, showErrors = true, showTi
                 {t('game.completedTime', { time: formattedTime })}
               </Text>
             )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Hint error */}
-      {hintError && (
-        <Card className="max-w-[500px] mx-auto border-l-4 border-l-red-500">
-          <CardContent className="py-3">
-            <Text size="sm" className="text-red-600 dark:text-red-400">
-              {hintError}
-            </Text>
           </CardContent>
         </Card>
       )}

@@ -26,6 +26,9 @@ import ScreenContainer from './components/layout/ScreenContainer';
 // PWA
 import { InstallPrompt } from './components/pwa';
 
+// Info Banner for displaying notifications/errors
+import { InfoBanner } from '@sudobility/di_web';
+
 // Query client
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -109,6 +112,7 @@ function App() {
                   <SubscriptionProviderWrapper>
                     <BrowserRouter>
                       <InstallPrompt />
+                      <InfoBanner />
                       <Routes>
                 {/* Root redirect */}
                 <Route path="/" element={<LanguageRedirect />} />

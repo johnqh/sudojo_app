@@ -25,6 +25,7 @@
     "@sudobility/components": "^4.0.93",
     "@sudobility/design": "^1.1.15",
     "@sudobility/di": "^1.5.8",
+    "@sudobility/di_web": "^0.1.17",
     "@sudobility/subscription-components": "^1.0.3",
     "@sudobility/sudojo_client": "^0.0.11",
     "@sudobility/sudojo_lib": "^0.0.9",

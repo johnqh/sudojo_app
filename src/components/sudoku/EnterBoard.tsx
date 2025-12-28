@@ -6,6 +6,8 @@ import SudokuGame from './SudokuGame';
 import EntryControls from './EntryControls';
 import { useBoardEntry } from '@/hooks/useBoardEntry';
 import { useTheme } from '@/hooks/useTheme';
+import { getInfoService } from '@sudobility/di';
+import { InfoType } from '@sudobility/types';
 
 interface EnterBoardProps {
   showErrors?: boolean;
@@ -40,6 +42,13 @@ export default function EnterBoard({ showErrors = true }: EnterBoardProps) {
       setMode('play');
     }
   }, [validatedPuzzle]);
+
+  // Show validation error via InfoService instead of rendering on page
+  useEffect(() => {
+    if (validationError) {
+      getInfoService().show(t('enter.validationError'), t(validationError), InfoType.ERROR, 5000);
+    }
+  }, [validationError, t]);
 
   // Handle number input in entry mode
   const handleNumberInput = useCallback(
@@ -157,17 +166,6 @@ export default function EnterBoard({ showErrors = true }: EnterBoardProps) {
           </Text>
         </CardContent>
       </Card>
-
-      {/* Validation error */}
-      {validationError && (
-        <Card className="max-w-[500px] mx-auto border-l-4 border-l-red-500">
-          <CardContent className="py-3">
-            <Text size="sm" className="text-red-600 dark:text-red-400">
-              {t(validationError)}
-            </Text>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Sudoku board */}
       <SudokuCanvas

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Heading, Text, Button } from '@sudobility/components';
@@ -12,6 +12,8 @@ import { useSettings } from '@/context/SettingsContext';
 import { useAuthStatus } from '@sudobility/auth-components';
 import { useSubscriptionContext } from '@sudobility/subscription-components';
 import { SubscriptionPaywall } from '@/components/subscription';
+import { getInfoService } from '@sudobility/di';
+import { InfoType } from '@sudobility/types';
 
 export default function LevelPlayPage() {
   const { levelId } = useParams<{ levelId: string }>();
@@ -42,6 +44,13 @@ export default function LevelPlayPage() {
   });
 
   const level = levelData?.data;
+
+  // Show error via InfoService instead of rendering on page
+  useEffect(() => {
+    if (status === 'error') {
+      getInfoService().show(t('common.error'), t('levels.loadError'), InfoType.ERROR, 5000);
+    }
+  }, [status, t]);
 
   const handleComplete = useCallback((timeSeconds: number) => {
     setCompleted(true);
@@ -100,14 +109,6 @@ export default function LevelPlayPage() {
             message={t('subscription.limitReachedMessage')}
             onSuccess={() => refetch()}
           />
-        </div>
-      )}
-
-      {status === 'error' && (
-        <div className="text-center py-12">
-          <Text color="muted" className="text-red-500">
-            {t('common.error')}
-          </Text>
         </div>
       )}
 

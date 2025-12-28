@@ -88,7 +88,8 @@
       "step": "Step {{current}} of {{total}}",
       "previous": "Previous",
       "next": "Next",
-      "apply": "Apply"
+      "apply": "Apply",
+      "error": "Hint Error"
     },
     "newGame": "New Game",
     "nextPuzzle": "Next Puzzle",
@@ -127,7 +128,8 @@
   "levels": {
     "title": "Levels",
     "level": "Level {{number}}",
-    "empty": "No levels available yet."
+    "empty": "No levels available yet.",
+    "loadError": "Failed to load levels. Please try again."
   },
   "techniques": {
     "title": "Techniques",
@@ -137,7 +139,8 @@
   },
   "daily": {
     "title": "Daily Puzzle",
-    "subtitle": "A new challenge every day"
+    "subtitle": "A new challenge every day",
+    "loadError": "Failed to load daily puzzle. Please try again."
   },
   "enter": {
     "title": "Enter Your Own Puzzle",
@@ -148,6 +151,7 @@
     "clueCount": "{{count}} clues entered",
     "minClues": "(minimum 17)",
     "backToEntry": "Enter another puzzle",
+    "validationError": "Validation Error",
     "errors": {
       "noSolution": "This puzzle has no valid solution",
       "multipleSolutions": "This puzzle has multiple solutions",

@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Heading, Text, Button } from '@sudobility/components';
 import { useDailyGame } from '@sudobility/sudojo_lib';
@@ -9,6 +9,8 @@ import { useSettings } from '@/context/SettingsContext';
 import { useAuthStatus } from '@sudobility/auth-components';
 import { useSubscriptionContext } from '@sudobility/subscription-components';
 import { SubscriptionPaywall } from '@/components/subscription';
+import { getInfoService } from '@sudobility/di';
+import { InfoType } from '@sudobility/types';
 
 export default function DailyPage() {
   const { t } = useTranslation();
@@ -26,6 +28,13 @@ export default function DailyPage() {
   });
 
   const alreadyCompleted = dailyDate ? isCompleted('daily', dailyDate) : false;
+
+  // Show error via InfoService instead of rendering on page
+  useEffect(() => {
+    if (status === 'error') {
+      getInfoService().show(t('common.error'), t('daily.loadError'), InfoType.ERROR, 5000);
+    }
+  }, [status, t]);
 
   const handleComplete = useCallback((timeSeconds: number) => {
     if (dailyDate && !alreadyCompleted) {
@@ -81,14 +90,6 @@ export default function DailyPage() {
             message={t('subscription.limitReachedMessage')}
             onSuccess={() => refetch()}
           />
-        </div>
-      )}
-
-      {status === 'error' && (
-        <div className="text-center py-12">
-          <Text color="muted" className="text-red-500">
-            {t('common.error')}
-          </Text>
         </div>
       )}
 

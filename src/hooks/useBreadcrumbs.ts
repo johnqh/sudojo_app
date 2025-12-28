@@ -15,8 +15,8 @@ export const useBreadcrumbs = () => {
   // Subscribe to dynamic title changes
   const dynamicTitleVersion = useSyncExternalStore(
     (callback) => breadcrumbBuilder.subscribe(callback),
-    () => Date.now(), // Return a new value on each change to trigger re-render
-    () => Date.now()
+    () => breadcrumbBuilder.getVersion(),
+    () => breadcrumbBuilder.getVersion()
   );
 
   // Memoize breadcrumbs with language and dynamic titles as dependencies

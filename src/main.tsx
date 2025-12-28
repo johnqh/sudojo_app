@@ -7,8 +7,10 @@ import './i18n';
 
 // CRITICAL: Initialize DI services BEFORE importing App
 import { initializeStorageService, initializeNetworkService } from '@sudobility/di';
+import { initializeInfoService } from '@sudobility/di_web';
 initializeStorageService();
 initializeNetworkService();
+initializeInfoService();
 
 // Import App AFTER DI initialization
 import App from './App';

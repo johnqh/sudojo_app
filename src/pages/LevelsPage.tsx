@@ -1,14 +1,24 @@
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Heading, Text, Card, CardContent } from '@sudobility/components';
 import { useSudojoLevels } from '@sudobility/sudojo_client';
 import { LocalizedLink } from '@/components/layout/LocalizedLink';
 import { useSudojoClient } from '@/hooks/useSudojoClient';
+import { getInfoService } from '@sudobility/di';
+import { InfoType } from '@sudobility/types';
 
 export default function LevelsPage() {
   const { t } = useTranslation();
   const { networkClient, config, auth } = useSudojoClient();
 
   const { data, isLoading, error } = useSudojoLevels(networkClient, config, auth);
+
+  // Show error via InfoService instead of rendering on page
+  useEffect(() => {
+    if (error) {
+      getInfoService().show(t('common.error'), t('levels.loadError'), InfoType.ERROR, 5000);
+    }
+  }, [error, t]);
 
   const levels = data?.data ?? [];
 
@@ -23,14 +33,6 @@ export default function LevelsPage() {
       {isLoading && (
         <div className="text-center py-12">
           <Text color="muted">{t('common.loading')}</Text>
-        </div>
-      )}
-
-      {error && (
-        <div className="text-center py-12">
-          <Text color="muted" className="text-red-500">
-            {t('common.error')}
-          </Text>
         </div>
       )}
 
