@@ -8,6 +8,11 @@ export interface BreadcrumbPath {
 export class BreadcrumbBuilder {
   private static instance: BreadcrumbBuilder;
 
+  // Dynamic title overrides for paths (e.g., level names instead of UUIDs)
+  private dynamicTitles: Map<string, string> = new Map();
+  // Listeners for title changes
+  private listeners: Set<() => void> = new Set();
+
   private constructor() {}
 
   public static getInstance(): BreadcrumbBuilder {
@@ -15,6 +20,45 @@ export class BreadcrumbBuilder {
       BreadcrumbBuilder.instance = new BreadcrumbBuilder();
     }
     return BreadcrumbBuilder.instance;
+  }
+
+  /**
+   * Set a dynamic title for a specific path
+   */
+  public setDynamicTitle(path: string, title: string): void {
+    const normalizedPath = this.normalizePath(path);
+    this.dynamicTitles.set(normalizedPath, title);
+    this.notifyListeners();
+  }
+
+  /**
+   * Clear a dynamic title for a specific path
+   */
+  public clearDynamicTitle(path: string): void {
+    const normalizedPath = this.normalizePath(path);
+    this.dynamicTitles.delete(normalizedPath);
+    this.notifyListeners();
+  }
+
+  /**
+   * Subscribe to title changes
+   */
+  public subscribe(listener: () => void): () => void {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  }
+
+  private notifyListeners(): void {
+    this.listeners.forEach(listener => listener());
+  }
+
+  private normalizePath(path: string): string {
+    const pathWithoutLang = removeLanguageFromPath(path);
+    let normalized = pathWithoutLang;
+    if (normalized !== '/' && normalized.endsWith('/')) {
+      normalized = normalized.replace(/\/+$/, '');
+    }
+    return normalized.toLowerCase();
   }
 
   /**
@@ -35,15 +79,15 @@ export class BreadcrumbBuilder {
    * Get localized breadcrumb title for a path
    */
   public localizedBreadcrumb(path: string, t: (key: string) => string): string {
-    const pathWithoutLang = removeLanguageFromPath(path);
+    const normalizedPath = this.normalizePath(path);
 
-    let normalizedPath = pathWithoutLang;
-    if (normalizedPath !== '/' && normalizedPath.endsWith('/')) {
-      normalizedPath = normalizedPath.replace(/\/+$/, '');
+    // Check for dynamic title override first
+    const dynamicTitle = this.dynamicTitles.get(normalizedPath);
+    if (dynamicTitle) {
+      return dynamicTitle;
     }
-    normalizedPath = normalizedPath.toLowerCase();
 
-    // Check for exact match first
+    // Check for exact match in translation keys
     const translationKey = this.pathTranslationKeys[normalizedPath];
     if (translationKey) {
       return t(translationKey);

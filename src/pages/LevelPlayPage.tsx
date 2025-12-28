@@ -6,6 +6,7 @@ import { useSudojoLevel } from '@sudobility/sudojo_client';
 import { useLevelGame } from '@sudobility/sudojo_lib';
 import { SudokuGame } from '@/components/sudoku';
 import { useSudojoClient } from '@/hooks/useSudojoClient';
+import { useBreadcrumbTitle } from '@/hooks/useBreadcrumbTitle';
 import { useProgress } from '@/context/ProgressContext';
 import { useSettings } from '@/context/SettingsContext';
 import { useAuthStatus } from '@sudobility/auth-components';
@@ -26,6 +27,9 @@ export default function LevelPlayPage() {
   const { data: levelData } = useSudojoLevel(networkClient, config, auth, levelId ?? '', {
     enabled: !!levelId,
   });
+
+  // Set breadcrumb title to level name
+  useBreadcrumbTitle(levelData?.data?.title);
 
   // Fetch a random board for this level with auth/subscription handling
   const { board, status, refetch, nextPuzzle } = useLevelGame({
