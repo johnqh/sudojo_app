@@ -102,46 +102,48 @@ function LanguageHomeRedirect() {
 
 function App() {
   return (
-    <HelmetProvider>
-      <I18nextProvider i18n={i18n}>
-        <ThemeProvider>
-          <SettingsProvider>
-            <ProgressProvider>
-              <QueryClientProvider client={queryClient}>
-                <AuthProviderWrapper>
-                  <SubscriptionProviderWrapper>
-                    <BrowserRouter>
-                      <InstallPrompt />
-                      <InfoBanner />
-                      <Routes>
-                {/* Root redirect */}
-                <Route path="/" element={<LanguageRedirect />} />
+    <>
+      <InfoBanner />
+      <HelmetProvider>
+        <I18nextProvider i18n={i18n}>
+          <ThemeProvider>
+            <SettingsProvider>
+              <ProgressProvider>
+                <QueryClientProvider client={queryClient}>
+                  <AuthProviderWrapper>
+                    <SubscriptionProviderWrapper>
+                      <BrowserRouter>
+                        <InstallPrompt />
+                        <Routes>
+                          {/* Root redirect */}
+                          <Route path="/" element={<LanguageRedirect />} />
 
-                {/* Language-prefixed routes */}
-                <Route path="/:lang" element={<LanguageValidator />}>
-                  <Route index element={<HomePage />} />
-                  <Route path="daily" element={<DailyPage />} />
-                  <Route path="enter" element={<EnterPage />} />
-                  <Route path="levels" element={<LevelsPage />} />
-                  <Route path="levels/:levelId" element={<LevelPlayPage />} />
-                  <Route path="techniques" element={<TechniquesPage />} />
-                  <Route path="techniques/:techniqueId" element={<TechniquesPage />} />
-                  <Route path="settings" element={<SettingsPage />} />
-                  <Route path="*" element={<LanguageHomeRedirect />} />
-                </Route>
+                          {/* Language-prefixed routes */}
+                          <Route path="/:lang" element={<LanguageValidator />}>
+                            <Route index element={<HomePage />} />
+                            <Route path="daily" element={<DailyPage />} />
+                            <Route path="enter" element={<EnterPage />} />
+                            <Route path="levels" element={<LevelsPage />} />
+                            <Route path="levels/:levelId" element={<LevelPlayPage />} />
+                            <Route path="techniques" element={<TechniquesPage />} />
+                            <Route path="techniques/:techniqueId" element={<TechniquesPage />} />
+                            <Route path="settings" element={<SettingsPage />} />
+                            <Route path="*" element={<LanguageHomeRedirect />} />
+                          </Route>
 
-                {/* Catch-all */}
-                <Route path="*" element={<LanguageRedirect />} />
-                    </Routes>
-                    </BrowserRouter>
-                  </SubscriptionProviderWrapper>
-                </AuthProviderWrapper>
-              </QueryClientProvider>
-            </ProgressProvider>
-          </SettingsProvider>
-        </ThemeProvider>
-      </I18nextProvider>
-    </HelmetProvider>
+                          {/* Catch-all */}
+                          <Route path="*" element={<LanguageRedirect />} />
+                        </Routes>
+                      </BrowserRouter>
+                    </SubscriptionProviderWrapper>
+                  </AuthProviderWrapper>
+                </QueryClientProvider>
+              </ProgressProvider>
+            </SettingsProvider>
+          </ThemeProvider>
+        </I18nextProvider>
+      </HelmetProvider>
+    </>
   );
 }
 
