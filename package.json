@@ -1,7 +1,7 @@
 {
   "name": "sudojo_app",
   "private": true,
-  "version": "0.0.12",
+  "version": "0.0.13",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -22,7 +22,7 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@revenuecat/purchases-js": "^1.22.0",
     "@sudobility/auth-components": "^1.0.0",
-    "@sudobility/components": "^4.0.97",
+    "@sudobility/components": "^4.0.101",
     "@sudobility/design": "^1.1.15",
     "@sudobility/di": "^1.5.8",
     "@sudobility/di_web": "^0.1.17",
