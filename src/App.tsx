@@ -19,6 +19,7 @@ const LevelsPage = lazy(() => import('./pages/LevelsPage'));
 const LevelPlayPage = lazy(() => import('./pages/LevelPlayPage'));
 const TechniquesPage = lazy(() => import('./pages/TechniquesPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
+const AdminPage = lazy(() => import('./pages/AdminPage'));
 const TechniqueImageGenerator = lazy(() => import('./pages/TechniqueImageGenerator'));
 
 // Layout
@@ -138,6 +139,8 @@ function App() {
                             <Route path="play/:levelId" element={<LevelPlayPage />} />
                             <Route path="techniques" element={<TechniquesPage />} />
                             <Route path="techniques/:techniqueId" element={<TechniquesPage />} />
+                            <Route path="admin" element={<AdminPage />} />
+                            <Route path="admin/:section" element={<AdminPage />} />
                             <Route path="settings" element={<SettingsPage />} />
                             <Route path="*" element={<LanguageHomeRedirect />} />
                           </Route>

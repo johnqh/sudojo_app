@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import {
@@ -10,46 +11,67 @@ import {
   TopbarActions,
   type TopbarNavItem,
 } from '@sudobility/components';
-import { AuthModal, AuthAction } from '@sudobility/auth-components';
+import { AuthModal, AuthAction, useAuthStatus } from '@sudobility/auth-components';
 import { useLocalizedNavigate } from '@/hooks/useLocalizedNavigate';
 import { LanguageSelector } from './LanguageSelector';
 import { LocalizedLink } from './LocalizedLink';
+
+const DEV_USER_EMAIL = 'johnqh@yahoo.com';
 
 export default function TopBar() {
   const { t } = useTranslation();
   const { navigate, currentLanguage } = useLocalizedNavigate();
   const location = useLocation();
+  const { user } = useAuthStatus();
+
+  // Check if current user is dev user
+  const isDevUser = user?.email === DEV_USER_EMAIL;
 
   // Check if current route is active
   const currentPath = location.pathname.replace(`/${currentLanguage}`, '');
   const isActive = (path: string) => currentPath === path || currentPath.startsWith(`${path}/`);
 
-  const navItems: TopbarNavItem[] = [
-    {
-      id: 'daily',
-      label: t('nav.daily'),
-      href: '/daily',
-      active: isActive('/daily'),
-    },
-    {
-      id: 'play',
-      label: t('nav.play'),
-      href: '/play',
-      active: isActive('/play'),
-    },
-    {
-      id: 'techniques',
-      label: t('nav.techniques'),
-      href: '/techniques',
-      active: isActive('/techniques'),
-    },
-    {
+  const navItems: TopbarNavItem[] = useMemo(() => {
+    const items: TopbarNavItem[] = [
+      {
+        id: 'daily',
+        label: t('nav.daily'),
+        href: '/daily',
+        active: isActive('/daily'),
+      },
+      {
+        id: 'play',
+        label: t('nav.play'),
+        href: '/play',
+        active: isActive('/play'),
+      },
+      {
+        id: 'techniques',
+        label: t('nav.techniques'),
+        href: '/techniques',
+        active: isActive('/techniques'),
+      },
+    ];
+
+    // Add Admin menu for dev user (after Techniques, before Settings)
+    if (isDevUser) {
+      items.push({
+        id: 'admin',
+        label: t('nav.admin', 'Admin'),
+        href: '/admin',
+        active: isActive('/admin'),
+      });
+    }
+
+    items.push({
       id: 'settings',
       label: t('nav.settings'),
       href: '/settings',
       active: isActive('/settings'),
-    },
-  ];
+    });
+
+    return items;
+  }, [t, isDevUser, currentPath]);
 
   // Custom link wrapper for localized navigation
   function LinkWrapper({
