@@ -51,6 +51,13 @@ export default function AdminPage() {
   const [progress, setProgress] = useState<string>('');
   const abortRef = useRef(false);
 
+  // Techniques section state
+  const [totalBoards, setTotalBoards] = useState<number>(0);
+  const [boardsWithoutTechniques, setBoardsWithoutTechniques] = useState<number>(0);
+  const [isTechniquesLoading, setIsTechniquesLoading] = useState(false);
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [extractProgress, setExtractProgress] = useState<string>('');
+
   // Processing state
   const [currentBoard, setCurrentBoard] = useState<Board | null>(null);
   const [boards, setBoards] = useState<Board[]>([]);
@@ -84,7 +91,7 @@ export default function AdminPage() {
     console.log('[AdminPage] onHintReceived:', {
       hintTitle: data.hint.title,
       hintTechniqueId,
-      targetTechnique,
+      targetTechniqueId: targetTechnique,
       targetTechniqueName: targetTechnique ? getTechniqueName(targetTechnique) : '',
       match: hintTechniqueId === targetTechnique,
       savedForBoard,
@@ -191,6 +198,36 @@ export default function AdminPage() {
     }
   }, [section, fetchCounts]);
 
+  // Fetch board counts for techniques section
+  const fetchBoardCounts = useCallback(async () => {
+    setIsTechniquesLoading(true);
+    try {
+      const response = await fetch(`${config.baseUrl}/api/v1/boards/counts`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data) {
+          setTotalBoards(data.data.total);
+          setBoardsWithoutTechniques(data.data.withoutTechniques);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch board counts:', error);
+    } finally {
+      setIsTechniquesLoading(false);
+    }
+  }, [config.baseUrl]);
+
+  useEffect(() => {
+    if (section === 'techniques') {
+      fetchBoardCounts();
+    }
+  }, [section, fetchBoardCounts]);
+
+  // Extract techniques handler
+  const handleExtractTechniques = useCallback(() => {
+    setExtractProgress('Extract techniques functionality coming soon...');
+  }, []);
+
   const handleSectionSelect = useCallback(
     (sectionId: string) => {
       setMobileViewOverride('content');
@@ -204,23 +241,53 @@ export default function AdminPage() {
     navigate('/admin');
   }, [navigate]);
 
-  // Fetch boards with a specific technique
+  // Fetch boards with a specific technique (paginating until we find enough)
   const fetchBoardsWithTechnique = useCallback(
-    async (techniqueId: TechniqueId, limit: number): Promise<Board[]> => {
-      const bit = techniqueToBit(techniqueId);
+    async (techniqueId: TechniqueId, targetCount: number): Promise<Board[]> => {
+      // Bit position IS the technique ID (bit 0 is unused)
+      const bit = 1 << techniqueId;
       const techniqueName = getTechniqueName(techniqueId);
-      console.log('[AdminPage] Fetching boards for:', { techniqueId, techniqueName, bit: bit.toString(16) });
+      console.log('[AdminPage] Fetching boards for:', { techniqueId, techniqueName, bit: bit.toString(16), targetCount });
+
+      const matchingBoards: Board[] = [];
+      let offset = 0;
+      const batchSize = 100;
+      const maxOffset = 10000; // Safety limit
+
       try {
-        const response = await fetch(
-          `${config.baseUrl}/api/v1/boards?technique_bit=${bit}&limit=${limit}`
-        );
-        if (!response.ok) return [];
-        const result = await response.json();
-        if (!result.success || !result.data) return [];
-        console.log('[AdminPage] Fetched boards:', result.data.length);
-        return result.data as Board[];
-      } catch {
-        return [];
+        while (matchingBoards.length < targetCount && offset < maxOffset) {
+          console.log('[AdminPage] Fetching batch:', { offset, batchSize, foundSoFar: matchingBoards.length });
+          const response = await fetch(
+            `${config.baseUrl}/api/v1/boards?limit=${batchSize}&offset=${offset}`
+          );
+          if (!response.ok) break;
+          const result = await response.json();
+          if (!result.success || !result.data || result.data.length === 0) break;
+
+          const boards = result.data as Board[];
+
+          // Filter client-side for boards with the target technique bit set
+          for (const board of boards) {
+            if (board.techniques && (board.techniques & bit) !== 0) {
+              matchingBoards.push(board);
+              if (matchingBoards.length >= targetCount) break;
+            }
+          }
+
+          console.log('[AdminPage] Batch result:', {
+            fetched: boards.length,
+            matchingInBatch: boards.filter(b => b.techniques && (b.techniques & bit) !== 0).length,
+            totalMatching: matchingBoards.length
+          });
+
+          offset += batchSize;
+        }
+
+        console.log('[AdminPage] Fetched boards with technique:', { techniqueId, techniqueName, count: matchingBoards.length });
+        return matchingBoards;
+      } catch (err) {
+        console.error('[AdminPage] Error fetching boards:', err);
+        return matchingBoards;
       }
     },
     [config.baseUrl]
@@ -347,7 +414,7 @@ export default function AdminPage() {
 
       console.log('[AdminPage] Hint received:', {
         hintTitle: hint.title,
-        targetTechnique,
+        targetTechniqueId: targetTechnique,
         targetTechniqueName,
         match: hint.title === targetTechniqueName,
         savedForBoard,
@@ -440,6 +507,7 @@ export default function AdminPage() {
 
   // Admin sections
   const sections = [
+    { id: 'techniques', label: 'Techniques', description: 'Technique management' },
     { id: 'examples', label: 'Examples', description: 'Technique example management' },
   ];
 
@@ -457,7 +525,49 @@ export default function AdminPage() {
     </div>
   );
 
-  const detailContent = section === 'examples' ? (
+  const detailContent = section === 'techniques' ? (
+    <div className="space-y-6">
+      {/* Board counts */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/50">
+          <Text>Total Boards</Text>
+          <Text weight="medium">
+            {isTechniquesLoading ? '...' : totalBoards.toLocaleString()}
+          </Text>
+        </div>
+        <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/50">
+          <Text>Boards without Techniques</Text>
+          <Text weight="medium" color={boardsWithoutTechniques > 0 ? 'warning' : 'success'}>
+            {isTechniquesLoading ? '...' : boardsWithoutTechniques.toLocaleString()}
+          </Text>
+        </div>
+      </div>
+
+      {/* Progress message */}
+      {extractProgress && (
+        <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+          <Text size="sm">{extractProgress}</Text>
+        </div>
+      )}
+
+      {/* Extract Techniques CTA */}
+      <div className="pt-4 border-t">
+        {isExtracting ? (
+          <Button variant="destructive" className="w-full" onClick={() => setIsExtracting(false)}>
+            Stop
+          </Button>
+        ) : (
+          <Button
+            className="w-full"
+            disabled={isTechniquesLoading || boardsWithoutTechniques === 0}
+            onClick={handleExtractTechniques}
+          >
+            Extract Techniques
+          </Button>
+        )}
+      </div>
+    </div>
+  ) : section === 'examples' ? (
     <div className="space-y-6">
       {/* Summary */}
       <div className="flex items-center justify-between">
@@ -519,7 +629,7 @@ export default function AdminPage() {
         masterTitle={t('nav.admin', 'Admin')}
         masterContent={masterContent}
         detailContent={detailContent}
-        detailTitle={section === 'examples' ? 'Examples' : undefined}
+        detailTitle={section === 'techniques' ? 'Techniques' : section === 'examples' ? 'Examples' : undefined}
         mobileView={mobileView}
         onBackToNavigation={handleBackToNavigation}
         masterWidth={280}
