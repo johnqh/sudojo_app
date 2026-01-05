@@ -19,6 +19,7 @@ const LevelsPage = lazy(() => import('./pages/LevelsPage'));
 const LevelPlayPage = lazy(() => import('./pages/LevelPlayPage'));
 const TechniquesPage = lazy(() => import('./pages/TechniquesPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
+const TechniqueImageGenerator = lazy(() => import('./pages/TechniqueImageGenerator'));
 
 // Layout
 import ScreenContainer from './components/layout/ScreenContainer';
@@ -117,6 +118,16 @@ function App() {
                         <Routes>
                           {/* Root redirect */}
                           <Route path="/" element={<LanguageRedirect />} />
+
+                          {/* Dev routes (no auth/layout) */}
+                          <Route
+                            path="/dev/technique-images"
+                            element={
+                              <Suspense fallback={<LoadingFallback />}>
+                                <TechniqueImageGenerator />
+                              </Suspense>
+                            }
+                          />
 
                           {/* Language-prefixed routes */}
                           <Route path="/:lang" element={<LanguageValidator />}>
