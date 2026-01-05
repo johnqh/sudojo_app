@@ -88,6 +88,9 @@ export default function AdminPage() {
     const currentCount = localCountsRef.current[targetTechnique] || 0;
     if (currentCount >= TARGET_PER_TECHNIQUE) return;
 
+    // Mark as saved immediately to stop processing this board
+    setSavedForBoard(true);
+
     // Get current board state (pre-hint) to save
     const boardString = play?.board
       ? play.board.cells.map(c => {
@@ -100,7 +103,7 @@ export default function AdminPage() {
 
     setProgress(`Saving ${data.hint.title} example...`);
 
-    // Save the example
+    // Save the example (async, but we've already stopped processing)
     fetch(`${config.baseUrl}/api/v1/examples`, {
       method: 'POST',
       headers: {
@@ -122,7 +125,6 @@ export default function AdminPage() {
         localCountsRef.current[targetTechnique] = newCount;
         setCounts({ ...localCountsRef.current });
         setProgress(`Saved ${data.hint.title} (${newCount}/${TARGET_PER_TECHNIQUE})`);
-        setSavedForBoard(true);
       }
     }).catch(err => {
       console.error('Failed to save example:', err);
