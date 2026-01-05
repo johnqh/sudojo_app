@@ -79,10 +79,27 @@ export default function AdminPage() {
 
   // Hint received callback - this intercepts hints before state updates
   const handleHintReceived = useCallback((data: HintReceivedData) => {
-    if (!targetTechnique || !currentBoard || savedForBoard) return;
-
     const hintTechniqueId = TECHNIQUE_TITLE_TO_ID[data.hint.title];
-    if (hintTechniqueId !== targetTechnique) return;
+
+    console.log('[AdminPage] onHintReceived:', {
+      hintTitle: data.hint.title,
+      hintTechniqueId,
+      targetTechnique,
+      targetTechniqueName: targetTechnique ? getTechniqueName(targetTechnique) : '',
+      match: hintTechniqueId === targetTechnique,
+      savedForBoard,
+      currentBoard: currentBoard?.uuid?.slice(0, 8),
+    });
+
+    if (!targetTechnique || !currentBoard || savedForBoard) {
+      console.log('[AdminPage] onHintReceived: skipping - no target/board or already saved');
+      return;
+    }
+
+    if (hintTechniqueId !== targetTechnique) {
+      console.log('[AdminPage] onHintReceived: technique does not match, continuing');
+      return;
+    }
 
     // Check if we still need examples for this technique
     const currentCount = localCountsRef.current[targetTechnique] || 0;
@@ -324,9 +341,20 @@ export default function AdminPage() {
       // Compare strings directly - hint.title is a string like "ALS Chain"
       const targetTechniqueName = targetTechnique ? getTechniqueName(targetTechnique) : '';
 
+      console.log('[AdminPage] Hint received:', {
+        hintTitle: hint.title,
+        targetTechnique,
+        targetTechniqueName,
+        match: hint.title === targetTechniqueName,
+        savedForBoard,
+        boardIndex,
+        iterationCount: iterationCountRef.current,
+      });
+
       // If this hint matches target technique, don't apply - move to next board
       // (onHintReceived should have already set savedForBoard, but double-check here)
       if (hint.title === targetTechniqueName) {
+        console.log('[AdminPage] MATCH! Moving to next board');
         // Move to next board without applying
         setBoardIndex(prev => prev + 1);
         setCurrentBoard(null);
