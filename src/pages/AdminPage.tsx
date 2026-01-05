@@ -321,11 +321,12 @@ export default function AdminPage() {
 
     // If we have a hint, check technique and apply if not target
     if (hint) {
-      const hintTechniqueId = TECHNIQUE_TITLE_TO_ID[hint.title];
+      // Compare strings directly - hint.title is a string like "ALS-Chain"
+      const targetTechniqueName = targetTechnique ? getTechniqueName(targetTechnique) : '';
 
       // If this hint matches target technique, don't apply - move to next board
       // (onHintReceived should have already set savedForBoard, but double-check here)
-      if (hintTechniqueId === targetTechnique) {
+      if (hint.title === targetTechniqueName) {
         // Move to next board without applying
         setBoardIndex(prev => prev + 1);
         setCurrentBoard(null);
