@@ -208,6 +208,8 @@ export default function AdminPage() {
   const fetchBoardsWithTechnique = useCallback(
     async (techniqueId: TechniqueId, limit: number): Promise<Board[]> => {
       const bit = techniqueToBit(techniqueId);
+      const techniqueName = getTechniqueName(techniqueId);
+      console.log('[AdminPage] Fetching boards for:', { techniqueId, techniqueName, bit: bit.toString(16) });
       try {
         const response = await fetch(
           `${config.baseUrl}/api/v1/boards?technique_bit=${bit}&limit=${limit}`
@@ -215,6 +217,7 @@ export default function AdminPage() {
         if (!response.ok) return [];
         const result = await response.json();
         if (!result.success || !result.data) return [];
+        console.log('[AdminPage] Fetched boards:', result.data.length);
         return result.data as Board[];
       } catch {
         return [];
@@ -249,6 +252,7 @@ export default function AdminPage() {
       }
 
       const nextTechnique = TECHNIQUE_ORDER[nextIndex]!;
+      console.log('[AdminPage] Moving to next technique:', { nextTechnique, name: getTechniqueName(nextTechnique) });
       setTargetTechnique(nextTechnique);
       setBoards([]);
       setBoardIndex(0);
@@ -413,6 +417,8 @@ export default function AdminPage() {
     }
 
     const techniqueId = TECHNIQUE_ORDER[startIndex]!;
+    console.log('[AdminPage] Starting with technique:', { techniqueId, name: getTechniqueName(techniqueId), startIndex });
+    console.log('[AdminPage] TECHNIQUE_ORDER:', TECHNIQUE_ORDER.map(id => ({ id, name: getTechniqueName(id) })));
     setTargetTechnique(techniqueId);
     setBoards([]);
     setBoardIndex(0);
