@@ -321,7 +321,7 @@ export default function AdminPage() {
 
     // If we have a hint, check technique and apply if not target
     if (hint) {
-      // Compare strings directly - hint.title is a string like "ALS-Chain"
+      // Compare strings directly - hint.title is a string like "ALS Chain"
       const targetTechniqueName = targetTechnique ? getTechniqueName(targetTechnique) : '';
 
       // If this hint matches target technique, don't apply - move to next board
