@@ -319,9 +319,23 @@ export default function AdminPage() {
       return;
     }
 
-    // If we have a hint, apply it and then wait before next request
+    // If we have a hint, check technique and apply if not target
     if (hint) {
-      setIsProcessingHint(true); // Block re-entry during apply+wait
+      const hintTechniqueId = TECHNIQUE_TITLE_TO_ID[hint.title];
+
+      // If this hint matches target technique, don't apply - move to next board
+      // (onHintReceived should have already set savedForBoard, but double-check here)
+      if (hintTechniqueId === targetTechnique) {
+        // Move to next board without applying
+        setBoardIndex(prev => prev + 1);
+        setCurrentBoard(null);
+        setSavedForBoard(false);
+        clearHint();
+        return;
+      }
+
+      // Not the target technique - apply hint and continue
+      setIsProcessingHint(true);
       const hintData = applyHint();
       if (hintData) {
         applyHintData(hintData.user, hintData.pencilmarks, hintData.autoPencilmarks);
@@ -341,7 +355,7 @@ export default function AdminPage() {
       setProgress(`Getting hint for board ${currentBoard.uuid.slice(0, 8)}...`);
       getHint(); // This sets isHintLoading=true, then isHintLoading=false when done
     }
-  }, [isCreating, currentBoard, play, hint, isHintLoading, hintError, savedForBoard, isCompleted, isProcessingHint, applyHint, applyHintData, getHint, clearHint]);
+  }, [isCreating, currentBoard, play, hint, isHintLoading, hintError, savedForBoard, isCompleted, isProcessingHint, targetTechnique, applyHint, applyHintData, getHint, clearHint]);
 
   // Start processing
   const handleCreateExamples = useCallback(() => {
