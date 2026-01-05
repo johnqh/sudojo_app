@@ -59,7 +59,7 @@ export default function AdminPage() {
   const [savedForBoard, setSavedForBoard] = useState(false);
   const localCountsRef = useRef<Record<number, number>>({});
   const iterationCountRef = useRef(0);
-  const isProcessingHintRef = useRef(false); // Prevent concurrent hint requests
+  const [isProcessingHint, setIsProcessingHint] = useState(false); // Prevent concurrent hint requests
   const MAX_ITERATIONS = 200;
 
   // Use the game hooks
@@ -290,7 +290,7 @@ export default function AdminPage() {
       setCurrentBoard(board);
       setSavedForBoard(false);
       iterationCountRef.current = 0;
-      isProcessingHintRef.current = false; // Reset for new board
+      setIsProcessingHint(false); // Reset for new board
       setProgress(`Loading board ${boardIndex + 1}/${boards.length}...`);
       loadBoard(board.board, board.solution, { scramble: false });
       clearHint();
@@ -298,37 +298,36 @@ export default function AdminPage() {
     }
   }, [isCreating, targetTechnique, boards, boardIndex, currentBoard, fetchBoardsWithTechnique, loadBoard, clearHint]);
 
-  // Effect to handle hint fetching and applying - uses ref to prevent concurrent requests
+  // Effect to handle hint fetching and applying - uses state to prevent concurrent requests
   useEffect(() => {
     if (!isCreating || abortRef.current) return;
     if (!currentBoard || !play) return;
     if (isHintLoading) return;
-    if (isProcessingHintRef.current) return; // Already processing
+    if (isProcessingHint) return; // Already processing
 
     // Check if we should move to next board
     if (savedForBoard || isCompleted || iterationCountRef.current > MAX_ITERATIONS || hintError) {
       // Move to next board
-      isProcessingHintRef.current = false;
       setBoardIndex(prev => prev + 1);
       setCurrentBoard(null);
       setSavedForBoard(false);
+      setIsProcessingHint(false);
       clearHint();
       return;
     }
 
     // If we have a hint, apply it and then request next
     if (hint) {
-      isProcessingHintRef.current = true;
+      setIsProcessingHint(true);
       const hintData = applyHint();
       if (hintData) {
         applyHintData(hintData.user, hintData.pencilmarks, hintData.autoPencilmarks);
       }
-      // Wait for state to settle, then request next hint
+      // Wait for state to settle, then allow next hint request
       setTimeout(() => {
         if (!abortRef.current && isCreating) {
           iterationCountRef.current++;
-          isProcessingHintRef.current = false;
-          // Don't call getHint() here - let the effect re-run and handle it
+          setIsProcessingHint(false); // This triggers effect re-run
         }
       }, 100);
       return;
@@ -336,14 +335,11 @@ export default function AdminPage() {
 
     // No hint yet, request one
     if (!hint && !isHintLoading && !hintError) {
-      isProcessingHintRef.current = true;
+      setIsProcessingHint(true);
       setProgress(`Getting hint for board ${currentBoard.uuid.slice(0, 8)}...`);
-      getHint().finally(() => {
-        // getHint completed - allow effect to process the result
-        isProcessingHintRef.current = false;
-      });
+      getHint(); // hint state will update, triggering effect re-run
     }
-  }, [isCreating, currentBoard, play, hint, isHintLoading, hintError, savedForBoard, isCompleted, applyHint, applyHintData, getHint, clearHint]);
+  }, [isCreating, currentBoard, play, hint, isHintLoading, hintError, savedForBoard, isCompleted, isProcessingHint, applyHint, applyHintData, getHint, clearHint]);
 
   // Start processing
   const handleCreateExamples = useCallback(() => {
@@ -377,7 +373,7 @@ export default function AdminPage() {
     setBoardIndex(0);
     setCurrentBoard(null);
     setSavedForBoard(false);
-    isProcessingHintRef.current = false;
+    setIsProcessingHint(false);
     setIsCreating(true);
   }, [counts, auth.accessToken]);
 
