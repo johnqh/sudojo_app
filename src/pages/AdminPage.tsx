@@ -298,12 +298,14 @@ export default function AdminPage() {
     }
   }, [isCreating, targetTechnique, boards, boardIndex, currentBoard, fetchBoardsWithTechnique, loadBoard, clearHint]);
 
-  // Effect to handle hint fetching and applying - uses state to prevent concurrent requests
+  // Effect to handle hint fetching and applying
+  // isHintLoading prevents concurrent API calls
+  // isProcessingHint prevents re-applying during the wait period after apply
   useEffect(() => {
     if (!isCreating || abortRef.current) return;
     if (!currentBoard || !play) return;
-    if (isHintLoading) return;
-    if (isProcessingHint) return; // Already processing
+    if (isHintLoading) return; // Wait for API call to complete
+    if (isProcessingHint) return; // Wait for apply+delay to complete
 
     // Check if we should move to next board
     if (savedForBoard || isCompleted || iterationCountRef.current > MAX_ITERATIONS || hintError) {
@@ -311,14 +313,13 @@ export default function AdminPage() {
       setBoardIndex(prev => prev + 1);
       setCurrentBoard(null);
       setSavedForBoard(false);
-      setIsProcessingHint(false);
       clearHint();
       return;
     }
 
-    // If we have a hint, apply it and then request next
+    // If we have a hint, apply it and then wait before next request
     if (hint) {
-      setIsProcessingHint(true);
+      setIsProcessingHint(true); // Block re-entry during apply+wait
       const hintData = applyHint();
       if (hintData) {
         applyHintData(hintData.user, hintData.pencilmarks, hintData.autoPencilmarks);
@@ -333,11 +334,10 @@ export default function AdminPage() {
       return;
     }
 
-    // No hint yet, request one
-    if (!hint && !isHintLoading && !hintError) {
-      setIsProcessingHint(true);
+    // No hint yet, request one (isHintLoading will block concurrent calls)
+    if (!hint && !hintError) {
       setProgress(`Getting hint for board ${currentBoard.uuid.slice(0, 8)}...`);
-      getHint(); // hint state will update, triggering effect re-run
+      getHint(); // This sets isHintLoading=true, then isHintLoading=false when done
     }
   }, [isCreating, currentBoard, play, hint, isHintLoading, hintError, savedForBoard, isCompleted, isProcessingHint, applyHint, applyHintData, getHint, clearHint]);
 
