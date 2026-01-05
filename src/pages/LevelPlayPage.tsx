@@ -2,11 +2,11 @@ import { useCallback, useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Heading, Text, Button } from '@sudobility/components';
-import { useSudojoLevel } from '@sudobility/sudojo_client';
 import { useLevelGame } from '@sudobility/sudojo_lib';
 import { SudokuGame } from '@/components/sudoku';
 import { useSudojoClient } from '@/hooks/useSudojoClient';
 import { useBreadcrumbTitle } from '@/hooks/useBreadcrumbTitle';
+import { useGameDataStore } from '@/stores/gameDataStore';
 import { useProgress } from '@/context/ProgressContext';
 import { useSettings } from '@/context/SettingsContext';
 import { useAuthStatus } from '@sudobility/auth-components';
@@ -25,13 +25,17 @@ export default function LevelPlayPage() {
   const { currentSubscription } = useSubscriptionContext();
   const [completed, setCompleted] = useState(false);
 
-  // Fetch level info for the title
-  const { data: levelData } = useSudojoLevel(networkClient, config, auth, levelId ?? '', {
-    enabled: !!levelId,
-  });
+  // Get level from store (already fetched on LevelsPage)
+  const { getLevelById, fetchLevels } = useGameDataStore();
+  const level = levelId ? getLevelById(levelId) : undefined;
+
+  // Ensure levels are fetched if navigating directly to this page
+  useEffect(() => {
+    fetchLevels(networkClient, config, auth);
+  }, [networkClient, config, auth, fetchLevels]);
 
   // Set breadcrumb title to level name
-  useBreadcrumbTitle(levelData?.data?.title);
+  useBreadcrumbTitle(level?.title);
 
   // Fetch a random board for this level with auth/subscription handling
   const { board, status, refetch, nextPuzzle } = useLevelGame({
@@ -42,8 +46,6 @@ export default function LevelPlayPage() {
     subscriptionActive: currentSubscription?.isActive ?? false,
     enabled: !!levelId,
   });
-
-  const level = levelData?.data;
 
   // Show error via InfoService instead of rendering on page
   useEffect(() => {

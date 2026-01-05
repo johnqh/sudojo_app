@@ -4,9 +4,10 @@ import { isLanguageSupported, SUPPORTED_LANGUAGES } from '@/i18n';
 
 interface LocalizedLinkProps extends Omit<LinkProps, 'to'> {
   to: string;
+  state?: Record<string, unknown>;
 }
 
-export function LocalizedLink({ to, children, ...props }: LocalizedLinkProps) {
+export function LocalizedLink({ to, state, children, ...props }: LocalizedLinkProps) {
   const { lang } = useParams<{ lang: string }>();
   const currentLang = lang && isLanguageSupported(lang) ? lang : 'en';
 
@@ -16,7 +17,7 @@ export function LocalizedLink({ to, children, ...props }: LocalizedLinkProps) {
     : `/${currentLang}${to.startsWith('/') ? to : `/${to}`}`;
 
   return (
-    <Link to={localizedPath} {...props}>
+    <Link to={localizedPath} state={state} {...props}>
       {children}
     </Link>
   );

@@ -31,7 +31,7 @@ export default function HomePage() {
           </Card>
         </LocalizedLink>
 
-        <LocalizedLink to="/levels" className="block">
+        <LocalizedLink to="/play" className="block">
           <Card variant="elevated" className="h-full hover:shadow-lg transition-shadow">
             <CardContent className="text-center py-8">
               <div className="text-4xl mb-4">🎯</div>

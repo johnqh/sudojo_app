@@ -2,9 +2,11 @@ import React, { useMemo, useCallback, useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { MasterDetailLayout, MasterListItem, Text, Card, CardContent } from '@sudobility/components';
-import { useSudojoTechniques, useSudojoLearning } from '@sudobility/sudojo_client';
+import { useSudojoLearning } from '@sudobility/sudojo_client';
 import { useLocalizedNavigate } from '@/hooks/useLocalizedNavigate';
 import { useSudojoClient } from '@/hooks/useSudojoClient';
+import { useBreadcrumbTitle } from '@/hooks/useBreadcrumbTitle';
+import { useGameDataStore } from '@/stores/gameDataStore';
 import {
   getTechniqueIconUrl,
   getHelpFileUrl,
@@ -97,13 +99,17 @@ export default function TechniquesPage() {
   const [mobileViewOverride, setMobileViewOverride] = useState<'navigation' | 'content' | null>(null);
   const mobileView = mobileViewOverride ?? (techniqueId ? 'content' : 'navigation');
 
-  // Fetch techniques list
-  const { data: techniquesData, isLoading: techniquesLoading } = useSudojoTechniques(
-    networkClient,
-    config,
-    auth
-  );
-  const techniques = useMemo(() => techniquesData?.data ?? [], [techniquesData?.data]);
+  // Get techniques from store
+  const {
+    techniques,
+    techniquesLoading,
+    fetchTechniques,
+  } = useGameDataStore();
+
+  // Fetch techniques on mount (only fetches if not already fetched)
+  useEffect(() => {
+    fetchTechniques(networkClient, config, auth);
+  }, [networkClient, config, auth, fetchTechniques]);
 
   // Fetch learning content for selected technique
   const learningParams = useMemo(
@@ -123,6 +129,9 @@ export default function TechniquesPage() {
   const learningItems = learningData?.data ?? [];
 
   const selectedTechnique = techniques.find(tech => tech.uuid === techniqueId);
+
+  // Set dynamic breadcrumb title for the selected technique
+  useBreadcrumbTitle(selectedTechnique?.title);
 
   const handleTechniqueSelect = useCallback(
     (uuid: string) => {

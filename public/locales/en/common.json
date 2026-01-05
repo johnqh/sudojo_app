@@ -6,7 +6,8 @@
   "breadcrumbs": {
     "home": "Home",
     "daily": "Daily",
-    "enter": "Enter",
+    "play": "Play",
+    "enter": "Enter My Board",
     "levels": "Levels",
     "techniques": "Techniques",
     "settings": "Settings"
@@ -19,7 +20,8 @@
   },
   "nav": {
     "daily": "Daily",
-    "enter": "Enter",
+    "play": "Play",
+    "enter": "Enter My Board",
     "levels": "Levels",
     "techniques": "Techniques",
     "settings": "Settings"

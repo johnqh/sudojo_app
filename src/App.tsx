@@ -123,8 +123,8 @@ function App() {
                             <Route index element={<HomePage />} />
                             <Route path="daily" element={<DailyPage />} />
                             <Route path="enter" element={<EnterPage />} />
-                            <Route path="levels" element={<LevelsPage />} />
-                            <Route path="levels/:levelId" element={<LevelPlayPage />} />
+                            <Route path="play" element={<LevelsPage />} />
+                            <Route path="play/:levelId" element={<LevelPlayPage />} />
                             <Route path="techniques" element={<TechniquesPage />} />
                             <Route path="techniques/:techniqueId" element={<TechniquesPage />} />
                             <Route path="settings" element={<SettingsPage />} />

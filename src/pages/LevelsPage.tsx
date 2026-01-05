@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Heading, Text, Card, CardContent } from '@sudobility/components';
-import { useSudojoLevels } from '@sudobility/sudojo_client';
+import { Heading, Text } from '@sudobility/components';
 import { LocalizedLink } from '@/components/layout/LocalizedLink';
 import { useSudojoClient } from '@/hooks/useSudojoClient';
+import { useGameDataStore } from '@/stores/gameDataStore';
 import { getInfoService } from '@sudobility/di';
 import { InfoType } from '@sudobility/types';
 
@@ -11,7 +11,17 @@ export default function LevelsPage() {
   const { t } = useTranslation();
   const { networkClient, config, auth } = useSudojoClient();
 
-  const { data, isLoading, error } = useSudojoLevels(networkClient, config, auth);
+  const {
+    levels,
+    levelsLoading: isLoading,
+    levelsError: error,
+    fetchLevels,
+  } = useGameDataStore();
+
+  // Fetch levels on mount (only fetches if not already fetched)
+  useEffect(() => {
+    fetchLevels(networkClient, config, auth);
+  }, [networkClient, config, auth, fetchLevels]);
 
   // Show error via InfoService instead of rendering on page
   useEffect(() => {
@@ -20,49 +30,67 @@ export default function LevelsPage() {
     }
   }, [error, t]);
 
-  const levels = data?.data ?? [];
-
   return (
     <div className="py-8">
-      <header className="mb-8">
-        <Heading level={1} size="2xl">
+      {/* Section 1: Play */}
+      <section className="mb-8">
+        <Heading level={2} size="xl" className="mb-4">
+          {t('nav.play')}
+        </Heading>
+        <div className="flex flex-col divide-y divide-gray-200 dark:divide-gray-700">
+          <LocalizedLink
+            to="/enter"
+            className="flex items-center justify-between py-4 px-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+          >
+            <Text weight="medium">{t('nav.enter')}</Text>
+            <Text color="muted">→</Text>
+          </LocalizedLink>
+        </div>
+      </section>
+
+      {/* Section 2: Levels */}
+      <section>
+        <Heading level={2} size="xl" className="mb-4">
           {t('levels.title')}
         </Heading>
-      </header>
 
-      {isLoading && (
-        <div className="text-center py-12">
-          <Text color="muted">{t('common.loading')}</Text>
-        </div>
-      )}
+        {isLoading && (
+          <div className="text-center py-12">
+            <Text color="muted">{t('common.loading')}</Text>
+          </div>
+        )}
 
-      {!isLoading && !error && levels.length === 0 && (
-        <div className="text-center py-12">
-          <Text color="muted">{t('levels.empty')}</Text>
-        </div>
-      )}
+        {!isLoading && !error && levels.length === 0 && (
+          <div className="text-center py-12">
+            <Text color="muted">{t('levels.empty')}</Text>
+          </div>
+        )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {levels.map(level => (
-          <LocalizedLink key={level.uuid} to={`/levels/${level.uuid}`} className="block">
-            <Card variant="elevated" className="hover:shadow-lg transition-shadow">
-              <CardContent className="py-6">
-                <Text size="sm" color="muted" className="mb-1">
+        <div className="flex flex-col divide-y divide-gray-200 dark:divide-gray-700">
+          {levels.map(level => (
+            <LocalizedLink
+              key={level.uuid}
+              to={`/play/${level.uuid}`}
+              className="flex items-center justify-between py-4 px-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            >
+              <div className="flex items-center gap-4">
+                <Text color="muted" className="w-16">
                   {t('levels.level', { number: level.index })}
                 </Text>
-                <Heading level={3} size="lg">
-                  {level.title}
-                </Heading>
-                {level.text && (
-                  <Text size="sm" color="muted" className="mt-2">
-                    {level.text}
-                  </Text>
-                )}
-              </CardContent>
-            </Card>
-          </LocalizedLink>
-        ))}
-      </div>
+                <div>
+                  <Text weight="medium">{level.title}</Text>
+                  {level.text && (
+                    <Text size="sm" color="muted">
+                      {level.text}
+                    </Text>
+                  )}
+                </div>
+              </div>
+              <Text color="muted">→</Text>
+            </LocalizedLink>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }

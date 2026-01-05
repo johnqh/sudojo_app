@@ -65,9 +65,9 @@ export default function Footer({ variant = 'compact' }: FooterProps) {
           </FooterLink>
         </FooterLinkSection>
 
-        <FooterLinkSection title={t('nav.levels')}>
+        <FooterLinkSection title={t('nav.play')}>
           <FooterLink>
-            <LocalizedLink to="/levels">{t('levels.title')}</LocalizedLink>
+            <LocalizedLink to="/play">{t('nav.play')}</LocalizedLink>
           </FooterLink>
         </FooterLinkSection>
 
