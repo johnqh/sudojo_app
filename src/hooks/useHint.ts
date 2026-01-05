@@ -3,11 +3,11 @@
  */
 
 import { useHint as useHintBase } from '@sudobility/sudojo_lib';
-import type { UseHintResult, HintBoardData } from '@sudobility/sudojo_lib';
+import type { UseHintResult, HintBoardData, HintReceivedData } from '@sudobility/sudojo_lib';
 import { useSudojoClient } from './useSudojoClient';
 
 // Re-export types from lib
-export type { UseHintResult, HintBoardData };
+export type { UseHintResult, HintBoardData, HintReceivedData };
 
 /** Options for useHint (app-specific - uses useSudojoClient internally) */
 export interface UseHintOptions {
@@ -19,6 +19,11 @@ export interface UseHintOptions {
   pencilmarks?: string;
   /** Whether auto-pencilmarks were generated */
   autoPencilmarks?: boolean;
+  /**
+   * Callback fired when hints are received from the API.
+   * Use this to intercept hints for logging, saving examples, etc.
+   */
+  onHintReceived?: (data: HintReceivedData) => void;
 }
 
 /**
@@ -30,6 +35,7 @@ export function useHint({
   userInput,
   pencilmarks,
   autoPencilmarks = false,
+  onHintReceived,
 }: UseHintOptions): UseHintResult {
   const { networkClient, config, auth } = useSudojoClient();
 
@@ -41,5 +47,6 @@ export function useHint({
     userInput,
     pencilmarks,
     autoPencilmarks,
+    onHintReceived,
   });
 }

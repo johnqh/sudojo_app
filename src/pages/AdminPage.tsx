@@ -12,12 +12,11 @@ import {
   TECHNIQUE_TITLE_TO_ID,
   techniqueToBit,
   type Board,
-  type SolverHintStep,
 } from '@sudobility/sudojo_types';
 import { useSudoku } from '@sudobility/sudojo_lib';
 import { useLocalizedNavigate } from '@/hooks/useLocalizedNavigate';
 import { useSudojoClient } from '@/hooks/useSudojoClient';
-import { useHint } from '@/hooks/useHint';
+import { useHint, type HintReceivedData } from '@/hooks/useHint';
 
 
 const TARGET_PER_TECHNIQUE = 20;
@@ -36,17 +35,6 @@ function getTechniqueName(techniqueId: number): string {
   return `Technique ${techniqueId}`;
 }
 
-// Processing state machine
-type ProcessingState =
-  | { type: 'IDLE' }
-  | { type: 'FETCHING_BOARDS'; techniqueId: TechniqueId }
-  | { type: 'LOADING_BOARD'; board: Board; techniqueId: TechniqueId; boardIndex: number; boards: Board[] }
-  | { type: 'GETTING_HINT'; board: Board; techniqueId: TechniqueId; boardIndex: number; boards: Board[]; savedForThisBoard: boolean }
-  | { type: 'APPLYING_HINT'; board: Board; techniqueId: TechniqueId; boardIndex: number; boards: Board[]; savedForThisBoard: boolean }
-  | { type: 'NEXT_BOARD'; techniqueId: TechniqueId; boardIndex: number; boards: Board[] }
-  | { type: 'NEXT_TECHNIQUE' }
-  | { type: 'DONE' };
-
 export default function AdminPage() {
   const { section } = useParams<{ section: string }>();
   const { t } = useTranslation();
@@ -59,17 +47,21 @@ export default function AdminPage() {
   // Example counts state
   const [counts, setCounts] = useState<Record<number, number>>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const [progress, setProgress] = useState<string>('');
   const abortRef = useRef(false);
 
-  // Processing state machine
-  const [processingState, setProcessingState] = useState<ProcessingState>({ type: 'IDLE' });
+  // Processing state
+  const [currentBoard, setCurrentBoard] = useState<Board | null>(null);
+  const [boards, setBoards] = useState<Board[]>([]);
+  const [boardIndex, setBoardIndex] = useState(0);
+  const [targetTechnique, setTargetTechnique] = useState<TechniqueId | null>(null);
+  const [savedForBoard, setSavedForBoard] = useState(false);
   const localCountsRef = useRef<Record<number, number>>({});
-  const techniqueIndexRef = useRef(0);
   const iterationCountRef = useRef(0);
   const MAX_ITERATIONS = 200;
 
-  // Use the game hooks - this is what the game uses!
+  // Use the game hooks
   const {
     play,
     isCompleted,
@@ -80,8 +72,61 @@ export default function AdminPage() {
   } = useSudoku();
 
   // Get current board state for the hint hook
-  const puzzle = play?.board ?
-    play.board.cells.map(c => c.given !== null ? String(c.given) : '0').join('') : '';
+  const puzzle = play?.board
+    ? play.board.cells.map(c => c.given !== null ? String(c.given) : '0').join('')
+    : '';
+
+  // Hint received callback - this intercepts hints before state updates
+  const handleHintReceived = useCallback((data: HintReceivedData) => {
+    if (!targetTechnique || !currentBoard || savedForBoard) return;
+
+    const hintTechniqueId = TECHNIQUE_TITLE_TO_ID[data.hint.title];
+    if (hintTechniqueId !== targetTechnique) return;
+
+    // Check if we still need examples for this technique
+    const currentCount = localCountsRef.current[targetTechnique] || 0;
+    if (currentCount >= TARGET_PER_TECHNIQUE) return;
+
+    // Get current board state (pre-hint) to save
+    const boardString = play?.board
+      ? play.board.cells.map(c => {
+          if (c.given !== null) return String(c.given);
+          if (c.input !== null) return String(c.input);
+          return '0';
+        }).join('')
+      : '';
+    const pencilmarks = getPencilmarksString();
+
+    setProgress(`Saving ${data.hint.title} example...`);
+
+    // Save the example
+    fetch(`${config.baseUrl}/api/v1/examples`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${auth.accessToken}`,
+      },
+      body: JSON.stringify({
+        board: boardString,
+        pencilmarks: pencilmarks || null,
+        solution: currentBoard.solution,
+        techniques_bitfield: techniqueToBit(targetTechnique),
+        primary_technique: targetTechnique,
+        hint_data: JSON.stringify(data.hint),
+        source_board_uuid: currentBoard.uuid,
+      }),
+    }).then(response => {
+      if (response.ok) {
+        const newCount = (localCountsRef.current[targetTechnique] || 0) + 1;
+        localCountsRef.current[targetTechnique] = newCount;
+        setCounts({ ...localCountsRef.current });
+        setProgress(`Saved ${data.hint.title} (${newCount}/${TARGET_PER_TECHNIQUE})`);
+        setSavedForBoard(true);
+      }
+    }).catch(err => {
+      console.error('Failed to save example:', err);
+    });
+  }, [targetTechnique, currentBoard, savedForBoard, play, getPencilmarksString, config.baseUrl, auth.accessToken]);
 
   const {
     hint,
@@ -95,6 +140,7 @@ export default function AdminPage() {
     userInput: getInputString(),
     pencilmarks: getPencilmarksString(),
     autoPencilmarks: play?.settings.autoPencilmarks ?? true,
+    onHintReceived: handleHintReceived,
   });
 
   // Fetch counts
@@ -138,43 +184,6 @@ export default function AdminPage() {
     navigate('/admin');
   }, [navigate]);
 
-  // Save example to API
-  const saveExample = useCallback(
-    async (
-      board: string,
-      pencilmarks: string | null,
-      solution: string,
-      techniqueId: TechniqueId,
-      hintStep: SolverHintStep,
-      sourceBoardUuid: string
-    ): Promise<boolean> => {
-      if (!auth.accessToken) return false;
-
-      try {
-        const response = await fetch(`${config.baseUrl}/api/v1/examples`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${auth.accessToken}`,
-          },
-          body: JSON.stringify({
-            board,
-            pencilmarks,
-            solution,
-            techniques_bitfield: techniqueToBit(techniqueId),
-            primary_technique: techniqueId,
-            hint_data: JSON.stringify(hintStep),
-            source_board_uuid: sourceBoardUuid,
-          }),
-        });
-        return response.ok;
-      } catch {
-        return false;
-      }
-    },
-    [config.baseUrl, auth.accessToken]
-  );
-
   // Fetch boards with a specific technique
   const fetchBoardsWithTechnique = useCallback(
     async (techniqueId: TechniqueId, limit: number): Promise<Board[]> => {
@@ -194,296 +203,138 @@ export default function AdminPage() {
     [config.baseUrl]
   );
 
-  // State machine: Handle FETCHING_BOARDS
+  // Main processing effect - drives the state machine
   useEffect(() => {
-    if (processingState.type !== 'FETCHING_BOARDS') return;
-    if (abortRef.current) {
-      setProcessingState({ type: 'DONE' });
-      return;
-    }
+    if (!isCreating || abortRef.current) return;
+    if (!targetTechnique) return;
 
-    const { techniqueId } = processingState;
-    const techniqueName = getTechniqueName(techniqueId);
-    setProgress(`Fetching boards for ${techniqueName}...`);
-
-    fetchBoardsWithTechnique(techniqueId, 20).then(boards => {
-      if (boards.length === 0) {
-        setProgress(`No boards found for ${techniqueName}`);
-        setProcessingState({ type: 'NEXT_TECHNIQUE' });
-      } else {
-        setProgress(`Found ${boards.length} boards for ${techniqueName}`);
-        setProcessingState({
-          type: 'LOADING_BOARD',
-          board: boards[0]!,
-          techniqueId,
-          boardIndex: 0,
-          boards,
-        });
-      }
-    });
-  }, [processingState, fetchBoardsWithTechnique]);
-
-  // State machine: Handle LOADING_BOARD
-  useEffect(() => {
-    if (processingState.type !== 'LOADING_BOARD') return;
-    if (abortRef.current) {
-      setProcessingState({ type: 'DONE' });
-      return;
-    }
-
-    const { board, techniqueId, boardIndex, boards } = processingState;
-    setProgress(`Loading board ${boardIndex + 1}/${boards.length}...`);
-    iterationCountRef.current = 0;
-
-    // Load the board into useSudoku - this sets up the game state
-    loadBoard(board.board, board.solution, { scramble: false });
-    clearHint();
-
-    // Move to getting hint state
-    setProcessingState({
-      type: 'GETTING_HINT',
-      board,
-      techniqueId,
-      boardIndex,
-      boards,
-      savedForThisBoard: false,
-    });
-  }, [processingState, loadBoard, clearHint]);
-
-  // State machine: Handle GETTING_HINT
-  useEffect(() => {
-    if (processingState.type !== 'GETTING_HINT') return;
-    if (abortRef.current) {
-      setProcessingState({ type: 'DONE' });
-      return;
-    }
-    if (isHintLoading) return; // Wait for hint to load
-    if (!play) return; // Wait for board to be loaded
-
-    const { board, techniqueId, boardIndex, boards, savedForThisBoard } = processingState;
-    iterationCountRef.current++;
-
-    // Check if puzzle is completed
-    if (isCompleted) {
-      setProgress(`Board ${boardIndex + 1}/${boards.length} completed`);
-      setProcessingState({
-        type: 'NEXT_BOARD',
-        techniqueId,
-        boardIndex,
-        boards,
-      });
-      return;
-    }
-
-    // Check iteration limit
-    if (iterationCountRef.current > MAX_ITERATIONS) {
-      setProgress(`Max iterations reached for board ${boardIndex + 1}`);
-      setProcessingState({
-        type: 'NEXT_BOARD',
-        techniqueId,
-        boardIndex,
-        boards,
-      });
-      return;
-    }
-
-    // If we already saved an example for this board, move to next
-    if (savedForThisBoard) {
-      setProcessingState({
-        type: 'NEXT_BOARD',
-        techniqueId,
-        boardIndex,
-        boards,
-      });
-      return;
-    }
-
-    // If we already have enough examples, move to next technique
-    const currentCount = localCountsRef.current[techniqueId] || 0;
+    // Check if we have enough examples for current technique
+    const currentCount = localCountsRef.current[targetTechnique] || 0;
     if (currentCount >= TARGET_PER_TECHNIQUE) {
-      setProcessingState({ type: 'NEXT_TECHNIQUE' });
-      return;
-    }
+      // Move to next technique
+      const currentIndex = TECHNIQUE_ORDER.indexOf(targetTechnique);
+      let nextIndex = currentIndex + 1;
+      while (nextIndex < TECHNIQUE_ORDER.length) {
+        const nextTech = TECHNIQUE_ORDER[nextIndex]!;
+        if ((localCountsRef.current[nextTech] || 0) < TARGET_PER_TECHNIQUE) {
+          break;
+        }
+        nextIndex++;
+      }
 
-    // Request a hint if we don't have one
-    if (!hint && !isHintLoading && !hintError) {
-      setProgress(`Getting hint for board ${board.uuid.slice(0, 8)}...`);
-      getHint();
-      return;
-    }
-
-    // Handle hint error
-    if (hintError) {
-      console.warn('Hint error:', hintError);
-      setProcessingState({
-        type: 'NEXT_BOARD',
-        techniqueId,
-        boardIndex,
-        boards,
-      });
-      return;
-    }
-
-    // Process the hint if we have one
-    if (hint) {
-      const hintTechniqueId = TECHNIQUE_TITLE_TO_ID[hint.title];
-
-      // Check if this hint matches our target technique
-      if (hintTechniqueId === techniqueId) {
-        // Save the example with current board state (pre-hint)
-        const currentBoard = play.board.cells.map(c => {
-          if (c.given !== null) return String(c.given);
-          if (c.input !== null) return String(c.input);
-          return '0';
-        }).join('');
-
-        const pencilmarks = getPencilmarksString();
-
-        setProgress(`Saving ${hint.title} example...`);
-        saveExample(
-          currentBoard,
-          pencilmarks || null,
-          board.solution,
-          techniqueId,
-          hint,
-          board.uuid
-        ).then(saved => {
-          if (saved) {
-            const newCount = (localCountsRef.current[techniqueId] || 0) + 1;
-            localCountsRef.current[techniqueId] = newCount;
-            setCounts({ ...localCountsRef.current });
-            setProgress(`Saved ${hint.title} (${newCount}/${TARGET_PER_TECHNIQUE})`);
-          }
-
-          // Apply the hint and continue
-          setProcessingState({
-            type: 'APPLYING_HINT',
-            board,
-            techniqueId,
-            boardIndex,
-            boards,
-            savedForThisBoard: saved,
-          });
-        });
+      if (nextIndex >= TECHNIQUE_ORDER.length) {
+        setIsCreating(false);
+        setProgress('Done!');
         return;
       }
 
-      // Hint doesn't match target - apply it and continue looking
-      setProcessingState({
-        type: 'APPLYING_HINT',
-        board,
-        techniqueId,
-        boardIndex,
-        boards,
-        savedForThisBoard: false,
+      const nextTechnique = TECHNIQUE_ORDER[nextIndex]!;
+      setTargetTechnique(nextTechnique);
+      setBoards([]);
+      setBoardIndex(0);
+      setCurrentBoard(null);
+      setSavedForBoard(false);
+      clearHint();
+
+      setProgress(`Fetching boards for ${getTechniqueName(nextTechnique)}...`);
+      fetchBoardsWithTechnique(nextTechnique, 20).then(newBoards => {
+        if (newBoards.length === 0) {
+          setProgress(`No boards found for ${getTechniqueName(nextTechnique)}`);
+        } else {
+          setBoards(newBoards);
+          setBoardIndex(0);
+        }
       });
-    }
-  }, [processingState, play, isCompleted, hint, isHintLoading, hintError, getHint, getPencilmarksString, saveExample]);
-
-  // State machine: Handle APPLYING_HINT
-  useEffect(() => {
-    if (processingState.type !== 'APPLYING_HINT') return;
-    if (abortRef.current) {
-      setProcessingState({ type: 'DONE' });
       return;
     }
-    if (!hint) return; // Wait for hint
 
-    const { board, techniqueId, boardIndex, boards, savedForThisBoard } = processingState;
-
-    // Apply the hint - this is exactly what SudokuGame does!
-    const hintData = applyHint();
-    if (hintData) {
-      applyHintData(hintData.user, hintData.pencilmarks, hintData.autoPencilmarks);
-    }
-
-    // Small delay then continue getting hints
-    setTimeout(() => {
-      setProcessingState({
-        type: 'GETTING_HINT',
-        board,
-        techniqueId,
-        boardIndex,
-        boards,
-        savedForThisBoard,
+    // Need to fetch boards if we don't have any
+    if (boards.length === 0) {
+      setProgress(`Fetching boards for ${getTechniqueName(targetTechnique)}...`);
+      fetchBoardsWithTechnique(targetTechnique, 20).then(newBoards => {
+        if (newBoards.length === 0) {
+          setProgress(`No boards found for ${getTechniqueName(targetTechnique)}`);
+          // Move to next technique
+          const currentIndex = TECHNIQUE_ORDER.indexOf(targetTechnique);
+          if (currentIndex + 1 < TECHNIQUE_ORDER.length) {
+            setTargetTechnique(TECHNIQUE_ORDER[currentIndex + 1]!);
+          } else {
+            setIsCreating(false);
+            setProgress('Done!');
+          }
+        } else {
+          setBoards(newBoards);
+        }
       });
-    }, 50);
-  }, [processingState, hint, applyHint, applyHintData]);
-
-  // State machine: Handle NEXT_BOARD
-  useEffect(() => {
-    if (processingState.type !== 'NEXT_BOARD') return;
-    if (abortRef.current) {
-      setProcessingState({ type: 'DONE' });
       return;
     }
 
-    const { techniqueId, boardIndex, boards } = processingState;
-    const nextIndex = boardIndex + 1;
-
-    // Check if we have enough examples
-    const currentCount = localCountsRef.current[techniqueId] || 0;
-    if (currentCount >= TARGET_PER_TECHNIQUE) {
-      setProcessingState({ type: 'NEXT_TECHNIQUE' });
-      return;
-    }
-
-    // Check if there are more boards
-    if (nextIndex >= boards.length) {
-      setProcessingState({ type: 'NEXT_TECHNIQUE' });
-      return;
-    }
-
-    // Load next board
-    clearHint();
-    setProcessingState({
-      type: 'LOADING_BOARD',
-      board: boards[nextIndex]!,
-      techniqueId,
-      boardIndex: nextIndex,
-      boards,
-    });
-  }, [processingState, clearHint]);
-
-  // State machine: Handle NEXT_TECHNIQUE
-  useEffect(() => {
-    if (processingState.type !== 'NEXT_TECHNIQUE') return;
-    if (abortRef.current) {
-      setProcessingState({ type: 'DONE' });
-      return;
-    }
-
-    // Find next technique that needs examples
-    let nextTechIndex = techniqueIndexRef.current + 1;
-    while (nextTechIndex < TECHNIQUE_ORDER.length) {
-      const techniqueId = TECHNIQUE_ORDER[nextTechIndex]!;
-      const currentCount = localCountsRef.current[techniqueId] || 0;
-      if (currentCount < TARGET_PER_TECHNIQUE) {
-        break;
+    // Need to load a board if we don't have one
+    if (!currentBoard && boards.length > 0) {
+      if (boardIndex >= boards.length) {
+        // No more boards, move to next technique
+        const currentIndex = TECHNIQUE_ORDER.indexOf(targetTechnique);
+        if (currentIndex + 1 < TECHNIQUE_ORDER.length) {
+          setTargetTechnique(TECHNIQUE_ORDER[currentIndex + 1]!);
+          setBoards([]);
+          setBoardIndex(0);
+        } else {
+          setIsCreating(false);
+          setProgress('Done!');
+        }
+        return;
       }
-      nextTechIndex++;
-    }
 
-    if (nextTechIndex >= TECHNIQUE_ORDER.length) {
-      setProcessingState({ type: 'DONE' });
+      const board = boards[boardIndex]!;
+      setCurrentBoard(board);
+      setSavedForBoard(false);
+      iterationCountRef.current = 0;
+      setProgress(`Loading board ${boardIndex + 1}/${boards.length}...`);
+      loadBoard(board.board, board.solution, { scramble: false });
+      clearHint();
+      return;
+    }
+  }, [isCreating, targetTechnique, boards, boardIndex, currentBoard, fetchBoardsWithTechnique, loadBoard, clearHint]);
+
+  // Effect to handle hint fetching and applying
+  useEffect(() => {
+    if (!isCreating || abortRef.current) return;
+    if (!currentBoard || !play) return;
+    if (isHintLoading) return;
+
+    iterationCountRef.current++;
+
+    // Check if we should move to next board
+    if (savedForBoard || isCompleted || iterationCountRef.current > MAX_ITERATIONS || hintError) {
+      // Move to next board
+      setBoardIndex(prev => prev + 1);
+      setCurrentBoard(null);
+      setSavedForBoard(false);
+      clearHint();
       return;
     }
 
-    techniqueIndexRef.current = nextTechIndex;
-    const techniqueId = TECHNIQUE_ORDER[nextTechIndex]!;
-    clearHint();
-    setProcessingState({
-      type: 'FETCHING_BOARDS',
-      techniqueId,
-    });
-  }, [processingState, clearHint]);
+    // If we have a hint, apply it
+    if (hint) {
+      const hintData = applyHint();
+      if (hintData) {
+        applyHintData(hintData.user, hintData.pencilmarks, hintData.autoPencilmarks);
+      }
+      // Small delay before getting next hint
+      setTimeout(() => {
+        if (!abortRef.current) {
+          getHint();
+        }
+      }, 50);
+      return;
+    }
 
-  // State machine: Handle DONE
-  useEffect(() => {
-    if (processingState.type !== 'DONE') return;
-    setProgress(abortRef.current ? 'Stopped' : 'Done!');
-    setCounts({ ...localCountsRef.current });
-  }, [processingState]);
+    // No hint yet, request one
+    if (!hint && !isHintLoading && !hintError) {
+      setProgress(`Getting hint for board ${currentBoard.uuid.slice(0, 8)}...`);
+      getHint();
+    }
+  }, [isCreating, currentBoard, play, hint, isHintLoading, hintError, savedForBoard, isCompleted, applyHint, applyHintData, getHint, clearHint]);
 
   // Start processing
   const handleCreateExamples = useCallback(() => {
@@ -511,20 +362,20 @@ export default function AdminPage() {
       return;
     }
 
-    techniqueIndexRef.current = startIndex;
     const techniqueId = TECHNIQUE_ORDER[startIndex]!;
-    setProcessingState({
-      type: 'FETCHING_BOARDS',
-      techniqueId,
-    });
+    setTargetTechnique(techniqueId);
+    setBoards([]);
+    setBoardIndex(0);
+    setCurrentBoard(null);
+    setSavedForBoard(false);
+    setIsCreating(true);
   }, [counts, auth.accessToken]);
 
   const handleStopCreating = useCallback(() => {
     abortRef.current = true;
-    setProgress('Stopping...');
+    setIsCreating(false);
+    setProgress('Stopped');
   }, []);
-
-  const isCreating = processingState.type !== 'IDLE' && processingState.type !== 'DONE';
 
   // Calculate totals
   const totalCaptured = Object.values(counts).reduce((sum, c) => sum + c, 0);
