@@ -27,11 +27,12 @@ export default function TopBar() {
   // Check if current user is dev user
   const isDevUser = user?.email === DEV_USER_EMAIL;
 
-  // Check if current route is active
+  // Check if current route is active - strip language prefix from path
   const currentPath = location.pathname.replace(`/${currentLanguage}`, '');
-  const isActive = (path: string) => currentPath === path || currentPath.startsWith(`${path}/`);
 
   const navItems: TopbarNavItem[] = useMemo(() => {
+    const isActive = (path: string) => currentPath === path || currentPath.startsWith(`${path}/`);
+
     const items: TopbarNavItem[] = [
       {
         id: 'daily',

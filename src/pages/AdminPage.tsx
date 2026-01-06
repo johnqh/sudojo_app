@@ -57,6 +57,12 @@ export default function AdminPage() {
   const [isTechniquesLoading, setIsTechniquesLoading] = useState(false);
   const [isExtracting, setIsExtracting] = useState(false);
   const [extractProgress, setExtractProgress] = useState<string>('');
+  const [extractBoard, setExtractBoard] = useState<Board | null>(null);
+  const [extractTechniquesBitfield, setExtractTechniquesBitfield] = useState<number>(0);
+  const [isExtractProcessingHint, setIsExtractProcessingHint] = useState(false);
+  const extractAbortRef = useRef(false);
+  const extractIterationRef = useRef(0);
+  const extractedCountRef = useRef(0);
 
   // Processing state
   const [currentBoard, setCurrentBoard] = useState<Board | null>(null);
@@ -88,23 +94,19 @@ export default function AdminPage() {
   const handleHintReceived = useCallback((data: HintReceivedData) => {
     const hintTechniqueId = TECHNIQUE_TITLE_TO_ID[data.hint.title];
 
-    console.log('[AdminPage] onHintReceived:', {
-      hintTitle: data.hint.title,
-      hintTechniqueId,
-      targetTechniqueId: targetTechnique,
-      targetTechniqueName: targetTechnique ? getTechniqueName(targetTechnique) : '',
-      match: hintTechniqueId === targetTechnique,
-      savedForBoard,
-      currentBoard: currentBoard?.uuid?.slice(0, 8),
-    });
+    // Handle extraction mode - accumulate techniques bitfield
+    if (isExtracting && extractBoard && hintTechniqueId) {
+      const bit = 1 << hintTechniqueId;
+      setExtractTechniquesBitfield(prev => prev | bit);
+      return;
+    }
 
+    // Handle examples mode
     if (!targetTechnique || !currentBoard || savedForBoard) {
-      console.log('[AdminPage] onHintReceived: skipping - no target/board or already saved');
       return;
     }
 
     if (hintTechniqueId !== targetTechnique) {
-      console.log('[AdminPage] onHintReceived: technique does not match, continuing');
       return;
     }
 
@@ -153,7 +155,7 @@ export default function AdminPage() {
     }).catch(err => {
       console.error('Failed to save example:', err);
     });
-  }, [targetTechnique, currentBoard, savedForBoard, play, getPencilmarksString, config.baseUrl, auth.accessToken]);
+  }, [targetTechnique, currentBoard, savedForBoard, play, getPencilmarksString, config.baseUrl, auth.accessToken, isExtracting, extractBoard]);
 
   const {
     hint,
@@ -223,9 +225,74 @@ export default function AdminPage() {
     }
   }, [section, fetchBoardCounts]);
 
-  // Extract techniques handler
-  const handleExtractTechniques = useCallback(() => {
-    setExtractProgress('Extract techniques functionality coming soon...');
+  // Fetch a board without techniques
+  const fetchBoardWithoutTechniques = useCallback(async (): Promise<Board | null> => {
+    try {
+      const response = await fetch(`${config.baseUrl}/api/v1/boards?techniques=0&limit=1`);
+      if (!response.ok) return null;
+      const data = await response.json();
+      if (data.success && data.data && data.data.length > 0) {
+        return data.data[0] as Board;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }, [config.baseUrl]);
+
+  // Update board's techniques field
+  const updateBoardTechniques = useCallback(async (boardUuid: string, techniques: number) => {
+    try {
+      const response = await fetch(`${config.baseUrl}/api/v1/boards/${boardUuid}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${auth.accessToken}`,
+        },
+        body: JSON.stringify({ techniques }),
+      });
+      await response.json();
+      return response.ok;
+    } catch {
+      return false;
+    }
+  }, [config.baseUrl, auth.accessToken]);
+
+  // Extract techniques handler - start the extraction process
+  const handleExtractTechniques = useCallback(async () => {
+    if (!auth.accessToken) {
+      setExtractProgress('Error: Not authenticated');
+      return;
+    }
+
+    extractAbortRef.current = false;
+    extractedCountRef.current = 0;
+    setExtractProgress('Starting extraction...');
+    setIsExtracting(true);
+
+    // Fetch first board
+    const board = await fetchBoardWithoutTechniques();
+    if (!board) {
+      setExtractProgress('No boards without techniques found');
+      setIsExtracting(false);
+      return;
+    }
+
+    setExtractBoard(board);
+    setExtractTechniquesBitfield(0);
+    extractIterationRef.current = 0;
+    setIsExtractProcessingHint(false);
+    setExtractProgress(`Loading board ${board.uuid.slice(0, 8)}...`);
+    loadBoard(board.board, board.solution, { scramble: false });
+    clearHint();
+  }, [auth.accessToken, fetchBoardWithoutTechniques, loadBoard, clearHint]);
+
+  // Stop extraction handler
+  const handleStopExtracting = useCallback(() => {
+    extractAbortRef.current = true;
+    setIsExtracting(false);
+    setExtractBoard(null);
+    setExtractProgress('Stopped');
   }, []);
 
   const handleSectionSelect = useCallback(
@@ -246,8 +313,6 @@ export default function AdminPage() {
     async (techniqueId: TechniqueId, targetCount: number): Promise<Board[]> => {
       // Bit position IS the technique ID (bit 0 is unused)
       const bit = 1 << techniqueId;
-      const techniqueName = getTechniqueName(techniqueId);
-      console.log('[AdminPage] Fetching boards for:', { techniqueId, techniqueName, bit: bit.toString(16), targetCount });
 
       const matchingBoards: Board[] = [];
       let offset = 0;
@@ -256,7 +321,6 @@ export default function AdminPage() {
 
       try {
         while (matchingBoards.length < targetCount && offset < maxOffset) {
-          console.log('[AdminPage] Fetching batch:', { offset, batchSize, foundSoFar: matchingBoards.length });
           const response = await fetch(
             `${config.baseUrl}/api/v1/boards?limit=${batchSize}&offset=${offset}`
           );
@@ -274,19 +338,11 @@ export default function AdminPage() {
             }
           }
 
-          console.log('[AdminPage] Batch result:', {
-            fetched: boards.length,
-            matchingInBatch: boards.filter(b => b.techniques && (b.techniques & bit) !== 0).length,
-            totalMatching: matchingBoards.length
-          });
-
           offset += batchSize;
         }
 
-        console.log('[AdminPage] Fetched boards with technique:', { techniqueId, techniqueName, count: matchingBoards.length });
         return matchingBoards;
-      } catch (err) {
-        console.error('[AdminPage] Error fetching boards:', err);
+      } catch {
         return matchingBoards;
       }
     },
@@ -319,7 +375,6 @@ export default function AdminPage() {
       }
 
       const nextTechnique = TECHNIQUE_ORDER[nextIndex]!;
-      console.log('[AdminPage] Moving to next technique:', { nextTechnique, name: getTechniqueName(nextTechnique) });
       setTargetTechnique(nextTechnique);
       setBoards([]);
       setBoardIndex(0);
@@ -412,20 +467,9 @@ export default function AdminPage() {
       // Compare strings directly - hint.title is a string like "ALS Chain"
       const targetTechniqueName = targetTechnique ? getTechniqueName(targetTechnique) : '';
 
-      console.log('[AdminPage] Hint received:', {
-        hintTitle: hint.title,
-        targetTechniqueId: targetTechnique,
-        targetTechniqueName,
-        match: hint.title === targetTechniqueName,
-        savedForBoard,
-        boardIndex,
-        iterationCount: iterationCountRef.current,
-      });
-
       // If this hint matches target technique, don't apply - move to next board
       // (onHintReceived should have already set savedForBoard, but double-check here)
       if (hint.title === targetTechniqueName) {
-        console.log('[AdminPage] MATCH! Moving to next board');
         // Move to next board without applying
         setBoardIndex(prev => prev + 1);
         setCurrentBoard(null);
@@ -457,6 +501,97 @@ export default function AdminPage() {
     }
   }, [isCreating, currentBoard, play, hint, isHintLoading, hintError, savedForBoard, isCompleted, isProcessingHint, targetTechnique, applyHint, applyHintData, getHint, clearHint]);
 
+  // Effect to handle extraction hint processing
+  useEffect(() => {
+    if (!isExtracting || extractAbortRef.current) return;
+    if (!extractBoard || !play) return;
+    if (isHintLoading) return;
+    if (isExtractProcessingHint) return;
+
+    // Check if board is completed - save techniques and move to next board
+    if (isCompleted) {
+      const finalBitfield = extractTechniquesBitfield;
+
+      // Update the board's techniques field
+      setExtractProgress(`Updating board ${extractBoard.uuid.slice(0, 8)} with techniques 0x${finalBitfield.toString(16)}...`);
+      updateBoardTechniques(extractBoard.uuid, finalBitfield).then(async (success) => {
+        if (success) {
+          extractedCountRef.current++;
+          setBoardsWithoutTechniques(prev => Math.max(0, prev - 1));
+          setExtractProgress(`Extracted ${extractedCountRef.current} boards. Finding next board...`);
+        } else {
+          setExtractProgress(`Failed to update board ${extractBoard.uuid.slice(0, 8)}`);
+        }
+
+        // Fetch next board
+        const nextBoard = await fetchBoardWithoutTechniques();
+        if (!nextBoard || extractAbortRef.current) {
+          setIsExtracting(false);
+          setExtractBoard(null);
+          setExtractProgress(`Done! Extracted techniques for ${extractedCountRef.current} boards.`);
+          fetchBoardCounts(); // Refresh counts
+          return;
+        }
+
+        // Load next board
+        setExtractBoard(nextBoard);
+        setExtractTechniquesBitfield(0);
+        extractIterationRef.current = 0;
+        setIsExtractProcessingHint(false);
+        setExtractProgress(`Loading board ${nextBoard.uuid.slice(0, 8)}...`);
+        loadBoard(nextBoard.board, nextBoard.solution, { scramble: false });
+        clearHint();
+      });
+      return;
+    }
+
+    // Check iteration limit
+    if (extractIterationRef.current > MAX_ITERATIONS || hintError) {
+      setExtractProgress(`Skipping board ${extractBoard.uuid.slice(0, 8)} (error or max iterations)`);
+
+      // Fetch next board
+      fetchBoardWithoutTechniques().then(async (nextBoard) => {
+        if (!nextBoard || extractAbortRef.current) {
+          setIsExtracting(false);
+          setExtractBoard(null);
+          setExtractProgress(`Done! Extracted techniques for ${extractedCountRef.current} boards.`);
+          fetchBoardCounts();
+          return;
+        }
+
+        setExtractBoard(nextBoard);
+        setExtractTechniquesBitfield(0);
+        extractIterationRef.current = 0;
+        setIsExtractProcessingHint(false);
+        loadBoard(nextBoard.board, nextBoard.solution, { scramble: false });
+        clearHint();
+      });
+      return;
+    }
+
+    // If we have a hint, apply it
+    if (hint) {
+      setIsExtractProcessingHint(true);
+      const hintData = applyHint();
+      if (hintData) {
+        applyHintData(hintData.user, hintData.pencilmarks, hintData.autoPencilmarks);
+      }
+      setTimeout(() => {
+        if (!extractAbortRef.current && isExtracting) {
+          extractIterationRef.current++;
+          setIsExtractProcessingHint(false);
+        }
+      }, 50);
+      return;
+    }
+
+    // No hint yet, request one
+    if (!hint && !hintError) {
+      setExtractProgress(`Getting hint for board ${extractBoard.uuid.slice(0, 8)} (${extractIterationRef.current})...`);
+      getHint();
+    }
+  }, [isExtracting, extractBoard, play, hint, isHintLoading, hintError, isCompleted, isExtractProcessingHint, extractTechniquesBitfield, updateBoardTechniques, fetchBoardWithoutTechniques, fetchBoardCounts, loadBoard, clearHint, applyHint, applyHintData, getHint]);
+
   // Start processing
   const handleCreateExamples = useCallback(() => {
     if (!auth.accessToken) {
@@ -484,8 +619,6 @@ export default function AdminPage() {
     }
 
     const techniqueId = TECHNIQUE_ORDER[startIndex]!;
-    console.log('[AdminPage] Starting with technique:', { techniqueId, name: getTechniqueName(techniqueId), startIndex });
-    console.log('[AdminPage] TECHNIQUE_ORDER:', TECHNIQUE_ORDER.map(id => ({ id, name: getTechniqueName(id) })));
     setTargetTechnique(techniqueId);
     setBoards([]);
     setBoardIndex(0);
@@ -553,7 +686,7 @@ export default function AdminPage() {
       {/* Extract Techniques CTA */}
       <div className="pt-4 border-t">
         {isExtracting ? (
-          <Button variant="destructive" className="w-full" onClick={() => setIsExtracting(false)}>
+          <Button variant="destructive" className="w-full" onClick={handleStopExtracting}>
             Stop
           </Button>
         ) : (

@@ -6,8 +6,8 @@ import { useMemo, useState, useEffect } from 'react';
 import { getNetworkService } from '@sudobility/di';
 import type { NetworkClient, NetworkResponse, NetworkRequestOptions, Optional } from '@sudobility/types';
 import type { SudojoConfig, SudojoAuth } from '@sudobility/sudojo_client';
-import { useAuthStatus } from '@sudobility/auth-components';
 import { auth as firebaseAuth } from '@/config/firebase';
+import { onIdTokenChanged } from 'firebase/auth';
 
 const config: SudojoConfig = {
   baseUrl: import.meta.env.VITE_SUDOJO_API_URL || 'https://api.sudojo.com',
@@ -108,45 +108,35 @@ function createNetworkClientAdapter(): NetworkClient {
  */
 export function useSudojoClient() {
   const networkClient = useMemo(() => createNetworkClientAdapter(), []);
-  const { user, loading } = useAuthStatus();
   const [auth, setAuth] = useState<SudojoAuth>({ accessToken: '' });
 
-  // Get Firebase ID token when user changes
+  // Listen for Firebase ID token changes (including automatic hourly refresh)
   useEffect(() => {
-    let isMounted = true;
+    // If Firebase auth is not configured, keep the initial empty token state
+    if (!firebaseAuth) {
+      return;
+    }
 
-    const fetchToken = async () => {
-      // Wait for auth to be ready
-      if (loading) return;
-
-      // Use Firebase auth directly to get the current user's ID token
-      const currentUser = firebaseAuth?.currentUser;
-      if (currentUser) {
+    // onIdTokenChanged fires when:
+    // - User signs in
+    // - User signs out
+    // - Token is refreshed (every hour)
+    const unsubscribe = onIdTokenChanged(firebaseAuth, async (user) => {
+      if (user) {
         try {
-          // Force refresh to ensure we have a valid token
-          const token = await currentUser.getIdToken(true);
-          if (isMounted) {
-            setAuth({ accessToken: token });
-          }
+          const token = await user.getIdToken();
+          setAuth({ accessToken: token });
         } catch (err) {
           console.error('Failed to get ID token:', err);
-          if (isMounted) {
-            setAuth({ accessToken: '' });
-          }
-        }
-      } else {
-        if (isMounted) {
           setAuth({ accessToken: '' });
         }
+      } else {
+        setAuth({ accessToken: '' });
       }
-    };
+    });
 
-    fetchToken();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [user, loading]);
+    return () => unsubscribe();
+  }, []);
 
   return {
     networkClient,
