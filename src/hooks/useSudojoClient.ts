@@ -7,14 +7,32 @@ import { getNetworkService } from '@sudobility/di';
 import type { NetworkClient, NetworkResponse, NetworkRequestOptions, Optional } from '@sudobility/types';
 import type { SudojoConfig, SudojoAuth } from '@sudobility/sudojo_client';
 import { auth as firebaseAuth } from '@/config/firebase';
-import { onIdTokenChanged } from 'firebase/auth';
+import { onAuthStateChanged } from 'firebase/auth';
 
 const config: SudojoConfig = {
   baseUrl: import.meta.env.VITE_SUDOJO_API_URL || 'https://api.sudojo.com',
 };
 
 /**
- * Adapter to wrap PlatformNetwork to implement NetworkClient interface
+ * Get a fresh Firebase ID token. Returns empty string if not authenticated.
+ * Firebase's getIdToken() handles caching - returns cached token if valid,
+ * or automatically refreshes if expired.
+ */
+async function getAuthToken(): Promise<string> {
+  const user = firebaseAuth?.currentUser;
+  if (!user) return '';
+
+  try {
+    return await user.getIdToken();
+  } catch (err) {
+    console.error('Failed to get ID token:', err);
+    return '';
+  }
+}
+
+/**
+ * Adapter to wrap PlatformNetwork to implement NetworkClient interface.
+ * On 401 response, refreshes auth token and retries once.
  */
 function createNetworkClientAdapter(): NetworkClient {
   const platformNetwork = getNetworkService();
@@ -47,6 +65,32 @@ function createNetworkClientAdapter(): NetworkClient {
     };
   };
 
+  // Execute request, retry once with fresh token on 401
+  const executeWithRetry = async <T>(
+    url: string,
+    requestInit: RequestInit
+  ): Promise<NetworkResponse<T>> => {
+    const response = await platformNetwork.request(url, requestInit);
+
+    // If 401, get fresh token and retry once
+    if (response.status === 401) {
+      const freshToken = await getAuthToken();
+      if (freshToken) {
+        const retryHeaders = {
+          ...(requestInit.headers as Record<string, string>),
+          Authorization: `Bearer ${freshToken}`,
+        };
+        const retryResponse = await platformNetwork.request(url, {
+          ...requestInit,
+          headers: retryHeaders,
+        });
+        return parseResponse<T>(retryResponse);
+      }
+    }
+
+    return parseResponse<T>(response);
+  };
+
   return {
     async request<T>(url: string, options?: Optional<NetworkRequestOptions>): Promise<NetworkResponse<T>> {
       const requestInit: RequestInit = {
@@ -55,8 +99,7 @@ function createNetworkClientAdapter(): NetworkClient {
         body: options?.body ?? undefined,
         signal: options?.signal ?? undefined,
       };
-      const response = await platformNetwork.request(url, requestInit);
-      return parseResponse<T>(response);
+      return executeWithRetry<T>(url, requestInit);
     },
 
     async get<T>(url: string, options?: Optional<Omit<NetworkRequestOptions, 'method' | 'body'>>): Promise<NetworkResponse<T>> {
@@ -65,8 +108,7 @@ function createNetworkClientAdapter(): NetworkClient {
         headers: options?.headers ?? undefined,
         signal: options?.signal ?? undefined,
       };
-      const response = await platformNetwork.request(url, requestInit);
-      return parseResponse<T>(response);
+      return executeWithRetry<T>(url, requestInit);
     },
 
     async post<T>(url: string, body?: Optional<unknown>, options?: Optional<Omit<NetworkRequestOptions, 'method'>>): Promise<NetworkResponse<T>> {
@@ -76,8 +118,7 @@ function createNetworkClientAdapter(): NetworkClient {
         body: body ? JSON.stringify(body) : undefined,
         signal: options?.signal ?? undefined,
       };
-      const response = await platformNetwork.request(url, requestInit);
-      return parseResponse<T>(response);
+      return executeWithRetry<T>(url, requestInit);
     },
 
     async put<T>(url: string, body?: Optional<unknown>, options?: Optional<Omit<NetworkRequestOptions, 'method'>>): Promise<NetworkResponse<T>> {
@@ -87,8 +128,7 @@ function createNetworkClientAdapter(): NetworkClient {
         body: body ? JSON.stringify(body) : undefined,
         signal: options?.signal ?? undefined,
       };
-      const response = await platformNetwork.request(url, requestInit);
-      return parseResponse<T>(response);
+      return executeWithRetry<T>(url, requestInit);
     },
 
     async delete<T>(url: string, options?: Optional<Omit<NetworkRequestOptions, 'method' | 'body'>>): Promise<NetworkResponse<T>> {
@@ -97,39 +137,28 @@ function createNetworkClientAdapter(): NetworkClient {
         headers: options?.headers ?? undefined,
         signal: options?.signal ?? undefined,
       };
-      const response = await platformNetwork.request(url, requestInit);
-      return parseResponse<T>(response);
+      return executeWithRetry<T>(url, requestInit);
     },
   };
 }
 
 /**
- * Hook to get the network client, config, and auth for Sudojo API hooks
+ * Hook to get the network client, config, and auth for Sudojo API hooks.
+ * - networkClient: Retries with fresh token on 401
+ * - auth: Updated on auth state changes
  */
 export function useSudojoClient() {
   const networkClient = useMemo(() => createNetworkClientAdapter(), []);
   const [auth, setAuth] = useState<SudojoAuth>({ accessToken: '' });
 
-  // Listen for Firebase ID token changes (including automatic hourly refresh)
+  // Update auth token on auth state changes
   useEffect(() => {
-    // If Firebase auth is not configured, keep the initial empty token state
-    if (!firebaseAuth) {
-      return;
-    }
+    if (!firebaseAuth) return;
 
-    // onIdTokenChanged fires when:
-    // - User signs in
-    // - User signs out
-    // - Token is refreshed (every hour)
-    const unsubscribe = onIdTokenChanged(firebaseAuth, async (user) => {
+    const unsubscribe = onAuthStateChanged(firebaseAuth, async (user) => {
       if (user) {
-        try {
-          const token = await user.getIdToken();
-          setAuth({ accessToken: token });
-        } catch (err) {
-          console.error('Failed to get ID token:', err);
-          setAuth({ accessToken: '' });
-        }
+        const token = await getAuthToken();
+        setAuth({ accessToken: token });
       } else {
         setAuth({ accessToken: '' });
       }

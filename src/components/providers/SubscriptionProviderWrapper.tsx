@@ -6,7 +6,6 @@ import {
 import { useAuthStatus } from '@sudobility/auth-components';
 
 const REVENUECAT_API_KEY = import.meta.env.VITE_REVENUECAT_API_KEY || '';
-const ENTITLEMENT_ID = import.meta.env.VITE_REVENUECAT_ENTITLEMENT_ID || 'premium';
 
 interface SubscriptionProviderWrapperProps {
   children: ReactNode;
@@ -36,7 +35,6 @@ export function SubscriptionProviderWrapper({ children }: SubscriptionProviderWr
   return (
     <SubscriptionProvider
       apiKey={REVENUECAT_API_KEY}
-      entitlementId={ENTITLEMENT_ID}
       onError={(error) => console.error('[Subscription] Error:', error)}
     >
       <SubscriptionInitializer>{children}</SubscriptionInitializer>
