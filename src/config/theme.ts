@@ -1,22 +1,9 @@
 /**
- * Theme configuration - re-exports from sudojo_lib
+ * Theme configuration - re-exports from shared components
  */
 
-import {
-  type ThemePreference,
-  type ResolvedTheme,
-  THEME_STORAGE_KEY,
-} from '@sudobility/sudojo_lib';
+// Re-export Theme from shared components
+export { Theme } from '@sudobility/components';
 
-// Backward compatibility: Theme is an alias for ThemePreference
-export const Theme = {
-  LIGHT: 'light',
-  DARK: 'dark',
-  SYSTEM: 'system',
-} as const;
-
-export type Theme = ThemePreference;
-
-// Re-export from lib
-export { THEME_STORAGE_KEY };
-export type { ThemePreference, ResolvedTheme };
+// For backward compatibility, keep the storage key
+export const THEME_STORAGE_KEY = 'sudojo-theme';

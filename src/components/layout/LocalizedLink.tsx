@@ -1,24 +1,15 @@
-import { Link, type LinkProps } from 'react-router-dom';
-import { useParams } from 'react-router-dom';
-import { isLanguageSupported, SUPPORTED_LANGUAGES } from '@/i18n';
+import { LocalizedLink as SharedLocalizedLink } from '@sudobility/components';
+import type { LocalizedLinkProps as SharedLocalizedLinkProps } from '@sudobility/components';
+import { isLanguageSupported } from '@/i18n';
 
-interface LocalizedLinkProps extends Omit<LinkProps, 'to'> {
-  to: string;
-  state?: Record<string, unknown>;
-}
+type LocalizedLinkProps = Omit<SharedLocalizedLinkProps, 'isLanguageSupported' | 'defaultLanguage'>;
 
-export function LocalizedLink({ to, state, children, ...props }: LocalizedLinkProps) {
-  const { lang } = useParams<{ lang: string }>();
-  const currentLang = lang && isLanguageSupported(lang) ? lang : 'en';
-
-  // If path already starts with language prefix, use as is
-  const localizedPath = SUPPORTED_LANGUAGES.some(l => to.startsWith(`/${l}/`) || to === `/${l}`)
-    ? to
-    : `/${currentLang}${to.startsWith('/') ? to : `/${to}`}`;
-
+export function LocalizedLink(props: LocalizedLinkProps) {
   return (
-    <Link to={localizedPath} state={state} {...props}>
-      {children}
-    </Link>
+    <SharedLocalizedLink
+      {...props}
+      isLanguageSupported={isLanguageSupported}
+      defaultLanguage="en"
+    />
   );
 }

@@ -1,8 +1,8 @@
-import { BrowserRouter, Routes, Route, Navigate, Outlet, useParams } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HelmetProvider } from 'react-helmet-async';
-import { I18nextProvider, useTranslation } from 'react-i18next';
-import i18n, { isLanguageSupported } from './i18n';
+import { I18nextProvider } from 'react-i18next';
+import i18n from './i18n';
 import ThemeProvider from './context/ThemeContext';
 import { AuthProviderWrapper } from './components/providers/AuthProviderWrapper';
 import { SettingsProvider } from './context/SettingsContext';
@@ -10,7 +10,7 @@ import { ProgressProvider } from './context/ProgressContext';
 import { SubscriptionProviderWrapper } from './components/providers/SubscriptionProviderWrapper';
 
 // Pages (lazy loaded)
-import { lazy, Suspense, useEffect } from 'react';
+import { lazy, Suspense } from 'react';
 
 const HomePage = lazy(() => import('./pages/HomePage'));
 const DailyPage = lazy(() => import('./pages/DailyPage'));
@@ -22,8 +22,13 @@ const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const AdminPage = lazy(() => import('./pages/AdminPage'));
 const TechniqueImageGenerator = lazy(() => import('./pages/TechniqueImageGenerator'));
 
-// Layout
-import ScreenContainer from './components/layout/ScreenContainer';
+// Layout components
+import LanguageValidator, { LanguageRedirect } from './components/layout/LanguageValidator';
+const ProtectedRoute = lazy(() => import('./components/layout/ProtectedRoute'));
+
+// PerformancePanel - only used in dev mode
+// Note: Not lazy loaded because @sudobility/components is statically imported elsewhere
+import { PerformancePanel } from '@sudobility/components';
 
 // PWA
 import { InstallPrompt } from './components/pwa';
@@ -42,50 +47,8 @@ const queryClient = new QueryClient({
   },
 });
 
-// Language redirect component
-function LanguageRedirect() {
-  const detectLanguage = (): string => {
-    // Check localStorage
-    const stored = localStorage.getItem('language');
-    if (stored && isLanguageSupported(stored)) {
-      return stored;
-    }
-
-    // Check browser language
-    const browserLang = navigator.language.split('-')[0];
-    if (isLanguageSupported(browserLang)) {
-      return browserLang;
-    }
-
-    return 'en';
-  };
-
-  return <Navigate to={`/${detectLanguage()}`} replace />;
-}
-
-// Language validator component
-function LanguageValidator() {
-  const { lang } = useParams<{ lang: string }>();
-  const { i18n: i18nInstance } = useTranslation();
-
-  useEffect(() => {
-    if (lang && isLanguageSupported(lang) && i18nInstance.language !== lang) {
-      i18nInstance.changeLanguage(lang);
-    }
-  }, [lang, i18nInstance]);
-
-  if (!lang || !isLanguageSupported(lang)) {
-    return <LanguageRedirect />;
-  }
-
-  return (
-    <ScreenContainer>
-      <Suspense fallback={<LoadingFallback />}>
-        <Outlet />
-      </Suspense>
-    </ScreenContainer>
-  );
-}
+// Stable reference for PerformancePanel to prevent infinite re-renders
+const PERFORMANCE_API_PATTERNS = ['/api/'];
 
 // Loading fallback
 function LoadingFallback() {
@@ -139,8 +102,22 @@ function App() {
                             <Route path="play/:levelId" element={<LevelPlayPage />} />
                             <Route path="techniques" element={<TechniquesPage />} />
                             <Route path="techniques/:techniqueId" element={<TechniquesPage />} />
-                            <Route path="admin" element={<AdminPage />} />
-                            <Route path="admin/:section" element={<AdminPage />} />
+                            <Route
+                              path="admin"
+                              element={
+                                <ProtectedRoute>
+                                  <AdminPage />
+                                </ProtectedRoute>
+                              }
+                            />
+                            <Route
+                              path="admin/:section"
+                              element={
+                                <ProtectedRoute>
+                                  <AdminPage />
+                                </ProtectedRoute>
+                              }
+                            />
                             <Route path="settings" element={<SettingsPage />} />
                             <Route path="*" element={<LanguageHomeRedirect />} />
                           </Route>
@@ -148,6 +125,14 @@ function App() {
                           {/* Catch-all */}
                           <Route path="*" element={<LanguageRedirect />} />
                         </Routes>
+                        {/* Floating performance panel - controlled by VITE_SHOW_PERFORMANCE_MONITOR */}
+                        {import.meta.env.VITE_SHOW_PERFORMANCE_MONITOR === 'true' && (
+                          <PerformancePanel
+                            enabled={true}
+                            position="bottom-right"
+                            apiPatterns={PERFORMANCE_API_PATTERNS}
+                          />
+                        )}
                       </BrowserRouter>
                     </SubscriptionProviderWrapper>
                   </AuthProviderWrapper>

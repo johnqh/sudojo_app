@@ -137,6 +137,23 @@ export default defineConfig({
           if (id.includes('node_modules/@heroicons/') || id.includes('node_modules/lucide-react')) {
             return 'icons';
           }
+
+          // Sudobility packages - split by package
+          if (id.includes('node_modules/@sudobility/components')) {
+            return 'sudobility-components';
+          }
+          if (id.includes('node_modules/@sudobility/sudojo_lib')) {
+            return 'sudobility-sudojo-lib';
+          }
+          if (id.includes('node_modules/@sudobility/sudojo_client')) {
+            return 'sudojo-client';
+          }
+          if (id.includes('node_modules/@sudobility/sudojo_types')) {
+            return 'sudojo-types';
+          }
+          if (id.includes('node_modules/@sudobility/')) {
+            return 'sudobility-core';
+          }
         },
       },
     },
