@@ -1,6 +1,6 @@
 import type { AuthTexts, AuthErrorTexts } from '@sudobility/auth-components';
 import type { TFunction } from 'i18next';
-import { getFirebaseErrorMessage } from '@sudobility/sudojo_lib';
+import { getFirebaseErrorMessage } from '@sudobility/auth_lib';
 
 /**
  * Create auth texts from i18next translations
@@ -53,7 +53,7 @@ export function createAuthTexts(t: TFunction): AuthTexts {
 }
 
 /**
- * Create auth error texts - uses sudojo_lib's getFirebaseErrorMessage
+ * Create auth error texts - uses auth_lib's getFirebaseErrorMessage
  * for consistent error message handling
  */
 export function createAuthErrorTexts(): AuthErrorTexts {

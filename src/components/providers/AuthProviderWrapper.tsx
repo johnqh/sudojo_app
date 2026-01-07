@@ -1,9 +1,8 @@
-import { type ReactNode } from 'react';
+import { type ReactNode, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AuthProvider } from '@sudobility/auth-components';
-import { auth } from '@/config/firebase';
+import { getFirebaseAuth, getFirebaseErrorMessage } from '@sudobility/auth_lib';
 import { createAuthTexts, createAuthErrorTexts } from '@/config/auth-config';
-import { getFirebaseErrorMessage } from '@sudobility/sudojo_lib';
 
 interface AuthProviderWrapperProps {
   children: ReactNode;
@@ -16,17 +15,21 @@ interface AuthProviderWrapperProps {
 export function AuthProviderWrapper({ children }: AuthProviderWrapperProps) {
   const { t } = useTranslation();
 
+  // Memoize texts - must be called before any conditional returns
+  const texts = useMemo(() => createAuthTexts(t), [t]);
+  const errorTexts = useMemo(() => createAuthErrorTexts(), []);
+
+  const auth = getFirebaseAuth();
+
   // If Firebase is not configured, render children without auth
   if (!auth) {
+    console.warn('[AuthProviderWrapper] No auth instance - Firebase not configured');
     return <>{children}</>;
   }
 
-  const texts = createAuthTexts(t);
-  const errorTexts = createAuthErrorTexts();
-
   return (
     <AuthProvider
-      firebaseConfig={{ type: 'instance', auth }}
+      firebaseConfig={{ type: 'instance', auth: auth }}
       providerConfig={{
         providers: ['google', 'email'],
         enableAnonymous: true,

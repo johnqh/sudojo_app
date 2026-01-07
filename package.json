@@ -22,6 +22,7 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@revenuecat/purchases-js": "^1.22.0",
     "@sudobility/auth-components": "^1.0.2",
+    "@sudobility/auth_lib": "^0.0.1",
     "@sudobility/components": "^4.0.113",
     "@sudobility/design": "^1.1.15",
     "@sudobility/di": "^1.5.8",
