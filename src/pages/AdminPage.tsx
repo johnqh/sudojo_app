@@ -6,17 +6,20 @@ import {
   MasterListItem,
   Text,
   Button,
+  Switch,
 } from '@sudobility/components';
 import {
   TechniqueId,
   TECHNIQUE_TITLE_TO_ID,
   techniqueToBit,
   type Board,
+  type Level,
 } from '@sudobility/sudojo_types';
 import { useSudoku } from '@sudobility/sudojo_lib';
 import { useLocalizedNavigate } from '@/hooks/useLocalizedNavigate';
 import { useSudojoClient } from '@/hooks/useSudojoClient';
 import { useHint, type HintReceivedData } from '@/hooks/useHint';
+import { createSudojoClient } from '@sudobility/sudojo_client';
 
 
 const TARGET_PER_TECHNIQUE = 20;
@@ -39,7 +42,7 @@ export default function AdminPage() {
   const { section } = useParams<{ section: string }>();
   const { t } = useTranslation();
   const { navigate } = useLocalizedNavigate();
-  const { config, auth } = useSudojoClient();
+  const { networkClient, config, auth } = useSudojoClient();
 
   const [mobileViewOverride, setMobileViewOverride] = useState<'navigation' | 'content' | null>(null);
   const mobileView = mobileViewOverride ?? (section ? 'content' : 'navigation');
@@ -51,9 +54,17 @@ export default function AdminPage() {
   const [progress, setProgress] = useState<string>('');
   const abortRef = useRef(false);
 
-  // Techniques section state
+  // Boards section state
   const [totalBoards, setTotalBoards] = useState<number>(0);
   const [boardsWithoutTechniques, setBoardsWithoutTechniques] = useState<number>(0);
+  const [isBoardsLoading, setIsBoardsLoading] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generateProgress, setGenerateProgress] = useState<string>('');
+  const [symmetrical, setSymmetrical] = useState(true);
+  const [levels, setLevels] = useState<Level[]>([]);
+  const generateAbortRef = useRef(false);
+
+  // Techniques section state
   const [isTechniquesLoading, setIsTechniquesLoading] = useState(false);
   const [isExtracting, setIsExtracting] = useState(false);
   const [extractProgress, setExtractProgress] = useState<string>('');
@@ -200,8 +211,9 @@ export default function AdminPage() {
     }
   }, [section, fetchCounts]);
 
-  // Fetch board counts for techniques section
+  // Fetch board counts for boards/techniques section
   const fetchBoardCounts = useCallback(async () => {
+    setIsBoardsLoading(true);
     setIsTechniquesLoading(true);
     try {
       const response = await fetch(`${config.baseUrl}/api/v1/boards/counts`);
@@ -215,15 +227,113 @@ export default function AdminPage() {
     } catch (error) {
       console.error('Failed to fetch board counts:', error);
     } finally {
+      setIsBoardsLoading(false);
       setIsTechniquesLoading(false);
     }
   }, [config.baseUrl]);
 
   useEffect(() => {
-    if (section === 'techniques') {
+    if (section === 'boards' || section === 'techniques') {
       fetchBoardCounts();
     }
   }, [section, fetchBoardCounts]);
+
+  // Generate boards handler
+  const handleGenerateBoards = useCallback(async () => {
+    if (!auth.accessToken) {
+      setGenerateProgress('Error: Not authenticated');
+      return;
+    }
+
+    generateAbortRef.current = false;
+    setGenerateProgress('Fetching levels...');
+    setIsGenerating(true);
+
+    const client = createSudojoClient(networkClient, config);
+
+    // Fetch levels first
+    let levelsList = levels;
+    if (levelsList.length === 0) {
+      try {
+        const levelsResponse = await client.getLevels(auth);
+        if (levelsResponse.success && levelsResponse.data) {
+          levelsList = levelsResponse.data;
+          setLevels(levelsList);
+        }
+      } catch (err) {
+        setGenerateProgress(`Error fetching levels: ${err instanceof Error ? err.message : 'Unknown error'}`);
+        setIsGenerating(false);
+        return;
+      }
+    }
+
+    if (levelsList.length === 0) {
+      setGenerateProgress('Error: No levels found');
+      setIsGenerating(false);
+      return;
+    }
+
+    setGenerateProgress('Starting generation...');
+    let count = 0;
+
+    while (!generateAbortRef.current) {
+      try {
+        // Generate a new board
+        setGenerateProgress(`Generating board ${count + 1}...`);
+        const generateResponse = await client.solverGenerate(auth, { symmetrical });
+
+        if (!generateResponse.success || !generateResponse.data) {
+          setGenerateProgress(`Error generating board: ${generateResponse.error || 'Unknown error'}`);
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          continue;
+        }
+
+        // Response structure: data.board contains { level, techniques, board: { original, solution } }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const boardData = generateResponse.data.board as any;
+        const level = boardData.level as number;
+        const techniquesBitfield = boardData.techniques as number;
+        const original = boardData.board.original as string;
+        const solution = (boardData.board.solution || '') as string;
+
+        // Find level with matching index to get level_uuid
+        const matchingLevel = levelsList.find(l => l.index === level);
+        const levelUuid = matchingLevel?.uuid || null;
+
+        // Save the board to the database
+        setGenerateProgress(`Saving board ${count + 1}...`);
+        const createResponse = await client.createBoard(auth, {
+          board: original,
+          solution: solution,
+          level_uuid: levelUuid,
+          symmetrical: symmetrical,
+          techniques: techniquesBitfield,
+        });
+
+        if (createResponse.success) {
+          count++;
+          setTotalBoards(prev => prev + 1);
+          setGenerateProgress(`Generated ${count} boards (level ${level}, techniques: 0x${techniquesBitfield.toString(16)})`);
+        } else {
+          setGenerateProgress(`Error saving board: ${createResponse.error || 'Unknown error'}`);
+        }
+
+        // Small delay to avoid overwhelming the server
+        await new Promise(resolve => setTimeout(resolve, 100));
+      } catch (err) {
+        setGenerateProgress(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
+
+    setIsGenerating(false);
+    setGenerateProgress(`Stopped. Generated ${count} boards.`);
+  }, [auth, networkClient, config, symmetrical, levels]);
+
+  // Stop generating handler
+  const handleStopGenerating = useCallback(() => {
+    generateAbortRef.current = true;
+  }, []);
 
   // Fetch a board without techniques
   const fetchBoardWithoutTechniques = useCallback(async (): Promise<Board | null> => {
@@ -640,6 +750,7 @@ export default function AdminPage() {
 
   // Admin sections
   const sections = [
+    { id: 'boards', label: 'Boards', description: 'Board management' },
     { id: 'techniques', label: 'Techniques', description: 'Technique management' },
     { id: 'examples', label: 'Examples', description: 'Technique example management' },
   ];
@@ -658,7 +769,49 @@ export default function AdminPage() {
     </div>
   );
 
-  const detailContent = section === 'techniques' ? (
+  const detailContent = section === 'boards' ? (
+    <div className="space-y-6">
+      {/* Board counts */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/50">
+          <Text>Total Boards</Text>
+          <Text weight="medium">
+            {isBoardsLoading ? '...' : totalBoards.toLocaleString()}
+          </Text>
+        </div>
+      </div>
+
+      {/* Symmetrical toggle */}
+      <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/50">
+        <Text>Symmetrical</Text>
+        <Switch
+          checked={symmetrical}
+          onCheckedChange={setSymmetrical}
+          disabled={isGenerating}
+        />
+      </div>
+
+      {/* Progress message */}
+      {generateProgress && (
+        <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+          <Text size="sm">{generateProgress}</Text>
+        </div>
+      )}
+
+      {/* Generate CTA */}
+      <div className="pt-4 border-t">
+        {isGenerating ? (
+          <Button variant="destructive" className="w-full" onClick={handleStopGenerating}>
+            Stop
+          </Button>
+        ) : (
+          <Button className="w-full" onClick={handleGenerateBoards}>
+            Generate
+          </Button>
+        )}
+      </div>
+    </div>
+  ) : section === 'techniques' ? (
     <div className="space-y-6">
       {/* Board counts */}
       <div className="space-y-3">
@@ -762,7 +915,7 @@ export default function AdminPage() {
         masterTitle={t('nav.admin', 'Admin')}
         masterContent={masterContent}
         detailContent={detailContent}
-        detailTitle={section === 'techniques' ? 'Techniques' : section === 'examples' ? 'Examples' : undefined}
+        detailTitle={section === 'boards' ? 'Boards' : section === 'techniques' ? 'Techniques' : section === 'examples' ? 'Examples' : undefined}
         mobileView={mobileView}
         onBackToNavigation={handleBackToNavigation}
         masterWidth={280}

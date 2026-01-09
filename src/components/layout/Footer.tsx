@@ -1,87 +1,81 @@
 import { useTranslation } from 'react-i18next';
 import {
-  Footer as FooterContainer,
-  FooterCompact,
-  FooterCompactLeft,
-  FooterCompactRight,
-  FooterCopyright,
-  FooterVersion,
-  FooterGrid,
-  FooterBrand,
-  FooterLinkSection,
-  FooterLink,
-  FooterBottom,
-} from '@sudobility/components';
+  AppFooter,
+  AppFooterForHomePage,
+  type FooterLinkSection,
+} from '@sudobility/building_blocks';
 import { LocalizedLink } from './LocalizedLink';
 
 interface FooterProps {
   variant?: 'full' | 'compact';
 }
 
+// Link wrapper for footer
+const LinkWrapper = ({
+  href,
+  children,
+  className,
+}: {
+  href: string;
+  children: React.ReactNode;
+  className?: string;
+}) => (
+  <LocalizedLink to={href} className={className}>
+    {children}
+  </LocalizedLink>
+);
+
 export default function Footer({ variant = 'compact' }: FooterProps) {
   const { t } = useTranslation();
   const currentYear = String(new Date().getFullYear());
+  const version = import.meta.env.VITE_APP_VERSION || '0.0.1';
 
   if (variant === 'compact') {
     return (
-      <FooterContainer variant="compact" sticky>
-        <FooterCompact>
-          <FooterCompactLeft>
-            <FooterVersion version={import.meta.env.VITE_APP_VERSION || '0.0.1'} />
-            <FooterCopyright year={currentYear} companyName={t('app.name')} />
-          </FooterCompactLeft>
-          <FooterCompactRight>
-            <LocalizedLink
-              to="/privacy"
-              className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
-            >
-              {t('footer.privacy')}
-            </LocalizedLink>
-            <LocalizedLink
-              to="/terms"
-              className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
-            >
-              {t('footer.terms')}
-            </LocalizedLink>
-          </FooterCompactRight>
-        </FooterCompact>
-      </FooterContainer>
+      <AppFooter
+        version={version}
+        copyrightYear={currentYear}
+        companyName={t('app.name')}
+        companyUrl="/"
+        links={[
+          { label: t('footer.privacy'), href: '/privacy' },
+          { label: t('footer.terms'), href: '/terms' },
+        ]}
+        LinkComponent={LinkWrapper}
+        sticky
+      />
     );
   }
 
   // Full footer for home page
+  const linkSections: FooterLinkSection[] = [
+    {
+      title: t('nav.daily'),
+      links: [{ label: t('daily.title'), href: '/daily' }],
+    },
+    {
+      title: t('nav.play'),
+      links: [{ label: t('nav.play'), href: '/play' }],
+    },
+    {
+      title: t('nav.techniques'),
+      links: [{ label: t('techniques.title'), href: '/techniques' }],
+    },
+  ];
+
   return (
-    <FooterContainer variant="full">
-      <FooterGrid>
-        <FooterBrand description={t('app.tagline')}>
-          <LocalizedLink to="/" className="text-xl font-bold text-blue-600 dark:text-blue-400">
-            {t('app.name')}
-          </LocalizedLink>
-        </FooterBrand>
-
-        <FooterLinkSection title={t('nav.daily')}>
-          <FooterLink>
-            <LocalizedLink to="/daily">{t('daily.title')}</LocalizedLink>
-          </FooterLink>
-        </FooterLinkSection>
-
-        <FooterLinkSection title={t('nav.play')}>
-          <FooterLink>
-            <LocalizedLink to="/play">{t('nav.play')}</LocalizedLink>
-          </FooterLink>
-        </FooterLinkSection>
-
-        <FooterLinkSection title={t('nav.techniques')}>
-          <FooterLink>
-            <LocalizedLink to="/techniques">{t('techniques.title')}</LocalizedLink>
-          </FooterLink>
-        </FooterLinkSection>
-      </FooterGrid>
-
-      <FooterBottom>
-        <FooterVersion version={import.meta.env.VITE_APP_VERSION || '0.0.1'} />
-        <FooterCopyright year={currentYear} companyName={t('app.name')} />
-      </FooterBottom>
-    </FooterContainer>
+    <AppFooterForHomePage
+      logo={{
+        appName: t('app.name'),
+      }}
+      linkSections={linkSections}
+      version={version}
+      copyrightYear={currentYear}
+      companyName={t('app.name')}
+      companyUrl="/"
+      description={t('app.tagline')}
+      LinkComponent={LinkWrapper}
+      gridColumns={3}
+    />
   );
 }
