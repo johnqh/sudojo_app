@@ -1,7 +1,7 @@
 {
   "name": "sudojo_app",
   "private": true,
-  "version": "0.0.21",
+  "version": "0.0.22",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -27,7 +27,7 @@
     "@revenuecat/purchases-js": "^1.22.0",
     "@sudobility/auth-components": "^1.0.4",
     "@sudobility/auth_lib": "^0.0.5",
-    "@sudobility/building_blocks": "^0.0.17",
+    "@sudobility/building_blocks": "^0.0.18",
     "@sudobility/components": "^4.0.134",
     "@sudobility/design": "^1.1.17",
     "@sudobility/di": "^1.5.17",
@@ -44,7 +44,6 @@
     "i18next": "^25.5.3",
     "i18next-browser-languagedetector": "^8.2.0",
     "i18next-http-backend": "^3.0.2",
-    "lucide-react": "^0.548.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-helmet-async": "^2.0.5",
