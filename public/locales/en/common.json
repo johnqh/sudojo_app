@@ -68,12 +68,75 @@
   "home": {
     "hero": {
       "title": "Master Sudoku",
-      "subtitle": "Learn solving techniques and challenge yourself with daily puzzles"
+      "subtitle": "Your personal dojo for mastering Sudoku, one technique at a time",
+      "description": "Sudojo combines the art of puzzle-solving with systematic learning. Whether you're a beginner learning the basics or an expert tackling advanced techniques, our intelligent hint system teaches you the 'why' behind every move."
+    },
+    "whatIs": {
+      "title": "Why Sudojo?",
+      "subtitle": "Most Sudoku apps just give you puzzles. We teach you how to solve them.",
+      "learn": {
+        "title": "Learn Real Techniques",
+        "description": "From Naked Singles to X-Wings and beyond. Master 20+ solving techniques used by experts worldwide."
+      },
+      "progress": {
+        "title": "Progress Systematically",
+        "description": "8 difficulty levels that build on each other. Each level introduces new techniques while reinforcing what you've learned."
+      },
+      "master": {
+        "title": "Master Any Puzzle",
+        "description": "Our hint system doesn't just give answers. It teaches you the exact technique to use and why it works."
+      }
+    },
+    "howItWorks": {
+      "title": "How It Works",
+      "step1": {
+        "title": "Choose Your Challenge",
+        "description": "Start with daily puzzles for a quick brain workout, or dive into progressive levels to build your skills systematically."
+      },
+      "step2": {
+        "title": "Learn as You Play",
+        "description": "Stuck on a puzzle? Our smart hints highlight exactly which cells to look at and explain the technique step by step."
+      },
+      "step3": {
+        "title": "Master New Techniques",
+        "description": "Each level introduces new solving strategies. Learn Hidden Pairs, Pointing Pairs, X-Wings, and more advanced patterns."
+      },
+      "step4": {
+        "title": "Track Your Progress",
+        "description": "Watch your skills grow with streaks, completion stats, and time tracking. See which techniques you've mastered."
+      }
+    },
+    "techniques": {
+      "title": "20+ Solving Techniques",
+      "subtitle": "From beginner basics to expert-level patterns, learn the techniques that pros use",
+      "list": {
+        "nakedSingle": "Naked Single",
+        "hiddenSingle": "Hidden Single",
+        "nakedPair": "Naked Pair",
+        "xWing": "X-Wing"
+      },
+      "viewAll": "Explore all techniques"
+    },
+    "hints": {
+      "title": "Hints That Teach",
+      "description": "Unlike other apps that just fill in answers, Sudojo's hints are designed to make you a better solver.",
+      "features": {
+        "step1": "See exactly which cells and candidates to focus on",
+        "step2": "Learn the name and logic of each technique",
+        "step3": "Apply the hint yourself to reinforce learning"
+      },
+      "example": {
+        "title": "\"Look at row 3...\"",
+        "description": "Our hints guide your eyes to the right spot and explain the pattern, so you can find similar situations on your own."
+      }
+    },
+    "getStarted": {
+      "title": "Ready to Level Up Your Sudoku?"
     },
     "cta": {
       "daily": "Play Today's Puzzle",
-      "levels": "Browse Levels",
-      "techniques": "Learn Techniques"
+      "levels": "Progress through difficulty levels",
+      "techniques": "Learn solving techniques"
     }
   },
   "game": {
