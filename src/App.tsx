@@ -21,6 +21,8 @@ const TechniquesPage = lazy(() => import('./pages/TechniquesPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const AdminPage = lazy(() => import('./pages/AdminPage'));
 const TechniqueImageGenerator = lazy(() => import('./pages/TechniqueImageGenerator'));
+const PricingPage = lazy(() => import('./pages/PricingPage'));
+const SubscriptionPage = lazy(() => import('./pages/SubscriptionPage'));
 
 // Layout components
 import LanguageValidator, { LanguageRedirect } from './components/layout/LanguageValidator';
@@ -119,6 +121,15 @@ function App() {
                               }
                             />
                             <Route path="settings" element={<SettingsPage />} />
+                            <Route path="pricing" element={<PricingPage />} />
+                            <Route
+                              path="subscription"
+                              element={
+                                <ProtectedRoute>
+                                  <SubscriptionPage />
+                                </ProtectedRoute>
+                              }
+                            />
                             <Route path="*" element={<LanguageHomeRedirect />} />
                           </Route>
 

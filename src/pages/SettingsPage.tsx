@@ -1,5 +1,8 @@
 import { useTranslation } from 'react-i18next';
+import { PuzzlePieceIcon } from '@heroicons/react/24/outline';
 import { Heading, Text, Card, CardContent, Switch, Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@sudobility/components';
+import { GlobalSettingsPage, type SettingsSectionConfig } from '@sudobility/building_blocks';
+import { useTheme, Theme, FontSize } from '@/context/ThemeContext';
 import { useSettings, type AppSettings } from '@/context/SettingsContext';
 import { useProgress } from '@/context/ProgressContext';
 import { formatTime as formatTimeBase } from '@sudobility/sudojo_lib';
@@ -12,7 +15,8 @@ function formatTime(seconds: number | null): string {
   return formatTimeBase(seconds);
 }
 
-export default function SettingsPage() {
+// Gaming settings content component
+const GamingSettingsContent: React.FC = () => {
   const { t } = useTranslation();
   const { settings, updateSetting } = useSettings();
   const { progress } = useProgress();
@@ -24,157 +28,178 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="py-8 max-w-2xl mx-auto">
-      <header className="mb-8">
-        <Heading level={1} size="2xl">
-          {t('settings.title')}
+    <div className="space-y-6">
+      {/* Progress Stats */}
+      <section>
+        <Heading level={2} size="lg" className="mb-3">
+          {t('settings.progress.title')}
         </Heading>
-      </header>
+        <Card>
+          <CardContent className="py-4">
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div>
+                <Text size="2xl" weight="bold" className="text-blue-600 dark:text-blue-400">
+                  {progress.totalCompleted}
+                </Text>
+                <Text size="sm" color="muted">
+                  {t('settings.progress.completed')}
+                </Text>
+              </div>
+              <div>
+                <Text size="2xl" weight="bold" className="text-green-600 dark:text-green-400">
+                  {progress.dailyStreak}
+                </Text>
+                <Text size="sm" color="muted">
+                  {t('settings.progress.streak')}
+                </Text>
+              </div>
+              <div>
+                <Text size="2xl" weight="bold" className="text-purple-600 dark:text-purple-400">
+                  {progress.completedPuzzles.filter(p => p.type === 'level').length}
+                </Text>
+                <Text size="sm" color="muted">
+                  {t('settings.progress.levels')}
+                </Text>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
 
-      <div className="space-y-6">
-        {/* Progress Stats */}
-        <section>
-          <Heading level={2} size="lg" className="mb-3">
-            {t('settings.progress.title')}
-          </Heading>
+      {/* Time Statistics */}
+      <section>
+        <Heading level={2} size="lg" className="mb-3">
+          {t('settings.stats.title')}
+        </Heading>
+        <Card>
+          <CardContent className="py-4">
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div>
+                <Text size="2xl" weight="bold" className="font-mono text-orange-600 dark:text-orange-400">
+                  {formatTime(progress.stats?.bestDailyTime ?? null)}
+                </Text>
+                <Text size="sm" color="muted">
+                  {t('settings.stats.bestDaily')}
+                </Text>
+              </div>
+              <div>
+                <Text size="2xl" weight="bold" className="font-mono text-teal-600 dark:text-teal-400">
+                  {formatTime(progress.stats?.bestLevelTime ?? null)}
+                </Text>
+                <Text size="sm" color="muted">
+                  {t('settings.stats.bestLevel')}
+                </Text>
+              </div>
+              <div>
+                <Text size="2xl" weight="bold" className="font-mono text-indigo-600 dark:text-indigo-400">
+                  {formatTime(progress.stats?.averageTime ?? null)}
+                </Text>
+                <Text size="sm" color="muted">
+                  {t('settings.stats.average')}
+                </Text>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+
+      {/* Game Settings */}
+      <section>
+        <Heading level={2} size="lg" className="mb-3">
+          {t('settings.gameSettings')}
+        </Heading>
+        <div className="space-y-4">
+          {/* Show Errors */}
+          <Card>
+            <CardContent className="flex items-center justify-between py-4">
+              <div>
+                <Text weight="medium">{t('settings.showErrors')}</Text>
+                <Text size="sm" color="muted">
+                  {t('settings.showErrorsDesc')}
+                </Text>
+              </div>
+              <Switch
+                checked={settings.showErrors}
+                onCheckedChange={checked => updateSetting('showErrors', checked)}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Symmetrical Puzzles */}
+          <Card>
+            <CardContent className="flex items-center justify-between py-4">
+              <div>
+                <Text weight="medium">{t('settings.symmetrical')}</Text>
+                <Text size="sm" color="muted">
+                  {t('settings.symmetricalDesc')}
+                </Text>
+              </div>
+              <Switch
+                checked={settings.symmetrical}
+                onCheckedChange={checked => updateSetting('symmetrical', checked)}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Display Format */}
           <Card>
             <CardContent className="py-4">
-              <div className="grid grid-cols-3 gap-4 text-center">
+              <div className="flex items-center justify-between">
                 <div>
-                  <Text size="2xl" weight="bold" className="text-blue-600 dark:text-blue-400">
-                    {progress.totalCompleted}
-                  </Text>
+                  <Text weight="medium">{t('settings.display')}</Text>
                   <Text size="sm" color="muted">
-                    {t('settings.progress.completed')}
+                    {t('settings.displayDesc')}
                   </Text>
                 </div>
-                <div>
-                  <Text size="2xl" weight="bold" className="text-green-600 dark:text-green-400">
-                    {progress.dailyStreak}
-                  </Text>
-                  <Text size="sm" color="muted">
-                    {t('settings.progress.streak')}
-                  </Text>
-                </div>
-                <div>
-                  <Text size="2xl" weight="bold" className="text-purple-600 dark:text-purple-400">
-                    {progress.completedPuzzles.filter(p => p.type === 'level').length}
-                  </Text>
-                  <Text size="sm" color="muted">
-                    {t('settings.progress.levels')}
-                  </Text>
-                </div>
+                <Select
+                  value={settings.display}
+                  onValueChange={value => updateSetting('display', value as AppSettings['display'])}
+                >
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {displayOptions.map(option => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </CardContent>
           </Card>
-        </section>
-
-        {/* Time Statistics */}
-        <section>
-          <Heading level={2} size="lg" className="mb-3">
-            {t('settings.stats.title')}
-          </Heading>
-          <Card>
-            <CardContent className="py-4">
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div>
-                  <Text size="2xl" weight="bold" className="font-mono text-orange-600 dark:text-orange-400">
-                    {formatTime(progress.stats?.bestDailyTime ?? null)}
-                  </Text>
-                  <Text size="sm" color="muted">
-                    {t('settings.stats.bestDaily')}
-                  </Text>
-                </div>
-                <div>
-                  <Text size="2xl" weight="bold" className="font-mono text-teal-600 dark:text-teal-400">
-                    {formatTime(progress.stats?.bestLevelTime ?? null)}
-                  </Text>
-                  <Text size="sm" color="muted">
-                    {t('settings.stats.bestLevel')}
-                  </Text>
-                </div>
-                <div>
-                  <Text size="2xl" weight="bold" className="font-mono text-indigo-600 dark:text-indigo-400">
-                    {formatTime(progress.stats?.averageTime ?? null)}
-                  </Text>
-                  <Text size="sm" color="muted">
-                    {t('settings.stats.average')}
-                  </Text>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </section>
-
-        {/* Game Settings */}
-        <section>
-          <Heading level={2} size="lg" className="mb-3">
-            {t('settings.gameSettings')}
-          </Heading>
-          <div className="space-y-4">
-            {/* Show Errors */}
-            <Card>
-              <CardContent className="flex items-center justify-between py-4">
-                <div>
-                  <Text weight="medium">{t('settings.showErrors')}</Text>
-                  <Text size="sm" color="muted">
-                    {t('settings.showErrorsDesc')}
-                  </Text>
-                </div>
-                <Switch
-                  checked={settings.showErrors}
-                  onCheckedChange={checked => updateSetting('showErrors', checked)}
-                />
-              </CardContent>
-            </Card>
-
-            {/* Symmetrical Puzzles */}
-            <Card>
-              <CardContent className="flex items-center justify-between py-4">
-                <div>
-                  <Text weight="medium">{t('settings.symmetrical')}</Text>
-                  <Text size="sm" color="muted">
-                    {t('settings.symmetricalDesc')}
-                  </Text>
-                </div>
-                <Switch
-                  checked={settings.symmetrical}
-                  onCheckedChange={checked => updateSetting('symmetrical', checked)}
-                />
-              </CardContent>
-            </Card>
-
-            {/* Display Format */}
-            <Card>
-              <CardContent className="py-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Text weight="medium">{t('settings.display')}</Text>
-                    <Text size="sm" color="muted">
-                      {t('settings.displayDesc')}
-                    </Text>
-                  </div>
-                  <Select
-                    value={settings.display}
-                    onValueChange={value => updateSetting('display', value as AppSettings['display'])}
-                  >
-                    <SelectTrigger className="w-40">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {displayOptions.map(option => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </section>
-      </div>
+        </div>
+      </section>
     </div>
+  );
+};
+
+export default function SettingsPage() {
+  const { t } = useTranslation();
+  const { theme, setTheme, fontSize, setFontSize } = useTheme();
+
+  // Additional settings sections
+  const additionalSections: SettingsSectionConfig[] = [
+    {
+      id: 'gaming',
+      icon: PuzzlePieceIcon,
+      label: t('settings.gaming.label', 'Gaming'),
+      description: t('settings.gaming.description', 'Game preferences and statistics'),
+      content: <GamingSettingsContent />,
+    },
+  ];
+
+  return (
+    <GlobalSettingsPage
+      theme={theme}
+      fontSize={fontSize}
+      onThemeChange={(value) => setTheme(value as Theme)}
+      onFontSizeChange={(value) => setFontSize(value as FontSize)}
+      additionalSections={additionalSections}
+      t={(key, fallback) => t(key, { defaultValue: fallback })}
+      appearanceT={(key, fallback) => t(`settings.appearance.${key}`, { defaultValue: fallback })}
+      showAppearanceInfoBox={true}
+    />
   );
 }
