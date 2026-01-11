@@ -23,6 +23,10 @@ const AdminPage = lazy(() => import('./pages/AdminPage'));
 const TechniqueImageGenerator = lazy(() => import('./pages/TechniqueImageGenerator'));
 const PricingPage = lazy(() => import('./pages/PricingPage'));
 const SubscriptionPage = lazy(() => import('./pages/SubscriptionPage'));
+const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
+const TermsPage = lazy(() => import('./pages/TermsPage'));
+const CookiesPage = lazy(() => import('./pages/CookiesPage'));
+const SitemapPage = lazy(() => import('./pages/SitemapPage'));
 
 // Layout components
 import LanguageValidator, { LanguageRedirect } from './components/layout/LanguageValidator';
@@ -122,6 +126,10 @@ function App() {
                             />
                             <Route path="settings" element={<SettingsPage />} />
                             <Route path="pricing" element={<PricingPage />} />
+                            <Route path="privacy" element={<PrivacyPage />} />
+                            <Route path="terms" element={<TermsPage />} />
+                            <Route path="cookies" element={<CookiesPage />} />
+                            <Route path="sitemap" element={<SitemapPage />} />
                             <Route
                               path="subscription"
                               element={
