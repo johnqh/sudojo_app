@@ -1,7 +1,7 @@
 {
   "name": "sudojo_app",
   "private": true,
-  "version": "0.0.23",
+  "version": "0.0.24",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -27,7 +27,7 @@
     "@revenuecat/purchases-js": "^1.22.0",
     "@sudobility/auth-components": "^1.0.4",
     "@sudobility/auth_lib": "^0.0.5",
-    "@sudobility/building_blocks": "^0.0.18",
+    "@sudobility/building_blocks": "^0.0.21",
     "@sudobility/components": "^4.0.134",
     "@sudobility/design": "^1.1.17",
     "@sudobility/di": "^1.5.17",

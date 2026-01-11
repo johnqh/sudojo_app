@@ -17,7 +17,7 @@
         "@revenuecat/purchases-js": "^1.22.0",
         "@sudobility/auth-components": "^1.0.4",
         "@sudobility/auth_lib": "^0.0.5",
-        "@sudobility/building_blocks": "^0.0.18",
+        "@sudobility/building_blocks": "^0.0.21",
         "@sudobility/components": "^4.0.134",
         "@sudobility/design": "^1.1.17",
         "@sudobility/di": "^1.5.17",
@@ -633,7 +633,7 @@
 
     "@sudobility/auth_lib": ["@sudobility/auth_lib@0.0.5", "", { "peerDependencies": { "@sudobility/di": "^1.5.17", "@sudobility/types": "^1.9.43", "firebase": "^12.7.0", "react": "^19.2.3" } }, "sha512-qSnY6bQeHqX5wXwy1jcEiOo0GUPdJ6x4HPy2ekhPq6j5Muk2iycAtIAhCT59V5XgEmNd46ZeHDBp/6ZH+WzTDQ=="],
 
-    "@sudobility/building_blocks": ["@sudobility/building_blocks@0.0.18", "", { "peerDependencies": { "@heroicons/react": "^2.0.0", "@sudobility/components": "^4.0.134", "@sudobility/design": "^1.1.17", "class-variance-authority": "^0.7.0", "clsx": "^2.0.0", "react": "^18.0.0 || ^19.0.0", "react-dom": "^18.0.0 || ^19.0.0", "tailwind-merge": "^2.0.0 || ^3.0.0" } }, "sha512-4xC6vpmVHMoCeoe9pQHuN01wcxzjYG58Ya2DhUAKICB09hBibRnLHgjwIWC3A8GJ6gu+yIsNXGt/Ak2gyfzSJA=="],
+    "@sudobility/building_blocks": ["@sudobility/building_blocks@0.0.21", "", { "peerDependencies": { "@heroicons/react": "^2.0.0", "@sudobility/components": "^4.0.134", "@sudobility/design": "^1.1.17", "class-variance-authority": "^0.7.0", "clsx": "^2.0.0", "react": "^18.0.0 || ^19.0.0", "react-dom": "^18.0.0 || ^19.0.0", "tailwind-merge": "^2.0.0 || ^3.0.0" } }, "sha512-6e2tC/eWK2h38wgk4dXA2QdYaYgM6xgq84uN3XD3+6ZDdf7yEUQFIjqSZgsycavhLhYQ+cY0Wf1emQuGuuSz/A=="],
 
     "@sudobility/components": ["@sudobility/components@4.0.134", "", { "dependencies": { "@sudobility/components": "^4.0.133" }, "optionalDependencies": { "@rollup/rollup-linux-x64-gnu": "4.52.5", "@rollup/rollup-linux-x64-musl": "4.52.5" }, "peerDependencies": { "@heroicons/react": ">=2.0.0", "@radix-ui/react-alert-dialog": ">=1.0.0", "@radix-ui/react-dialog": ">=1.0.0", "@radix-ui/react-label": ">=2.0.0", "@radix-ui/react-select": ">=2.0.0", "@radix-ui/react-slot": ">=1.0.0", "@radix-ui/react-switch": ">=1.0.0", "@radix-ui/react-tabs": ">=1.0.0", "@sudobility/design": "^1.1.17", "@sudobility/types": "^1.9.43", "class-variance-authority": ">=0.7.0", "clsx": ">=2.0.0", "i18next": ">=23.0.0", "lucide-react": ">=0.300.0", "react": ">=18.0.0", "react-dom": ">=18.0.0", "react-i18next": ">=14.0.0", "react-router-dom": ">=6.0.0", "tailwind-merge": ">=2.0.0", "web-vitals": ">=3.0.0" } }, "sha512-MTDm3BNRDuyWCV0lHfXRjeNfjjKEQu9pVYfMkr+tL35irqJSyFL30VhxUW8q3an18IucLOJLQcWe4OKRXJZmgw=="],
 
