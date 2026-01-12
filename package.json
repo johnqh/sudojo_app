@@ -1,7 +1,7 @@
 {
   "name": "sudojo_app",
   "private": true,
-  "version": "0.0.27",
+  "version": "0.0.28",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -33,9 +33,9 @@
     "@sudobility/di": "^1.5.18",
     "@sudobility/di_web": "^0.1.54",
     "@sudobility/subscription-components": "^1.0.13",
-    "@sudobility/sudojo_client": "^0.0.22",
-    "@sudobility/sudojo_lib": "^0.0.20",
-    "@sudobility/sudojo_types": "^1.1.10",
+    "@sudobility/sudojo_client": "^0.0.23",
+    "@sudobility/sudojo_lib": "^0.0.21",
+    "@sudobility/sudojo_types": "^1.1.15",
     "@sudobility/types": "^1.9.44",
     "@tanstack/react-query": "^5.90.5",
     "class-variance-authority": "^0.7.1",

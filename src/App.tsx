@@ -27,6 +27,7 @@ const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
 const TermsPage = lazy(() => import('./pages/TermsPage'));
 const CookiesPage = lazy(() => import('./pages/CookiesPage'));
 const SitemapPage = lazy(() => import('./pages/SitemapPage'));
+const LoginPage = lazy(() => import('./pages/LoginPage'));
 
 // Layout components
 import LanguageValidator, { LanguageRedirect } from './components/layout/LanguageValidator';
@@ -102,6 +103,7 @@ function App() {
                           {/* Language-prefixed routes */}
                           <Route path="/:lang" element={<LanguageValidator />}>
                             <Route index element={<HomePage />} />
+                            <Route path="login" element={<LoginPage />} />
                             <Route path="daily" element={<DailyPage />} />
                             <Route path="enter" element={<EnterPage />} />
                             <Route path="play" element={<LevelsPage />} />
