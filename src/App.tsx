@@ -107,6 +107,7 @@ function App() {
                             <Route path="daily" element={<DailyPage />} />
                             <Route path="enter" element={<EnterPage />} />
                             <Route path="play" element={<LevelsPage />} />
+                            <Route path="play/enter" element={<EnterPage />} />
                             <Route path="play/:levelId" element={<LevelPlayPage />} />
                             <Route path="techniques" element={<TechniquesPage />} />
                             <Route path="techniques/:techniqueId" element={<TechniquesPage />} />

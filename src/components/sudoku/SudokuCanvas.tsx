@@ -105,7 +105,10 @@ export default function SudokuCanvas({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const size = canvas.width;
+    // Use logical size (CSS pixels), not physical pixels
+    // ctx.scale(dpr, dpr) is applied in ResizeObserver, so we draw in logical coordinates
+    const dpr = window.devicePixelRatio || 1;
+    const size = canvas.width / dpr;
     const cellSize = size / 9;
     const boxSize = size / 3;
 

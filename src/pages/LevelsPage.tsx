@@ -6,6 +6,16 @@ import { useSudojoClient } from '@/hooks/useSudojoClient';
 import { useGameDataStore } from '@/stores/gameDataStore';
 import { getInfoService } from '@sudobility/di';
 import { InfoType } from '@sudobility/types';
+import { getBeltForLevel, getBeltIconSvg } from '@sudobility/sudojo_types';
+
+/** Belt icon component that renders the martial arts belt SVG */
+function BeltIcon({ levelIndex, width = 60, height = 24 }: { levelIndex: number; width?: number; height?: number }) {
+  const belt = getBeltForLevel(levelIndex);
+  if (!belt) return null;
+
+  const svg = getBeltIconSvg(belt.hex, width, height);
+  return <div dangerouslySetInnerHTML={{ __html: svg }} className="flex-shrink-0" />;
+}
 
 export default function LevelsPage() {
   const { t } = useTranslation();
@@ -39,7 +49,7 @@ export default function LevelsPage() {
         </Heading>
         <div className="flex flex-col divide-y divide-gray-200 dark:divide-gray-700">
           <LocalizedLink
-            to="/enter"
+            to="/play/enter"
             className="flex items-center justify-between py-4 px-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
           >
             <Text weight="medium">{t('nav.enter')}</Text>
@@ -74,9 +84,7 @@ export default function LevelsPage() {
               className="flex items-center justify-between py-4 px-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
             >
               <div className="flex items-center gap-4">
-                <Text color="muted" className="w-16">
-                  {t('levels.level', { number: level.index })}
-                </Text>
+                <BeltIcon levelIndex={level.index} />
                 <div>
                   <Text weight="medium">{level.title}</Text>
                   {level.text && (
