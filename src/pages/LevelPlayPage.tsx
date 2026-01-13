@@ -14,6 +14,7 @@ import { useSubscriptionContext } from '@sudobility/subscription-components';
 import { SubscriptionPaywall } from '@/components/subscription';
 import { getInfoService } from '@sudobility/di';
 import { InfoType } from '@sudobility/types';
+import { Section } from '@/components/layout/Section';
 
 export default function LevelPlayPage() {
   const { levelId } = useParams<{ levelId: string }>();
@@ -67,7 +68,7 @@ export default function LevelPlayPage() {
   }, [nextPuzzle]);
 
   return (
-    <div className="py-8">
+    <Section spacing="xl">
       <header className="mb-8">
         <Heading level={1} size="2xl" className="mb-2">
           {level ? level.title : t('levels.level', { number: levelId })}
@@ -133,6 +134,6 @@ export default function LevelPlayPage() {
           )}
         </>
       )}
-    </div>
+    </Section>
   );
 }

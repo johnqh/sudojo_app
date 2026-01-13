@@ -4,6 +4,7 @@ import { useAuthStatus } from "@sudobility/auth-components";
 import { getFirebaseAuth } from "@sudobility/auth_lib";
 import { LoginPage as LoginPageComponent } from "@sudobility/building_blocks";
 import { CONSTANTS } from "../config/constants";
+import { Section } from "@/components/layout/Section";
 
 function LoginPage() {
   const { user, loading } = useAuthStatus();
@@ -20,27 +21,29 @@ function LoginPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-theme-bg-primary">
+      <Section spacing="5xl" className="min-h-[60vh] flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
+      </Section>
     );
   }
 
   if (!auth) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-theme-bg-primary">
+      <Section spacing="5xl" className="min-h-[60vh] flex items-center justify-center">
         <p className="text-red-600">Firebase not configured</p>
-      </div>
+      </Section>
     );
   }
 
   return (
-    <LoginPageComponent
-      appName={CONSTANTS.APP_NAME}
-      logo={<img src="/logo.png" alt={CONSTANTS.APP_NAME} className="h-12" />}
-      auth={auth}
-      onSuccess={() => navigate(`/${lang || "en"}`, { replace: true })}
-    />
+    <Section spacing="none" fullWidth>
+      <LoginPageComponent
+        appName={CONSTANTS.APP_NAME}
+        logo={<img src="/logo.png" alt={CONSTANTS.APP_NAME} className="h-12" />}
+        auth={auth}
+        onSuccess={() => navigate(`/${lang || "en"}`, { replace: true })}
+      />
+    </Section>
   );
 }
 

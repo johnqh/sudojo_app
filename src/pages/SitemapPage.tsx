@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async';
-import ScreenContainer from '@/components/layout/ScreenContainer';
 import { LocalizedLink } from '@/components/layout/LocalizedLink';
 import { CONSTANTS } from '@/config/constants';
 import { SUPPORTED_LANGUAGES, LANGUAGE_NAMES, type SupportedLanguage } from '@/config/languages';
@@ -172,7 +171,7 @@ export default function SitemapPage() {
   };
 
   return (
-    <ScreenContainer>
+    <>
       <Helmet>
         <title>{t('meta.title', { defaultValue: `Sitemap - ${appName}`, appName })}</title>
         <meta
@@ -191,6 +190,6 @@ export default function SitemapPage() {
         quickLinks={quickLinks}
         LinkComponent={LinkWrapper}
       />
-    </ScreenContainer>
+    </>
   );
 }

@@ -5,6 +5,7 @@
 
 import { useState, useMemo } from 'react';
 import { Heading, Text, Button, Card, CardContent } from '@sudobility/components';
+import { Section } from '@/components/layout/Section';
 import { generateSudokuSvg, svgToDataUrl, downloadSvg } from '@/utils/sudokuSvgGenerator';
 import { techniqueExamples, type TechniqueExample } from '@/data/techniqueExamples';
 
@@ -58,7 +59,7 @@ export default function TechniqueImageGenerator() {
   };
 
   return (
-    <div className="py-8 max-w-6xl mx-auto">
+    <Section spacing="xl" maxWidth="6xl">
       <header className="mb-8">
         <Heading level={1} size="2xl">
           Technique Image Generator
@@ -159,6 +160,6 @@ export default function TechniqueImageGenerator() {
           </pre>
         </CardContent>
       </Card>
-    </div>
+    </Section>
   );
 }

@@ -11,6 +11,7 @@ import { useSubscriptionContext } from '@sudobility/subscription-components';
 import { SubscriptionPaywall } from '@/components/subscription';
 import { getInfoService } from '@sudobility/di';
 import { InfoType } from '@sudobility/types';
+import { Section } from '@/components/layout/Section';
 
 export default function DailyPage() {
   const { t } = useTranslation();
@@ -43,7 +44,7 @@ export default function DailyPage() {
   }, [dailyDate, alreadyCompleted, markCompleted]);
 
   return (
-    <div className="py-8">
+    <Section spacing="xl">
       <header className="mb-8">
         <Heading level={1} size="2xl" className="mb-2">
           {t('daily.title')}
@@ -101,6 +102,6 @@ export default function DailyPage() {
           onComplete={handleComplete}
         />
       )}
-    </div>
+    </Section>
   );
 }

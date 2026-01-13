@@ -172,7 +172,7 @@ export default function PricingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-theme-bg-primary">
+    <>
       <Helmet>
         <title>{t("pricing.meta.title", "Pricing")} | Sudojo</title>
         <meta
@@ -197,6 +197,6 @@ export default function PricingPage() {
         onFreePlanClick={handleFreePlanClick}
         faqItems={faqItems}
       />
-    </div>
+    </>
   );
 }

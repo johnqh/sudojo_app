@@ -38,6 +38,8 @@ export interface UseBoardEntryReturn {
   reset: () => void;
   /** Number of clues entered */
   clueCount: number;
+  /** Set cells from an 81-character puzzle string (for OCR) */
+  setCellsFromPuzzle: (puzzle: string) => void;
 }
 
 /**
@@ -66,6 +68,30 @@ function cellsToPuzzleString(cells: SudokuCell[]): string {
  */
 function countClues(cells: SudokuCell[]): number {
   return cells.filter(cell => cell.given !== null).length;
+}
+
+/**
+ * Create a board from an 81-character puzzle string
+ * '0' or '.' for empty, '1'-'9' for given values
+ */
+function puzzleStringToCells(puzzle: string): SudokuCell[] {
+  if (puzzle.length !== 81) {
+    return createEmptyBoard();
+  }
+
+  return Array.from({ length: 81 }, (_, index) => {
+    const char = puzzle[index];
+    const value = parseInt(char, 10);
+    const given = value >= 1 && value <= 9 ? value : null;
+
+    return {
+      index,
+      solution: null,
+      given,
+      input: null,
+      pencilmarks: null,
+    };
+  });
 }
 
 export function useBoardEntry(): UseBoardEntryReturn {
@@ -198,6 +224,15 @@ export function useBoardEntry(): UseBoardEntryReturn {
     setShouldValidate(false);
   }, []);
 
+  // Set cells from puzzle string (for OCR)
+  const setCellsFromPuzzle = useCallback((puzzle: string) => {
+    setCells(puzzleStringToCells(puzzle));
+    setSelectedIndex(null);
+    setValidationError(null);
+    setValidatedPuzzle(null);
+    setShouldValidate(false);
+  }, []);
+
   return {
     cells,
     selectedIndex,
@@ -211,5 +246,6 @@ export function useBoardEntry(): UseBoardEntryReturn {
     validate,
     reset,
     clueCount,
+    setCellsFromPuzzle,
   };
 }

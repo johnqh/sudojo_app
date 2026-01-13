@@ -211,11 +211,30 @@
     "clueCount": "已输入 {{count}} 个线索",
     "minClues": "（至少 17 个）",
     "backToEntry": "输入其他谜题",
+    "scanButton": "扫描",
+    "eraseCell": "擦除格子",
+    "clearBoard": "清空棋盘",
     "errors": {
       "noSolution": "此谜题没有有效解",
       "multipleSolutions": "此谜题有多个解",
       "notEnoughClues": "请至少输入 17 个线索",
       "validationFailed": "无法验证谜题，请重试。"
+    }
+  },
+  "scan": {
+    "instructions": "拍摄或选择一张数独谜题的照片。确保网格清晰可见且光线充足。",
+    "uploadPrompt": "点击选择图片或拖放文件",
+    "selectImage": "选择图片",
+    "scanImage": "扫描",
+    "processing": "处理中...",
+    "changeImage": "更换",
+    "retry": "重试",
+    "accept": "使用",
+    "detected": "检测到 {{count}} 个数字（置信度 {{confidence}}%）",
+    "errors": {
+      "invalidFileType": "请选择图片文件",
+      "tooFewDigits": "仅检测到 {{count}} 个数字。请尝试更清晰的图片。",
+      "processingFailed": "无法处理图片，请重试。"
     }
   },
   "pwa": {

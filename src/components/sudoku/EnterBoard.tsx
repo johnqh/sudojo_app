@@ -1,6 +1,6 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, Text } from '@sudobility/components';
+import { Card, CardContent, Text, Button } from '@sudobility/components';
 import SudokuCanvas from './SudokuCanvas';
 import SudokuGame from './SudokuGame';
 import EntryControls from './EntryControls';
@@ -9,11 +9,14 @@ import { useTheme } from '@/hooks/useTheme';
 import { getInfoService } from '@sudobility/di';
 import { InfoType } from '@sudobility/types';
 
+// Lazy load ScanBoard since it has a heavy dependency (Tesseract.js)
+const ScanBoard = lazy(() => import('./ScanBoard'));
+
 interface EnterBoardProps {
   showErrors?: boolean;
 }
 
-type Mode = 'entry' | 'play';
+type Mode = 'entry' | 'play' | 'scan';
 
 export default function EnterBoard({ showErrors = true }: EnterBoardProps) {
   const { t } = useTranslation();
@@ -33,6 +36,7 @@ export default function EnterBoard({ showErrors = true }: EnterBoardProps) {
     validate,
     reset,
     clueCount,
+    setCellsFromPuzzle,
   } = useBoardEntry();
 
   // Transition to play mode when puzzle is validated
@@ -130,6 +134,22 @@ export default function EnterBoard({ showErrors = true }: EnterBoardProps) {
     setMode('entry');
   }, [reset]);
 
+  // Handle switching to scan mode
+  const handleScanMode = useCallback(() => {
+    setMode('scan');
+  }, []);
+
+  // Handle scan complete - populate board with OCR result
+  const handleScanComplete = useCallback((puzzle: string) => {
+    setCellsFromPuzzle(puzzle);
+    setMode('entry');
+  }, [setCellsFromPuzzle]);
+
+  // Handle scan cancel
+  const handleScanCancel = useCallback(() => {
+    setMode('entry');
+  }, []);
+
   // Play mode - render SudokuGame
   if (mode === 'play' && validatedPuzzle) {
     return (
@@ -155,15 +175,59 @@ export default function EnterBoard({ showErrors = true }: EnterBoardProps) {
     );
   }
 
+  // Scan mode - render ScanBoard
+  if (mode === 'scan') {
+    return (
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+          </div>
+        }
+      >
+        <ScanBoard onScanComplete={handleScanComplete} onCancel={handleScanCancel} />
+      </Suspense>
+    );
+  }
+
   // Entry mode
   return (
     <div className="space-y-6">
-      {/* Instructions */}
+      {/* Instructions and scan button */}
       <Card className="max-w-[500px] mx-auto">
         <CardContent className="py-3">
-          <Text size="sm" color="muted" className="text-center">
-            {t('enter.instructions')}
-          </Text>
+          <div className="flex flex-col sm:flex-row items-center gap-3">
+            <Text size="sm" color="muted" className="flex-1 text-center sm:text-left">
+              {t('enter.instructions')}
+            </Text>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleScanMode}
+              className="flex items-center gap-2 whitespace-nowrap"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+              </svg>
+              {t('enter.scanButton')}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
@@ -180,9 +244,11 @@ export default function EnterBoard({ showErrors = true }: EnterBoardProps) {
       <EntryControls
         onNumberInput={handleNumberInput}
         onErase={erase}
+        onClearBoard={reset}
         onValidate={validate}
         isValidating={isValidating}
         clueCount={clueCount}
+        canEraseCell={selectedIndex !== null && cells[selectedIndex]?.given !== null}
       />
     </div>
   );

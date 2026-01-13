@@ -216,12 +216,31 @@
     "clueCount": "{{count}} clues entered",
     "minClues": "(minimum 17)",
     "backToEntry": "Enter another puzzle",
+    "scanButton": "Scan",
+    "eraseCell": "Erase Cell",
+    "clearBoard": "Clear Board",
     "validationError": "Validation Error",
     "errors": {
       "noSolution": "This puzzle has no valid solution",
       "multipleSolutions": "This puzzle has multiple solutions",
       "notEnoughClues": "Please enter at least 17 clues",
       "validationFailed": "Could not validate puzzle. Please try again."
+    }
+  },
+  "scan": {
+    "instructions": "Take or select a photo of a Sudoku puzzle. Make sure the grid is clearly visible and well-lit.",
+    "uploadPrompt": "Tap to select image or drag and drop",
+    "selectImage": "Select Image",
+    "scanImage": "Scan",
+    "processing": "Processing...",
+    "changeImage": "Change",
+    "retry": "Try Again",
+    "accept": "Use This",
+    "detected": "Found {{count}} digits ({{confidence}}% confidence)",
+    "errors": {
+      "invalidFileType": "Please select an image file",
+      "tooFewDigits": "Only {{count}} digits detected. Try a clearer image.",
+      "processingFailed": "Could not process image. Please try again."
     }
   },
   "pwa": {

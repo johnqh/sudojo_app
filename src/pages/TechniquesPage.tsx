@@ -13,6 +13,7 @@ import {
   getTechniqueFromHelpFile,
   extractBodyContent,
 } from '@sudobility/sudojo_lib';
+import { Section } from '@/components/layout/Section';
 
 // Cache for memoized icon components
 const techniqueIconCache = new Map<string, React.ComponentType<{ className?: string }>>();
@@ -256,7 +257,7 @@ export default function TechniquesPage() {
   );
 
   return (
-    <div className="py-8">
+    <Section spacing="xl">
       <MasterDetailLayout
         masterTitle={t('techniques.title')}
         masterContent={masterContent}
@@ -268,6 +269,6 @@ export default function TechniquesPage() {
         stickyMaster
         stickyTopOffset={80}
       />
-    </div>
+    </Section>
   );
 }

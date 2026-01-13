@@ -7,6 +7,7 @@ import { useGameDataStore } from '@/stores/gameDataStore';
 import { getInfoService } from '@sudobility/di';
 import { InfoType } from '@sudobility/types';
 import { getBeltForLevel, getBeltIconSvg } from '@sudobility/sudojo_types';
+import { Section } from '@/components/layout/Section';
 
 /** Belt icon component that renders the martial arts belt SVG */
 function BeltIcon({ levelIndex, width = 60, height = 24 }: { levelIndex: number; width?: number; height?: number }) {
@@ -41,9 +42,9 @@ export default function LevelsPage() {
   }, [error, t]);
 
   return (
-    <div className="py-8">
+    <>
       {/* Section 1: Play */}
-      <section className="mb-8">
+      <Section spacing="lg">
         <Heading level={2} size="xl" className="mb-4">
           {t('nav.play')}
         </Heading>
@@ -56,10 +57,10 @@ export default function LevelsPage() {
             <Text color="muted">→</Text>
           </LocalizedLink>
         </div>
-      </section>
+      </Section>
 
       {/* Section 2: Levels */}
-      <section>
+      <Section spacing="xl">
         <Heading level={2} size="xl" className="mb-4">
           {t('levels.title')}
         </Heading>
@@ -98,7 +99,7 @@ export default function LevelsPage() {
             </LocalizedLink>
           ))}
         </div>
-      </section>
-    </div>
+      </Section>
+    </>
   );
 }

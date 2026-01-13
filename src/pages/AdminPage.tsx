@@ -8,6 +8,7 @@ import {
   Button,
   Switch,
 } from '@sudobility/components';
+import { Section } from '@/components/layout/Section';
 import {
   TechniqueId,
   TECHNIQUE_TITLE_TO_ID,
@@ -910,7 +911,7 @@ export default function AdminPage() {
   );
 
   return (
-    <div className="py-8">
+    <Section spacing="xl">
       <MasterDetailLayout
         masterTitle={t('nav.admin', 'Admin')}
         masterContent={masterContent}
@@ -922,6 +923,6 @@ export default function AdminPage() {
         stickyMaster
         stickyTopOffset={80}
       />
-    </div>
+    </Section>
   );
 }

@@ -445,7 +445,6 @@ function enhanceContrast(canvas: Canvas, factor: number): Canvas {
 /**
  * Binarize image - convert to black and white
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function binarize(canvas: Canvas, threshold: number): Canvas {
   const ctx = canvas.getContext('2d');
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -459,6 +458,57 @@ function binarize(canvas: Canvas, threshold: number): Canvas {
     data[i + 2] = val;
   }
 
+  ctx.putImageData(imageData, 0, 0);
+  return canvas;
+}
+
+/**
+ * Morphological dilation - thickens black regions (digits)
+ * Uses a 3x3 structuring element
+ */
+function dilate(canvas: Canvas): Canvas {
+  const ctx = canvas.getContext('2d');
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = imageData.data;
+  const width = canvas.width;
+  const height = canvas.height;
+
+  // Create output array
+  const output = new Uint8ClampedArray(data.length);
+
+  // Copy original data
+  for (let i = 0; i < data.length; i++) {
+    output[i] = data[i];
+  }
+
+  // For each pixel, if any neighbor is black (0), make this pixel black
+  // This expands black regions (the digits)
+  for (let y = 1; y < height - 1; y++) {
+    for (let x = 1; x < width - 1; x++) {
+      let hasBlackNeighbor = false;
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          const idx = ((y + dy) * width + (x + dx)) * 4;
+          if (data[idx] < 128) {
+            hasBlackNeighbor = true;
+            break;
+          }
+        }
+        if (hasBlackNeighbor) break;
+      }
+      if (hasBlackNeighbor) {
+        const idx = (y * width + x) * 4;
+        output[idx] = 0;
+        output[idx + 1] = 0;
+        output[idx + 2] = 0;
+      }
+    }
+  }
+
+  // Put the dilated data back
+  for (let i = 0; i < data.length; i++) {
+    data[i] = output[i];
+  }
   ctx.putImageData(imageData, 0, 0);
   return canvas;
 }
@@ -496,6 +546,10 @@ function parseDigit(text: string): number | null {
     'T': 7, '/': 7, '?': 7, ')': 7, ']': 7, 'J': 7, 'j': 7,
     'B': 8,
     'g': 9, 'q': 9,
+    // "0" is not a valid Sudoku digit. If OCR returns "0" for a non-empty cell,
+    // it's likely a 9 with a font where the tail isn't recognized.
+    // This is a last-resort fallback after all preprocessing retries fail.
+    '0': 9, 'O': 9, 'o': 9,
   };
 
   for (const char of clean) {
@@ -548,9 +602,31 @@ async function recognizeSudoku(imagePath: string): Promise<string> {
 
     try {
       const { data } = await worker.recognize(cellBuffer);
-      const text = data.text.trim();
-      const confidence = data.confidence || 0;
-      const digit = parseDigit(text);
+      let text = data.text.trim();
+      let confidence = data.confidence || 0;
+      let digit = parseDigit(text);
+
+      // For images with headers, if OCR returns "0" (not a valid Sudoku digit),
+      // try dilation to thicken strokes and improve recognition of 9s
+      if (usedEdgeDetection && text === '0') {
+        const altCopy = createCanvas(cells[i].width, cells[i].height);
+        altCopy.getContext('2d').drawImage(cells[i], 0, 0);
+        let altProcessed = enhanceContrast(altCopy, OCR_CONFIG.contrastFactor);
+        altProcessed = binarize(altProcessed, 160);
+        altProcessed = dilate(altProcessed); // Thicken strokes
+        const altCell = addPadding(altProcessed);
+        const altBuffer = altCell.toBuffer('image/png');
+        const altResult = await worker.recognize(altBuffer);
+        const altText = altResult.data.text.trim();
+        const altConf = altResult.data.confidence || 0;
+        const altDigit = parseDigit(altText);
+
+        if (altDigit !== null && altConf >= minConfidence) {
+          text = altText;
+          confidence = altConf;
+          digit = altDigit;
+        }
+      }
 
       if (digit !== null && confidence >= minConfidence) {
         result += digit.toString();

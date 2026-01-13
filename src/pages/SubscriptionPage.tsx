@@ -11,9 +11,14 @@ import { getInfoService } from "@sudobility/di";
 import { InfoType } from "@sudobility/types";
 
 // Package ID to entitlement mapping (from RevenueCat configuration)
-const PACKAGE_ENTITLEMENT_MAP: Record<string, string> = {
+const ENTITLEMENT_MAP: Record<string, string> = {
   premium_yearly: "sudojo_premium",
   premium_monthly: "sudojo_premium",
+};
+
+// Entitlement to level mapping (higher = better tier)
+const ENTITLEMENT_LEVELS: Record<string, number> = {
+  sudojo_premium: 1,
 };
 
 export default function SubscriptionPage() {
@@ -136,23 +141,34 @@ export default function SubscriptionPage() {
         t("subscription.savePercent", "Save {{percent}}%", { percent }),
       formatIntroNote: (price: string) =>
         t("subscription.introNote", "Then {{price}}", { price }),
+      getProductFeatures: (productId: string) => {
+        // Return features based on product - premium tier features
+        if (productId.includes("premium")) {
+          return [
+            t("subscription.features.unlimitedPuzzles", "Unlimited puzzles"),
+            t("subscription.features.allLevels", "All difficulty levels"),
+            t("subscription.features.advancedTechniques", "Advanced techniques"),
+            t("subscription.features.noAds", "Ad-free experience"),
+          ];
+        }
+        return [];
+      },
     }),
     [t]
   );
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <AppSubscriptionsPage
-        subscription={subscriptionContext}
-        subscriptionUserId={subscriptionUserId}
-        labels={labels}
-        formatters={formatters}
-        packageEntitlementMap={PACKAGE_ENTITLEMENT_MAP}
-        onPurchaseSuccess={handlePurchaseSuccess}
-        onRestoreSuccess={handleRestoreSuccess}
-        onError={handleError}
-        onWarning={handleWarning}
-      />
-    </div>
+    <AppSubscriptionsPage
+      subscription={subscriptionContext}
+      subscriptionUserId={subscriptionUserId}
+      labels={labels}
+      formatters={formatters}
+      entitlementMap={ENTITLEMENT_MAP}
+      entitlementLevels={ENTITLEMENT_LEVELS}
+      onPurchaseSuccess={handlePurchaseSuccess}
+      onRestoreSuccess={handleRestoreSuccess}
+      onError={handleError}
+      onWarning={handleWarning}
+    />
   );
 }

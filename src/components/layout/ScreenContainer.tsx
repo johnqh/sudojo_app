@@ -19,12 +19,14 @@ export default function ScreenContainer({ children }: ScreenContainerProps) {
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--color-bg-primary)]">
-      <TopBar />
-      {!isHomePage && <BreadcrumbSection items={breadcrumbItems} />}
+      {/* Sticky header containing topbar and breadcrumbs */}
+      <div className="sticky top-0 z-40">
+        <TopBar />
+        {!isHomePage && <BreadcrumbSection items={breadcrumbItems} />}
+      </div>
 
-      <main className="flex-1">
-        <div className="container-app">{children}</div>
-      </main>
+      {/* Main content - no max-width wrapper; each Section handles its own constraints */}
+      <main className="flex-1">{children}</main>
 
       <Footer variant={isHomePage ? 'full' : 'compact'} />
     </div>

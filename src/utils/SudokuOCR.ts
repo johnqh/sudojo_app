@@ -967,12 +967,15 @@ function parseDigitFromText(text: string): number | null {
     'T': 7, '/': 7, '?': 7, ')': 7, ']': 7, 'J': 7, 'j': 7,
     'B': 8,
     'g': 9, 'q': 9,
-    'O': 0, 'o': 0, 'D': 0, // These map to 0 but we ignore 0
+    // "0" is not a valid Sudoku digit. If OCR returns "0" for a non-empty cell,
+    // it's likely a 9 with a font where the tail isn't recognized (e.g., large print fonts).
+    // This is safe because empty cells are detected by isCellEmpty() before OCR runs.
+    '0': 9, 'O': 9, 'o': 9,
   };
 
   for (const char of cleanText) {
     const corrected = corrections[char];
-    if (corrected !== undefined && corrected !== 0) {
+    if (corrected !== undefined) {
       return corrected;
     }
   }

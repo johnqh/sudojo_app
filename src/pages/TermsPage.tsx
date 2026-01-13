@@ -1,6 +1,5 @@
 import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async';
-import ScreenContainer from '@/components/layout/ScreenContainer';
 import { CONSTANTS } from '@/config/constants';
 import { AppTextPage } from '@sudobility/building_blocks';
 import type { TextPageContent } from '@sudobility/building_blocks';
@@ -110,7 +109,7 @@ export default function TermsPage() {
   };
 
   return (
-    <ScreenContainer>
+    <>
       <Helmet>
         <title>{t('meta.title', { defaultValue: `Terms of Service - ${appName}`, appName })}</title>
         <meta
@@ -126,6 +125,6 @@ export default function TermsPage() {
         text={text}
         lastUpdatedDate={new Date().toLocaleDateString()}
       />
-    </ScreenContainer>
+    </>
   );
 }

@@ -4,19 +4,23 @@ import { Button } from '@sudobility/components';
 interface EntryControlsProps {
   onNumberInput: (value: number) => void;
   onErase: () => void;
+  onClearBoard: () => void;
   onValidate: () => void;
   isValidating: boolean;
   disabled?: boolean;
   clueCount?: number;
+  canEraseCell?: boolean;
 }
 
 export default function EntryControls({
   onNumberInput,
   onErase,
+  onClearBoard,
   onValidate,
   isValidating,
   disabled = false,
   clueCount = 0,
+  canEraseCell = false,
 }: EntryControlsProps) {
   const { t } = useTranslation();
 
@@ -45,8 +49,12 @@ export default function EntryControls({
 
       {/* Action buttons */}
       <div className="flex flex-wrap gap-2 justify-center">
-        <Button variant="outline" size="sm" onClick={onErase} disabled={disabled}>
-          {t('game.erase')}
+        <Button variant="outline" size="sm" onClick={onErase} disabled={disabled || !canEraseCell}>
+          {t('enter.eraseCell')}
+        </Button>
+
+        <Button variant="outline" size="sm" onClick={onClearBoard} disabled={disabled || clueCount === 0}>
+          {t('enter.clearBoard')}
         </Button>
 
         <Button

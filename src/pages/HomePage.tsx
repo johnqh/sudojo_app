@@ -1,27 +1,30 @@
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, Heading, Text } from '@sudobility/components';
 import { LocalizedLink } from '@/components/layout/LocalizedLink';
+import { Section } from '@/components/layout/Section';
 
 export default function HomePage() {
   const { t } = useTranslation();
 
   return (
-    <div className="py-8 md:py-16">
+    <>
       {/* Hero Section */}
-      <section className="text-center mb-16 md:mb-24">
-        <Heading level={1} size="4xl" className="mb-4">
-          {t('home.hero.title')}
-        </Heading>
-        <Text size="xl" color="muted" className="max-w-2xl mx-auto mb-6">
-          {t('home.hero.subtitle')}
-        </Text>
-        <Text size="lg" className="max-w-3xl mx-auto text-gray-600 dark:text-gray-400">
-          {t('home.hero.description')}
-        </Text>
-      </section>
+      <Section spacing="4xl">
+        <div className="text-center">
+          <Heading level={1} size="4xl" className="mb-4">
+            {t('home.hero.title')}
+          </Heading>
+          <Text size="xl" color="muted" className="max-w-2xl mx-auto mb-6">
+            {t('home.hero.subtitle')}
+          </Text>
+          <Text size="lg" className="max-w-3xl mx-auto text-gray-600 dark:text-gray-400">
+            {t('home.hero.description')}
+          </Text>
+        </div>
+      </Section>
 
       {/* What is Sudojo Section */}
-      <section className="mb-16 md:mb-24 max-w-4xl mx-auto">
+      <Section spacing="4xl" maxWidth="4xl">
         <div className="text-center mb-10">
           <Heading level={2} size="2xl" className="mb-4">
             {t('home.whatIs.title')}
@@ -68,79 +71,77 @@ export default function HomePage() {
             </CardContent>
           </Card>
         </div>
-      </section>
+      </Section>
 
-      {/* How It Works Section */}
-      <section className="mb-16 md:mb-24 bg-gray-50 dark:bg-gray-900 -mx-4 px-4 py-12 md:py-16">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-10">
-            <Heading level={2} size="2xl" className="mb-4">
-              {t('home.howItWorks.title')}
-            </Heading>
+      {/* How It Works Section - with full-width background */}
+      <Section spacing="4xl" background="default" maxWidth="4xl">
+        <div className="text-center mb-10">
+          <Heading level={2} size="2xl" className="mb-4">
+            {t('home.howItWorks.title')}
+          </Heading>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="flex gap-4">
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold">
+              1
+            </div>
+            <div>
+              <Heading level={4} size="base" className="mb-2">
+                {t('home.howItWorks.step1.title')}
+              </Heading>
+              <Text size="sm" color="muted">
+                {t('home.howItWorks.step1.description')}
+              </Text>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="flex gap-4">
-              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold">
-                1
-              </div>
-              <div>
-                <Heading level={4} size="base" className="mb-2">
-                  {t('home.howItWorks.step1.title')}
-                </Heading>
-                <Text size="sm" color="muted">
-                  {t('home.howItWorks.step1.description')}
-                </Text>
-              </div>
+          <div className="flex gap-4">
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold">
+              2
             </div>
-
-            <div className="flex gap-4">
-              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold">
-                2
-              </div>
-              <div>
-                <Heading level={4} size="base" className="mb-2">
-                  {t('home.howItWorks.step2.title')}
-                </Heading>
-                <Text size="sm" color="muted">
-                  {t('home.howItWorks.step2.description')}
-                </Text>
-              </div>
+            <div>
+              <Heading level={4} size="base" className="mb-2">
+                {t('home.howItWorks.step2.title')}
+              </Heading>
+              <Text size="sm" color="muted">
+                {t('home.howItWorks.step2.description')}
+              </Text>
             </div>
+          </div>
 
-            <div className="flex gap-4">
-              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold">
-                3
-              </div>
-              <div>
-                <Heading level={4} size="base" className="mb-2">
-                  {t('home.howItWorks.step3.title')}
-                </Heading>
-                <Text size="sm" color="muted">
-                  {t('home.howItWorks.step3.description')}
-                </Text>
-              </div>
+          <div className="flex gap-4">
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold">
+              3
             </div>
+            <div>
+              <Heading level={4} size="base" className="mb-2">
+                {t('home.howItWorks.step3.title')}
+              </Heading>
+              <Text size="sm" color="muted">
+                {t('home.howItWorks.step3.description')}
+              </Text>
+            </div>
+          </div>
 
-            <div className="flex gap-4">
-              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold">
-                4
-              </div>
-              <div>
-                <Heading level={4} size="base" className="mb-2">
-                  {t('home.howItWorks.step4.title')}
-                </Heading>
-                <Text size="sm" color="muted">
-                  {t('home.howItWorks.step4.description')}
-                </Text>
-              </div>
+          <div className="flex gap-4">
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold">
+              4
+            </div>
+            <div>
+              <Heading level={4} size="base" className="mb-2">
+                {t('home.howItWorks.step4.title')}
+              </Heading>
+              <Text size="sm" color="muted">
+                {t('home.howItWorks.step4.description')}
+              </Text>
             </div>
           </div>
         </div>
-      </section>
+      </Section>
 
       {/* Techniques Preview Section */}
-      <section className="mb-16 md:mb-24 max-w-4xl mx-auto">
+      <Section spacing="4xl" maxWidth="4xl">
         <div className="text-center mb-10">
           <Heading level={2} size="2xl" className="mb-4">
             {t('home.techniques.title')}
@@ -170,10 +171,10 @@ export default function HomePage() {
             {t('home.techniques.viewAll')} →
           </LocalizedLink>
         </div>
-      </section>
+      </Section>
 
       {/* Smart Hints Section */}
-      <section className="mb-16 md:mb-24 max-w-4xl mx-auto">
+      <Section spacing="4xl" maxWidth="4xl">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
           <div>
             <Heading level={2} size="2xl" className="mb-4">
@@ -203,17 +204,17 @@ export default function HomePage() {
             </CardContent>
           </Card>
         </div>
-      </section>
+      </Section>
 
       {/* CTA Cards */}
-      <section className="mb-8">
+      <Section spacing="4xl" maxWidth="4xl">
         <div className="text-center mb-10">
           <Heading level={2} size="2xl" className="mb-4">
             {t('home.getStarted.title')}
           </Heading>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <LocalizedLink to="/daily" className="block">
             <Card variant="elevated" className="h-full hover:shadow-lg transition-shadow">
               <CardContent className="text-center py-8">
@@ -250,7 +251,7 @@ export default function HomePage() {
             </Card>
           </LocalizedLink>
         </div>
-      </section>
-    </div>
+      </Section>
+    </>
   );
 }
