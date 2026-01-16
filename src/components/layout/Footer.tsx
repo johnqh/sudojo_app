@@ -5,6 +5,7 @@ import {
   type FooterLinkSection,
 } from '@sudobility/building_blocks';
 import { LocalizedLink } from './LocalizedLink';
+import { useBuildingBlocksAnalytics } from '@/hooks/useBuildingBlocksAnalytics';
 
 interface FooterProps {
   variant?: 'full' | 'compact';
@@ -27,6 +28,7 @@ const LinkWrapper = ({
 
 export default function Footer({ variant = 'compact' }: FooterProps) {
   const { t } = useTranslation();
+  const onTrack = useBuildingBlocksAnalytics();
   const currentYear = String(new Date().getFullYear());
   const version = import.meta.env.VITE_APP_VERSION || '0.0.1';
 
@@ -42,6 +44,7 @@ export default function Footer({ variant = 'compact' }: FooterProps) {
           { label: t('footer.terms'), href: '/terms' },
         ]}
         LinkComponent={LinkWrapper}
+        onTrack={onTrack}
         sticky
       />
     );
@@ -75,6 +78,7 @@ export default function Footer({ variant = 'compact' }: FooterProps) {
       companyUrl="/"
       description={t('app.tagline')}
       LinkComponent={LinkWrapper}
+      onTrack={onTrack}
       gridColumns={3}
     />
   );

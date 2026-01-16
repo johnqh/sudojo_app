@@ -146,7 +146,7 @@ export default defineConfig({
           }
 
           // Icons
-          if (id.includes('node_modules/@heroicons/') || id.includes('node_modules/lucide-react')) {
+          if (id.includes('node_modules/@heroicons/')) {
             return 'icons';
           }
 

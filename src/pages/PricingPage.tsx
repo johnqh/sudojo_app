@@ -14,6 +14,7 @@ import {
 import { getInfoService } from "@sudobility/di";
 import { InfoType } from "@sudobility/types";
 import { useLocalizedNavigate } from "../hooks/useLocalizedNavigate";
+import { useBuildingBlocksAnalytics } from "../hooks/useBuildingBlocksAnalytics";
 
 // Package ID to entitlement mapping (from RevenueCat configuration)
 const PACKAGE_ENTITLEMENT_MAP: EntitlementMap = {
@@ -33,6 +34,7 @@ export default function PricingPage() {
   const { products: rawProducts, currentSubscription, purchase } =
     useSubscriptionContext();
   const { navigate } = useLocalizedNavigate();
+  const onTrack = useBuildingBlocksAnalytics();
 
   const isAuthenticated = !!user;
   const hasActiveSubscription = currentSubscription?.isActive ?? false;
@@ -196,6 +198,7 @@ export default function PricingPage() {
         onPlanClick={handlePlanClick}
         onFreePlanClick={handleFreePlanClick}
         faqItems={faqItems}
+        onTrack={onTrack}
       />
     </>
   );

@@ -6,6 +6,7 @@ import { useTheme, Theme, FontSize } from '@/context/ThemeContext';
 import { useSettings, type AppSettings } from '@/context/SettingsContext';
 import { useProgress } from '@/context/ProgressContext';
 import { formatTime as formatTimeBase } from '@sudobility/sudojo_lib';
+import { useBuildingBlocksAnalytics } from '@/hooks/useBuildingBlocksAnalytics';
 
 /**
  * Format seconds into MM:SS or HH:MM:SS string, with null handling
@@ -178,6 +179,7 @@ const GamingSettingsContent: React.FC = () => {
 export default function SettingsPage() {
   const { t } = useTranslation();
   const { theme, setTheme, fontSize, setFontSize } = useTheme();
+  const onTrack = useBuildingBlocksAnalytics();
 
   // Additional settings sections
   const additionalSections: SettingsSectionConfig[] = [
@@ -200,6 +202,7 @@ export default function SettingsPage() {
       t={(key, fallback) => t(key, { defaultValue: fallback })}
       appearanceT={(key, fallback) => t(`settings.appearance.${key}`, { defaultValue: fallback })}
       showAppearanceInfoBox={true}
+      onTrack={onTrack}
     />
   );
 }

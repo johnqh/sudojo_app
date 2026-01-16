@@ -16,4 +16,7 @@ export const CONSTANTS = {
   // Social handles
   TWITTER_HANDLE: import.meta.env.VITE_TWITTER_HANDLE || "",
   DISCORD_INVITE: import.meta.env.VITE_DISCORD_INVITE || "",
+
+  // Meet with Founder
+  MEET_FOUNDER_URL: import.meta.env.VITE_MEET_FOUNDER_URL || undefined,
 } as const;

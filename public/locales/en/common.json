@@ -16,7 +16,8 @@
     "loading": "Loading...",
     "error": "Something went wrong. Please try again.",
     "close": "Close",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "talkToFounder": "Talk to Founder"
   },
   "nav": {
     "daily": "Daily",

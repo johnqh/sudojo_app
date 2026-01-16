@@ -6,10 +6,11 @@
 # reusable push_projects.sh script from the workflows repo.
 #
 # Usage:
-#   ./push_all.sh                # Update deps and process only projects with changes
-#   ./push_all.sh --force        # Force version bump on all projects
-#   ./push_all.sh --subpackages  # Also process sub-packages in /packages directories
-#   ./push_all.sh --help         # Show help message
+#   ./push_all.sh                              # Update deps and process only projects with changes
+#   ./push_all.sh --force                      # Force version bump on all projects
+#   ./push_all.sh --subpackages                # Also process sub-packages in /packages directories
+#   ./push_all.sh --starting-project <name>    # Skip projects until reaching <name>
+#   ./push_all.sh --help                       # Show help message
 
 # Get the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
