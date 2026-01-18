@@ -6,50 +6,30 @@ import {
   AppPricingPage,
   type PricingPageLabels,
   type PricingPageFormatters,
-  type PricingProduct,
   type FAQItem,
-  type EntitlementMap,
-  type EntitlementLevels,
 } from "@sudobility/building_blocks";
 import { getInfoService } from "@sudobility/di";
 import { InfoType } from "@sudobility/types";
 import { useLocalizedNavigate } from "../hooks/useLocalizedNavigate";
 import { useBuildingBlocksAnalytics } from "../hooks/useBuildingBlocksAnalytics";
 
-// Package ID to entitlement mapping (from RevenueCat configuration)
-const PACKAGE_ENTITLEMENT_MAP: EntitlementMap = {
+// Offer ID for subscription_lib hooks
+const OFFER_ID = "default";
+
+// Package ID to entitlement mapping (for feature lookup)
+const PACKAGE_ENTITLEMENT_MAP: Record<string, string> = {
   premium_yearly: "sudojo_premium",
   premium_monthly: "sudojo_premium",
-};
-
-// Entitlement to level mapping (higher = better tier)
-const ENTITLEMENT_LEVELS: EntitlementLevels = {
-  none: 0,
-  sudojo_premium: 1,
 };
 
 export default function PricingPage() {
   const { t } = useTranslation();
   const { user, openModal } = useAuthStatus();
-  const { products: rawProducts, currentSubscription, purchase } =
-    useSubscriptionContext();
+  const { purchase } = useSubscriptionContext();
   const { navigate } = useLocalizedNavigate();
   const onTrack = useBuildingBlocksAnalytics();
 
   const isAuthenticated = !!user;
-  const hasActiveSubscription = currentSubscription?.isActive ?? false;
-
-  // Use firebase user ID as subscription user ID (no entities in sudojo)
-  const subscriptionUserId = user?.uid;
-
-  // Map products to the format expected by AppPricingPage
-  const products: PricingProduct[] = rawProducts.map((p) => ({
-    identifier: p.identifier,
-    title: p.title,
-    price: p.price,
-    priceString: p.priceString,
-    period: p.period,
-  }));
 
   const handlePlanClick = async (planIdentifier: string) => {
     if (isAuthenticated) {
@@ -186,15 +166,10 @@ export default function PricingPage() {
         />
       </Helmet>
       <AppPricingPage
-        products={products}
+        offerId={OFFER_ID}
         isAuthenticated={isAuthenticated}
-        hasActiveSubscription={hasActiveSubscription}
-        currentProductIdentifier={currentSubscription?.productIdentifier}
-        subscriptionUserId={subscriptionUserId}
         labels={labels}
         formatters={formatters}
-        entitlementMap={PACKAGE_ENTITLEMENT_MAP}
-        entitlementLevels={ENTITLEMENT_LEVELS}
         onPlanClick={handlePlanClick}
         onFreePlanClick={handleFreePlanClick}
         faqItems={faqItems}

@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useSubscriptionContext } from "@sudobility/subscription-components";
-import { useAuthStatus } from "@sudobility/auth-components";
 import {
   AppSubscriptionsPage,
   type SubscriptionPageLabels,
@@ -10,24 +9,30 @@ import {
 import { getInfoService } from "@sudobility/di";
 import { InfoType } from "@sudobility/types";
 
-// Package ID to entitlement mapping (from RevenueCat configuration)
-const ENTITLEMENT_MAP: Record<string, string> = {
-  premium_yearly: "sudojo_premium",
-  premium_monthly: "sudojo_premium",
-};
-
-// Entitlement to level mapping (higher = better tier)
-const ENTITLEMENT_LEVELS: Record<string, number> = {
-  sudojo_premium: 1,
-};
+// Offer ID for subscription_lib hooks
+const OFFER_ID = "default";
 
 export default function SubscriptionPage() {
   const { t } = useTranslation();
-  const { user } = useAuthStatus();
-  const subscriptionContext = useSubscriptionContext();
+  const { purchase, restore } = useSubscriptionContext();
 
-  // Use firebase user ID as subscription user ID (no entities in sudojo)
-  const subscriptionUserId = user?.uid;
+  const handlePurchase = async (packageId: string): Promise<boolean> => {
+    try {
+      const result = await purchase(packageId);
+      return !!result;
+    } catch {
+      return false;
+    }
+  };
+
+  const handleRestore = async (): Promise<boolean> => {
+    try {
+      const result = await restore();
+      return !!result;
+    } catch {
+      return false;
+    }
+  };
 
   const handlePurchaseSuccess = () => {
     getInfoService().show(
@@ -97,6 +102,8 @@ export default function SubscriptionPage() {
       // Buttons
       buttonSubscribe: t("subscription.subscribe", "Subscribe"),
       buttonPurchasing: t("common.loading", "Processing..."),
+      buttonUpgrade: t("subscription.upgrade", "Upgrade"),
+      buttonUpgrading: t("subscription.upgrading", "Upgrading..."),
       buttonRestore: t("subscription.restorePurchase", "Restore Purchases"),
       buttonRestoring: t("subscription.restoring", "Restoring..."),
 
@@ -159,12 +166,11 @@ export default function SubscriptionPage() {
 
   return (
     <AppSubscriptionsPage
-      subscription={subscriptionContext}
-      subscriptionUserId={subscriptionUserId}
+      offerId={OFFER_ID}
       labels={labels}
       formatters={formatters}
-      entitlementMap={ENTITLEMENT_MAP}
-      entitlementLevels={ENTITLEMENT_LEVELS}
+      onPurchase={handlePurchase}
+      onRestore={handleRestore}
       onPurchaseSuccess={handlePurchaseSuccess}
       onRestoreSuccess={handleRestoreSuccess}
       onError={handleError}
