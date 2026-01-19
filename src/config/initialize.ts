@@ -3,38 +3,38 @@
  * @description Single entry point for all DI singletons and service initializations
  */
 
+import { initializeStorageService, initializeNetworkService } from '@sudobility/di';
+import { initializeInfoService } from '@sudobility/di_web';
 import {
-  initializeStorageService,
-  initializeNetworkService,
-} from "@sudobility/di";
-import { initializeInfoService } from "@sudobility/di_web";
-import { initializeFirebaseAuth } from "@sudobility/auth_lib";
+  initializeFirebaseAuth,
+  FirebaseAuthNetworkService,
+} from '@sudobility/auth_lib';
 import {
   initializeSubscription,
   configureRevenueCatAdapter,
   createRevenueCatAdapter,
-} from "@sudobility/subscription_lib";
-import { registerServiceWorker } from "../utils/serviceWorker";
-import { initWebVitals } from "../utils/webVitals";
+} from '@sudobility/subscription_lib';
+import { registerServiceWorker } from '../utils/serviceWorker';
+import { initWebVitals } from '../utils/webVitals';
 
 /**
  * Initialize all app services and singletons.
  * Must be called before rendering the React app.
  *
  * Initialization order:
- * 1. DI services (storage, network, info)
- * 2. Firebase Auth
- * 3. Subscription (RevenueCat)
- * 4. i18n (imported separately)
- * 5. Performance monitoring (service worker, web vitals)
+ * 1. Storage service
+ * 2. Firebase Auth (needed before network service for token refresh)
+ * 3. Network service (with Firebase auth retry logic)
+ * 4. Info service
+ * 5. Subscription (RevenueCat)
+ * 6. i18n (imported separately)
+ * 7. Performance monitoring (service worker, web vitals)
  */
 export function initializeApp(): void {
-  // 1. Initialize DI services
+  // 1. Initialize storage service
   initializeStorageService();
-  initializeNetworkService();
-  initializeInfoService();
 
-  // 2. Initialize Firebase Auth
+  // 2. Initialize Firebase Auth first (needed by network service for token refresh)
   initializeFirebaseAuth({
     config: {
       apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -47,20 +47,26 @@ export function initializeApp(): void {
     },
   });
 
-  // 3. Initialize Subscription (RevenueCat) - SDK is lazily loaded when first needed
+  // 3. Initialize network service with Firebase auth retry logic
+  initializeNetworkService(new FirebaseAuthNetworkService());
+
+  // 4. Initialize info service
+  initializeInfoService();
+
+  // 5. Initialize Subscription (RevenueCat) - SDK is lazily loaded when first needed
   configureRevenueCatAdapter(
-    import.meta.env.MODE === "production"
+    import.meta.env.MODE === 'production'
       ? import.meta.env.VITE_REVENUECAT_API_KEY
       : import.meta.env.VITE_REVENUECAT_API_KEY_SANDBOX
   );
   initializeSubscription({
     adapter: createRevenueCatAdapter(),
-    freeTier: { packageId: "free", name: "Free" },
+    freeTier: { packageId: 'free', name: 'Free' },
   });
 
-  // 4. i18n is initialized via import in main.tsx
+  // 6. i18n is initialized via import in main.tsx
 
-  // 5. Initialize performance monitoring
+  // 7. Initialize performance monitoring
   registerServiceWorker();
   initWebVitals();
 }
