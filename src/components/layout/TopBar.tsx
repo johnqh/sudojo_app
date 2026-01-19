@@ -6,10 +6,10 @@ import {
   type MenuItemConfig,
   type AuthActionProps,
 } from '@sudobility/building_blocks';
+import { useSiteAdmin, useFirebaseAuthNetworkClient } from '@sudobility/auth_lib';
 import { useLocalizedNavigate } from '@/hooks/useLocalizedNavigate';
 import { LocalizedLink } from './LocalizedLink';
-
-const DEV_USER_EMAIL = 'johnqh@yahoo.com';
+import { useSudojoClient } from '@/hooks/useSudojoClient';
 
 // Icon components for nav items (styled like heroicons/outline)
 const CalendarDaysIcon = ({ className }: { className?: string }) => (
@@ -121,9 +121,16 @@ export default function TopBar() {
   const { t } = useTranslation();
   const { navigate } = useLocalizedNavigate();
   const { user } = useAuthStatus();
+  const networkClient = useFirebaseAuthNetworkClient();
+  const { config, auth } = useSudojoClient();
 
-  // Check if current user is dev user
-  const isDevUser = user?.email === DEV_USER_EMAIL;
+  // Check if current user is site admin
+  const { isSiteAdmin } = useSiteAdmin({
+    networkClient,
+    baseUrl: `${config.baseUrl}/api/v1`,
+    userId: user?.uid,
+    token: auth.accessToken || undefined,
+  });
 
   const menuItems: MenuItemConfig[] = useMemo(() => {
     const items: MenuItemConfig[] = [
@@ -147,8 +154,8 @@ export default function TopBar() {
       },
     ];
 
-    // Add Admin menu for dev user (after Techniques, before Settings)
-    if (isDevUser) {
+    // Add Admin menu for site admins (after Techniques, before Settings)
+    if (isSiteAdmin) {
       items.push({
         id: 'admin',
         label: t('nav.admin', 'Admin'),
@@ -165,7 +172,7 @@ export default function TopBar() {
     });
 
     return items;
-  }, [t, isDevUser]);
+  }, [t, isSiteAdmin]);
 
   return (
     <>

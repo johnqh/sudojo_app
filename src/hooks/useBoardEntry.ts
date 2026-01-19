@@ -130,12 +130,14 @@ export function useBoardEntry(): UseBoardEntryReturn {
     if (processedDataRef.current === validateData) return;
     processedDataRef.current = validateData;
 
-    if (validateData.success && validateData.data?.board.solution) {
+    // Solver returns SolverBoardData with nested board object
+    const solution = validateData.data?.board?.board?.solution;
+    if (validateData.success && solution) {
       // Validation succeeded - state updates are intentional here
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setValidatedPuzzle({
         puzzle: puzzleString,
-        solution: validateData.data.board.solution,
+        solution,
       });
       setValidationError(null);
     } else if (validateData.error) {
@@ -148,6 +150,11 @@ export function useBoardEntry(): UseBoardEntryReturn {
       } else {
         setValidationError('enter.errors.validationFailed');
       }
+      setValidatedPuzzle(null);
+    } else {
+      // Unexpected response - success but no solution
+      console.error('Unexpected validation response:', validateData);
+      setValidationError('enter.errors.validationFailed');
       setValidatedPuzzle(null);
     }
     setShouldValidate(false);
