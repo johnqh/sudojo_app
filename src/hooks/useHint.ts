@@ -4,12 +4,12 @@
 
 import { useHint as useHintBase } from '@sudobility/sudojo_lib';
 import type { UseHintResult, HintBoardData, HintReceivedData } from '@sudobility/sudojo_lib';
-import { useSudojoClient } from './useSudojoClient';
+import { useApi } from '@/context/apiContextDef';
 
 // Re-export types from lib
 export type { UseHintResult, HintBoardData, HintReceivedData };
 
-/** Options for useHint (app-specific - uses useSudojoClient internally) */
+/** Options for useHint (app-specific - uses useApi internally) */
 export interface UseHintOptions {
   /** Original puzzle string (81 chars) */
   puzzle: string;
@@ -27,7 +27,7 @@ export interface UseHintOptions {
 }
 
 /**
- * App-specific wrapper for useHint that uses useSudojoClient
+ * App-specific wrapper for useHint that uses useApi
  * to provide network client and config automatically.
  */
 export function useHint({
@@ -37,7 +37,7 @@ export function useHint({
   autoPencilmarks = false,
   onHintReceived,
 }: UseHintOptions): UseHintResult {
-  const { networkClient, config, auth } = useSudojoClient();
+  const { networkClient, config, auth } = useApi();
 
   return useHintBase({
     networkClient,

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Heading, Text, Button } from '@sudobility/components';
 import { useLevelGame } from '@sudobility/sudojo_lib';
 import { SudokuGame } from '@/components/sudoku';
-import { useSudojoClient } from '@/hooks/useSudojoClient';
+import { useApi } from '@/context/apiContextDef';
 import { useBreadcrumbTitle } from '@/hooks/useBreadcrumbTitle';
 import { useGameDataStore } from '@/stores/gameDataStore';
 import { useProgress } from '@/context/ProgressContext';
@@ -19,7 +19,7 @@ import { Section } from '@/components/layout/Section';
 export default function LevelPlayPage() {
   const { levelId } = useParams<{ levelId: string }>();
   const { t } = useTranslation();
-  const { networkClient, config, auth } = useSudojoClient();
+  const { networkClient, config, auth } = useApi();
   const { markCompleted } = useProgress();
   const { settings } = useSettings();
   const { openModal: openAuthModal } = useAuthStatus();

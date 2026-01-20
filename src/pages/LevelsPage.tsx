@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Heading, Text } from '@sudobility/components';
 import { LocalizedLink } from '@/components/layout/LocalizedLink';
-import { useSudojoClient } from '@/hooks/useSudojoClient';
+import { useApi } from '@/context/apiContextDef';
 import { useGameDataStore } from '@/stores/gameDataStore';
 import { getInfoService } from '@sudobility/di';
 import { InfoType } from '@sudobility/types';
@@ -20,7 +20,7 @@ function BeltIcon({ levelIndex, width = 60, height = 24 }: { levelIndex: number;
 
 export default function LevelsPage() {
   const { t } = useTranslation();
-  const { networkClient, config, auth } = useSudojoClient();
+  const { networkClient, config, auth } = useApi();
 
   const {
     levels,

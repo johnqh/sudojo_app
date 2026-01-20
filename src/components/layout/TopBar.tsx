@@ -6,10 +6,10 @@ import {
   type MenuItemConfig,
   type AuthActionProps,
 } from '@sudobility/building_blocks';
-import { useSiteAdmin, useFirebaseAuthNetworkClient } from '@sudobility/auth_lib';
+import { useSiteAdmin } from '@sudobility/auth_lib';
 import { useLocalizedNavigate } from '@/hooks/useLocalizedNavigate';
 import { LocalizedLink } from './LocalizedLink';
-import { useSudojoClient } from '@/hooks/useSudojoClient';
+import { useApi } from '@/context/apiContextDef';
 
 // Icon components for nav items (styled like heroicons/outline)
 const CalendarDaysIcon = ({ className }: { className?: string }) => (
@@ -121,8 +121,7 @@ export default function TopBar() {
   const { t } = useTranslation();
   const { navigate } = useLocalizedNavigate();
   const { user } = useAuthStatus();
-  const networkClient = useFirebaseAuthNetworkClient();
-  const { config, auth } = useSudojoClient();
+  const { networkClient, config, auth } = useApi();
 
   // Check if current user is site admin
   const { isSiteAdmin } = useSiteAdmin({

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { MasterDetailLayout, MasterListItem, Text, Card, CardContent } from '@sudobility/components';
 import { useSudojoLearning } from '@sudobility/sudojo_client';
 import { useLocalizedNavigate } from '@/hooks/useLocalizedNavigate';
-import { useSudojoClient } from '@/hooks/useSudojoClient';
+import { useApi } from '@/context/apiContextDef';
 import { useBreadcrumbTitle } from '@/hooks/useBreadcrumbTitle';
 import { useGameDataStore } from '@/stores/gameDataStore';
 import {
@@ -94,7 +94,7 @@ export default function TechniquesPage() {
   const { techniqueId } = useParams<{ techniqueId: string }>();
   const { t, i18n } = useTranslation();
   const { navigate } = useLocalizedNavigate();
-  const { networkClient, config, auth } = useSudojoClient();
+  const { networkClient, config, auth } = useApi();
 
   // Mobile view state - show content when techniqueId is present
   const [mobileViewOverride, setMobileViewOverride] = useState<'navigation' | 'content' | null>(null);

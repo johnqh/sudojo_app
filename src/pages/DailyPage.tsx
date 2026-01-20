@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Heading, Text, Button } from '@sudobility/components';
 import { useDailyGame } from '@sudobility/sudojo_lib';
 import { SudokuGame } from '@/components/sudoku';
-import { useSudojoClient } from '@/hooks/useSudojoClient';
+import { useApi } from '@/context/apiContextDef';
 import { useProgress } from '@/context/ProgressContext';
 import { useSettings } from '@/context/SettingsContext';
 import { useAuthStatus } from '@sudobility/auth-components';
@@ -15,7 +15,7 @@ import { Section } from '@/components/layout/Section';
 
 export default function DailyPage() {
   const { t } = useTranslation();
-  const { networkClient, config, auth } = useSudojoClient();
+  const { networkClient, config, auth } = useApi();
   const { markCompleted, isCompleted } = useProgress();
   const { settings } = useSettings();
   const { openModal: openAuthModal } = useAuthStatus();

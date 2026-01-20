@@ -8,6 +8,7 @@ import { AuthProviderWrapper } from './components/providers/AuthProviderWrapper'
 import { SettingsProvider } from './context/SettingsContext';
 import { ProgressProvider } from './context/ProgressContext';
 import { SubscriptionProviderWrapper } from './components/providers/SubscriptionProviderWrapper';
+import { ApiProvider } from './context/ApiContext';
 
 // Pages (lazy loaded)
 import { lazy, Suspense } from 'react';
@@ -83,7 +84,8 @@ function App() {
               <ProgressProvider>
                 <QueryClientProvider client={queryClient}>
                   <AuthProviderWrapper>
-                    <SubscriptionProviderWrapper>
+                    <ApiProvider>
+                      <SubscriptionProviderWrapper>
                       <BrowserRouter>
                         <InstallPrompt />
                         <Routes>
@@ -157,6 +159,7 @@ function App() {
                         )}
                       </BrowserRouter>
                     </SubscriptionProviderWrapper>
+                    </ApiProvider>
                   </AuthProviderWrapper>
                 </QueryClientProvider>
               </ProgressProvider>

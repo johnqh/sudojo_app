@@ -18,7 +18,7 @@ import {
 } from '@sudobility/sudojo_types';
 import { useSudoku } from '@sudobility/sudojo_lib';
 import { useLocalizedNavigate } from '@/hooks/useLocalizedNavigate';
-import { useSudojoClient } from '@/hooks/useSudojoClient';
+import { useApi } from '@/context/apiContextDef';
 import { useHint, type HintReceivedData } from '@/hooks/useHint';
 import { createSudojoClient } from '@sudobility/sudojo_client';
 
@@ -43,7 +43,7 @@ export default function AdminPage() {
   const { section } = useParams<{ section: string }>();
   const { t } = useTranslation();
   const { navigate } = useLocalizedNavigate();
-  const { networkClient, config, auth } = useSudojoClient();
+  const { networkClient, config, auth } = useApi();
 
   const [mobileViewOverride, setMobileViewOverride] = useState<'navigation' | 'content' | null>(null);
   const mobileView = mobileViewOverride ?? (section ? 'content' : 'navigation');
