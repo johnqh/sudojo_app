@@ -17,7 +17,7 @@ export default defineConfig({
     },
   },
   resolve: {
-    dedupe: ['react', 'react-dom', '@tanstack/react-query'],
+    dedupe: ['react', 'react-dom', '@tanstack/react-query', 'react-helmet-async'],
     alias: {
       '@': path.resolve(__dirname, './src'),
     },

@@ -1,9 +1,9 @@
 /**
  * Hook to create analytics tracking callback for building_blocks components.
- * This integrates the building_blocks onTrack interface with Firebase Analytics.
+ * Uses the analyticsService singleton directly.
  */
 import { useCallback } from 'react';
-import { useFirebaseAnalytics } from './useFirebaseAnalytics';
+import { analyticsService } from '../config/analytics';
 import type { AnalyticsTrackingParams } from '@sudobility/building_blocks';
 
 /**
@@ -23,62 +23,51 @@ import type { AnalyticsTrackingParams } from '@sudobility/building_blocks';
  * ```
  */
 export function useBuildingBlocksAnalytics() {
-  const analytics = useFirebaseAnalytics();
-
-  const onTrack = useCallback(
-    (params: AnalyticsTrackingParams) => {
-      // Map building_blocks event types to Firebase Analytics events
-      switch (params.eventType) {
-        case 'button_click':
-          analytics.trackButtonClick({
-            button_text: params.label,
-            component_name: params.componentName,
-            ...params.params,
-          });
-          break;
-        case 'link_click':
-          analytics.trackLinkClick({
-            link_text: params.label,
-            component_name: params.componentName,
-            ...params.params,
-          });
-          break;
-        case 'settings_change':
-          analytics.trackButtonClick({
-            button_text: params.label,
-            component_name: params.componentName,
-            action_type: 'settings_change',
-            ...params.params,
-          });
-          break;
-        case 'subscription_action':
-          analytics.trackButtonClick({
-            button_text: params.label,
-            component_name: params.componentName,
-            action_type: 'subscription',
-            ...params.params,
-          });
-          break;
-        case 'navigation':
-          analytics.trackLinkClick({
-            link_text: params.label,
-            component_name: params.componentName,
-            navigation_type: 'navigation',
-            ...params.params,
-          });
-          break;
-        default:
-          // Generic tracking for unknown event types
-          analytics.trackButtonClick({
-            button_text: params.label,
-            component_name: params.componentName,
-            action_type: params.eventType,
-            ...params.params,
-          });
-      }
-    },
-    [analytics]
-  );
+  const onTrack = useCallback((params: AnalyticsTrackingParams) => {
+    // Map building_blocks event types to analytics service methods
+    switch (params.eventType) {
+      case 'button_click':
+        analyticsService.trackButtonClick(params.label, {
+          component_name: params.componentName,
+          ...params.params,
+        });
+        break;
+      case 'link_click':
+        analyticsService.trackLinkClick(params.label, params.label, {
+          component_name: params.componentName,
+          ...params.params,
+        });
+        break;
+      case 'settings_change':
+        analyticsService.trackButtonClick(params.label, {
+          component_name: params.componentName,
+          action_type: 'settings_change',
+          ...params.params,
+        });
+        break;
+      case 'subscription_action':
+        analyticsService.trackButtonClick(params.label, {
+          component_name: params.componentName,
+          action_type: 'subscription',
+          ...params.params,
+        });
+        break;
+      case 'navigation':
+        analyticsService.trackLinkClick(params.label, params.label, {
+          component_name: params.componentName,
+          navigation_type: 'navigation',
+          ...params.params,
+        });
+        break;
+      default:
+        // Generic tracking for unknown event types
+        analyticsService.trackButtonClick(params.label, {
+          component_name: params.componentName,
+          action_type: params.eventType,
+          ...params.params,
+        });
+    }
+  }, []);
 
   return onTrack;
 }
