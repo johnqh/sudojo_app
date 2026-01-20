@@ -1,6 +1,6 @@
 import { useMemo, type ComponentType } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AuthModal, AuthAction, useAuthStatus } from '@sudobility/auth-components';
+import { AuthAction, useAuthStatus } from '@sudobility/auth-components';
 import {
   AppTopBarWithFirebaseAuth,
   type MenuItemConfig,
@@ -174,24 +174,19 @@ export default function TopBar() {
   }, [t, isSiteAdmin]);
 
   return (
-    <>
-      <AppTopBarWithFirebaseAuth
-        logo={{
-          src: '/logo.png',
-          appName: t('app.name'),
-          onClick: () => navigate('/'),
-        }}
-        menuItems={menuItems}
-        collapseBelow="lg"
-        LinkComponent={LinkWrapper}
-        AuthActionComponent={AuthAction as ComponentType<AuthActionProps>}
-        onLoginClick={() => navigate('/login')}
-        sticky
-        zIndex="highest"
-      />
-
-      {/* Auth Modal */}
-      <AuthModal />
-    </>
+    <AppTopBarWithFirebaseAuth
+      logo={{
+        src: '/logo.png',
+        appName: t('app.name'),
+        onClick: () => navigate('/'),
+      }}
+      menuItems={menuItems}
+      collapseBelow="lg"
+      LinkComponent={LinkWrapper}
+      AuthActionComponent={AuthAction as ComponentType<AuthActionProps>}
+      onLoginClick={() => navigate('/login')}
+      sticky
+      zIndex="highest"
+    />
   );
 }

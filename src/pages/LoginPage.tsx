@@ -12,9 +12,9 @@ function LoginPage() {
   const { lang } = useParams<{ lang: string }>();
   const auth = getFirebaseAuth();
 
-  // Redirect to home if already authenticated
+  // Redirect to home if already authenticated (non-anonymous)
   useEffect(() => {
-    if (!loading && user) {
+    if (!loading && user && !user.isAnonymous) {
       navigate(`/${lang || "en"}`, { replace: true });
     }
   }, [user, loading, navigate, lang]);
