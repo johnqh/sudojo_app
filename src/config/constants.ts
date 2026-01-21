@@ -10,8 +10,13 @@ export const CONSTANTS = {
   SUPPORT_EMAIL: import.meta.env.VITE_SUPPORT_EMAIL || "support@sudojo.com",
 
   // API
-  API_URL: import.meta.env.VITE_API_BASE_URL || "https://api.sudojo.com",
+  API_URL: import.meta.env.VITE_SUDOJO_API_URL || "https://api.sudojo.com",
   DEV_MODE: import.meta.env.VITE_DEV_MODE === "true",
+
+  // RevenueCat API keys
+  REVENUECAT_API_KEY: import.meta.env.VITE_REVENUECAT_API_KEY || "",
+  REVENUECAT_API_KEY_SANDBOX:
+    import.meta.env.VITE_REVENUECAT_API_KEY_SANDBOX || "",
 
   // Social handles
   TWITTER_HANDLE: import.meta.env.VITE_TWITTER_HANDLE || "",

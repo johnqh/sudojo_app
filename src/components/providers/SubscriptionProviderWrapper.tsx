@@ -4,8 +4,7 @@ import {
   useSubscriptionContext,
 } from '@sudobility/subscription-components';
 import { useAuthStatus } from '@sudobility/auth-components';
-
-const REVENUECAT_API_KEY = import.meta.env.VITE_REVENUECAT_API_KEY || '';
+import { CONSTANTS } from '../../config/constants';
 
 interface SubscriptionProviderWrapperProps {
   children: ReactNode;
@@ -32,9 +31,13 @@ function SubscriptionInitializer({ children }: { children: ReactNode }) {
  * with the app's auth system and auto-initializes when user is available
  */
 export function SubscriptionProviderWrapper({ children }: SubscriptionProviderWrapperProps) {
+  const apiKey = CONSTANTS.DEV_MODE
+    ? CONSTANTS.REVENUECAT_API_KEY_SANDBOX
+    : CONSTANTS.REVENUECAT_API_KEY;
+
   return (
     <SubscriptionProvider
-      apiKey={REVENUECAT_API_KEY}
+      apiKey={apiKey}
       onError={(error) => console.error('[Subscription] Error:', error)}
     >
       <SubscriptionInitializer>{children}</SubscriptionInitializer>

@@ -121,14 +121,14 @@ export default function TopBar() {
   const { t } = useTranslation();
   const { navigate } = useLocalizedNavigate();
   const { user } = useAuthStatus();
-  const { networkClient, config, auth } = useApi();
+  const { networkClient, baseUrl, token } = useApi();
 
   // Check if current user is site admin
   const { isSiteAdmin } = useSiteAdmin({
     networkClient,
-    baseUrl: `${config.baseUrl}/api/v1`,
+    baseUrl,
     userId: user?.uid,
-    token: auth.accessToken || undefined,
+    token: token || undefined,
   });
 
   const menuItems: MenuItemConfig[] = useMemo(() => {

@@ -19,7 +19,7 @@ import { Section } from '@/components/layout/Section';
 export default function LevelPlayPage() {
   const { levelId } = useParams<{ levelId: string }>();
   const { t } = useTranslation();
-  const { networkClient, config, auth } = useApi();
+  const { networkClient, baseUrl, token } = useApi();
   const { markCompleted } = useProgress();
   const { settings } = useSettings();
   const { openModal: openAuthModal } = useAuthStatus();
@@ -32,8 +32,8 @@ export default function LevelPlayPage() {
 
   // Ensure levels are fetched if navigating directly to this page
   useEffect(() => {
-    fetchLevels(networkClient, config, auth);
-  }, [networkClient, config, auth, fetchLevels]);
+    fetchLevels(networkClient, baseUrl, token ?? '');
+  }, [networkClient, baseUrl, token, fetchLevels]);
 
   // Set breadcrumb title to level name
   useBreadcrumbTitle(level?.title);
@@ -41,8 +41,8 @@ export default function LevelPlayPage() {
   // Fetch a random board for this level with auth/subscription handling
   const { board, status, refetch, nextPuzzle } = useLevelGame({
     networkClient,
-    config,
-    auth,
+    baseUrl,
+    token: token ?? '',
     levelId: levelId ?? '',
     subscriptionActive: currentSubscription?.isActive ?? false,
     enabled: !!levelId,

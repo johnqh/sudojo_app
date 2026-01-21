@@ -94,7 +94,7 @@ export default function TechniquesPage() {
   const { techniqueId } = useParams<{ techniqueId: string }>();
   const { t, i18n } = useTranslation();
   const { navigate } = useLocalizedNavigate();
-  const { networkClient, config, auth } = useApi();
+  const { networkClient, baseUrl, token } = useApi();
 
   // Mobile view state - show content when techniqueId is present
   const [mobileViewOverride, setMobileViewOverride] = useState<'navigation' | 'content' | null>(null);
@@ -109,8 +109,8 @@ export default function TechniquesPage() {
 
   // Fetch techniques on mount (only fetches if not already fetched)
   useEffect(() => {
-    fetchTechniques(networkClient, config, auth);
-  }, [networkClient, config, auth, fetchTechniques]);
+    fetchTechniques(networkClient, baseUrl, token ?? '');
+  }, [networkClient, baseUrl, token, fetchTechniques]);
 
   // Fetch learning content for selected technique
   const learningParams = useMemo(
@@ -122,8 +122,8 @@ export default function TechniquesPage() {
   );
   const { data: learningData, isLoading: learningLoading } = useSudojoLearning(
     networkClient,
-    config,
-    auth,
+    baseUrl,
+    token ?? '',
     learningParams,
     { enabled: !!techniqueId }
   );

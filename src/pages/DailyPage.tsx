@@ -15,7 +15,7 @@ import { Section } from '@/components/layout/Section';
 
 export default function DailyPage() {
   const { t } = useTranslation();
-  const { networkClient, config, auth } = useApi();
+  const { networkClient, baseUrl, token } = useApi();
   const { markCompleted, isCompleted } = useProgress();
   const { settings } = useSettings();
   const { openModal: openAuthModal } = useAuthStatus();
@@ -23,8 +23,8 @@ export default function DailyPage() {
 
   const { daily, dailyDate, status, refetch } = useDailyGame({
     networkClient,
-    config,
-    auth,
+    baseUrl,
+    token: token ?? '',
     subscriptionActive: currentSubscription?.isActive ?? false,
   });
 

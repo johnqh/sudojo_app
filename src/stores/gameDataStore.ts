@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import type { Level, Technique } from '@sudobility/sudojo_types';
 import type { NetworkClient } from '@sudobility/types';
-import type { SudojoAuth, SudojoConfig } from '@sudobility/sudojo_client';
 
 interface GameDataState {
   // Levels
@@ -19,13 +18,13 @@ interface GameDataState {
   // Actions
   fetchLevels: (
     networkClient: NetworkClient,
-    config: SudojoConfig,
-    auth: SudojoAuth
+    baseUrl: string,
+    token: string
   ) => Promise<void>;
   fetchTechniques: (
     networkClient: NetworkClient,
-    config: SudojoConfig,
-    auth: SudojoAuth
+    baseUrl: string,
+    token: string
   ) => Promise<void>;
 
   // Selectors
@@ -46,7 +45,7 @@ export const useGameDataStore = create<GameDataState>((set, get) => ({
   techniquesFetched: false,
 
   // Fetch levels (only if not already fetched)
-  fetchLevels: async (networkClient, config, auth) => {
+  fetchLevels: async (networkClient, baseUrl, token) => {
     const state = get();
     if (state.levelsFetched || state.levelsLoading) {
       return;
@@ -58,12 +57,12 @@ export const useGameDataStore = create<GameDataState>((set, get) => ({
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };
-      if (auth.accessToken) {
-        headers['Authorization'] = `Bearer ${auth.accessToken}`;
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
       }
 
       const response = await networkClient.get<{ data: Level[] }>(
-        `${config.baseUrl}/api/v1/levels`,
+        `${baseUrl}/api/v1/levels`,
         { headers }
       );
 
@@ -85,7 +84,7 @@ export const useGameDataStore = create<GameDataState>((set, get) => ({
   },
 
   // Fetch techniques (only if not already fetched)
-  fetchTechniques: async (networkClient, config, auth) => {
+  fetchTechniques: async (networkClient, baseUrl, token) => {
     const state = get();
     if (state.techniquesFetched || state.techniquesLoading) {
       return;
@@ -97,12 +96,12 @@ export const useGameDataStore = create<GameDataState>((set, get) => ({
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };
-      if (auth.accessToken) {
-        headers['Authorization'] = `Bearer ${auth.accessToken}`;
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
       }
 
       const response = await networkClient.get<{ data: Technique[] }>(
-        `${config.baseUrl}/api/v1/techniques`,
+        `${baseUrl}/api/v1/techniques`,
         { headers }
       );
 

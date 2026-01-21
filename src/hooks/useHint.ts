@@ -37,12 +37,12 @@ export function useHint({
   autoPencilmarks = false,
   onHintReceived,
 }: UseHintOptions): UseHintResult {
-  const { networkClient, config, auth } = useApi();
+  const { networkClient, baseUrl, token } = useApi();
 
   return useHintBase({
     networkClient,
-    config,
-    auth,
+    baseUrl,
+    token: token ?? '',
     puzzle,
     userInput,
     pencilmarks,

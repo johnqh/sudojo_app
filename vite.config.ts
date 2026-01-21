@@ -17,9 +17,24 @@ export default defineConfig({
     },
   },
   resolve: {
-    dedupe: ['react', 'react-dom', '@tanstack/react-query', 'react-helmet-async'],
+    dedupe: [
+      'react',
+      'react-dom',
+      '@tanstack/react-query',
+      'react-helmet-async',
+      '@sudobility/subscription-components',
+      '@sudobility/auth-components',
+      '@sudobility/entity_client',
+      '@sudobility/components',
+      '@sudobility/building_blocks',
+    ],
     alias: {
       '@': path.resolve(__dirname, './src'),
+      // Ensure all packages use the same subscription-components instance
+      '@sudobility/subscription-components': path.resolve(
+        __dirname,
+        'node_modules/@sudobility/subscription-components',
+      ),
     },
   },
   plugins: [
@@ -171,7 +186,7 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    include: ['react', 'react-dom', 'react-router-dom', '@sudobility/components'],
+    include: ['react', 'react-dom', 'react-router-dom', '@tanstack/react-query', '@sudobility/components', '@sudobility/subscription-components'],
     exclude: ['@sudobility/sudojo_client'],
   },
   server: {

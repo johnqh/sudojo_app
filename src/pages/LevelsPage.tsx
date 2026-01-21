@@ -20,7 +20,7 @@ function BeltIcon({ levelIndex, width = 60, height = 24 }: { levelIndex: number;
 
 export default function LevelsPage() {
   const { t } = useTranslation();
-  const { networkClient, config, auth } = useApi();
+  const { networkClient, baseUrl, token } = useApi();
 
   const {
     levels,
@@ -38,9 +38,9 @@ export default function LevelsPage() {
 
   // Fetch levels and techniques on mount (only fetches if not already fetched)
   useEffect(() => {
-    fetchLevels(networkClient, config, auth);
-    fetchTechniques(networkClient, config, auth);
-  }, [networkClient, config, auth, fetchLevels, fetchTechniques]);
+    fetchLevels(networkClient, baseUrl, token ?? '');
+    fetchTechniques(networkClient, baseUrl, token ?? '');
+  }, [networkClient, baseUrl, token, fetchLevels, fetchTechniques]);
 
   // Create a map of level_uuid to techniques
   const techniquesByLevel = useMemo(() => {

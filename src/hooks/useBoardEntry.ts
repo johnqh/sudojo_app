@@ -101,7 +101,7 @@ export function useBoardEntry(): UseBoardEntryReturn {
   const [validatedPuzzle, setValidatedPuzzle] = useState<ValidatedPuzzle | null>(null);
   const [shouldValidate, setShouldValidate] = useState(false);
 
-  const { networkClient, config, auth } = useApi();
+  const { networkClient, baseUrl, token } = useApi();
 
   // Compute puzzle string for validation
   const puzzleString = useMemo(() => cellsToPuzzleString(cells), [cells]);
@@ -110,8 +110,8 @@ export function useBoardEntry(): UseBoardEntryReturn {
   // Use the solver validate hook
   const { data: validateData, isLoading: isValidating } = useSolverValidate(
     networkClient,
-    config,
-    auth,
+    baseUrl,
+    token ?? '',
     { original: puzzleString },
     {
       enabled: shouldValidate && clueCount >= 17,

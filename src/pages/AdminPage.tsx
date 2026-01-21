@@ -43,7 +43,7 @@ export default function AdminPage() {
   const { section } = useParams<{ section: string }>();
   const { t } = useTranslation();
   const { navigate } = useLocalizedNavigate();
-  const { networkClient, config, auth } = useApi();
+  const { networkClient, baseUrl, token } = useApi();
 
   const [mobileViewOverride, setMobileViewOverride] = useState<'navigation' | 'content' | null>(null);
   const mobileView = mobileViewOverride ?? (section ? 'content' : 'navigation');
@@ -142,11 +142,11 @@ export default function AdminPage() {
     setProgress(`Saving ${data.hint.title} example...`);
 
     // Save the example (async, but we've already stopped processing)
-    fetch(`${config.baseUrl}/api/v1/examples`, {
+    fetch(`${baseUrl}/api/v1/examples`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${auth.accessToken}`,
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
         board: boardString,
@@ -167,7 +167,7 @@ export default function AdminPage() {
     }).catch(err => {
       console.error('Failed to save example:', err);
     });
-  }, [targetTechnique, currentBoard, savedForBoard, play, getPencilmarksString, config.baseUrl, auth.accessToken, isExtracting, extractBoard]);
+  }, [targetTechnique, currentBoard, savedForBoard, play, getPencilmarksString, baseUrl, token, isExtracting, extractBoard]);
 
   const {
     hint,
@@ -188,7 +188,7 @@ export default function AdminPage() {
   const fetchCounts = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${config.baseUrl}/api/v1/examples/counts`);
+      const response = await fetch(`${baseUrl}/api/v1/examples/counts`);
       if (response.ok) {
         const data = await response.json();
         if (data.success && data.data) {
@@ -204,7 +204,7 @@ export default function AdminPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [config.baseUrl]);
+  }, [baseUrl]);
 
   useEffect(() => {
     if (section === 'examples') {
@@ -217,7 +217,7 @@ export default function AdminPage() {
     setIsBoardsLoading(true);
     setIsTechniquesLoading(true);
     try {
-      const response = await fetch(`${config.baseUrl}/api/v1/boards/counts`);
+      const response = await fetch(`${baseUrl}/api/v1/boards/counts`);
       if (response.ok) {
         const data = await response.json();
         if (data.success && data.data) {
@@ -231,7 +231,7 @@ export default function AdminPage() {
       setIsBoardsLoading(false);
       setIsTechniquesLoading(false);
     }
-  }, [config.baseUrl]);
+  }, [baseUrl]);
 
   useEffect(() => {
     if (section === 'boards' || section === 'techniques') {
@@ -241,7 +241,7 @@ export default function AdminPage() {
 
   // Generate boards handler
   const handleGenerateBoards = useCallback(async () => {
-    if (!auth.accessToken) {
+    if (!token) {
       setGenerateProgress('Error: Not authenticated');
       return;
     }
@@ -250,13 +250,13 @@ export default function AdminPage() {
     setGenerateProgress('Fetching levels...');
     setIsGenerating(true);
 
-    const client = createSudojoClient(networkClient, config);
+    const client = createSudojoClient(networkClient, baseUrl);
 
     // Fetch levels first
     let levelsList = levels;
     if (levelsList.length === 0) {
       try {
-        const levelsResponse = await client.getLevels(auth);
+        const levelsResponse = await client.getLevels(token);
         if (levelsResponse.success && levelsResponse.data) {
           levelsList = levelsResponse.data;
           setLevels(levelsList);
@@ -281,7 +281,7 @@ export default function AdminPage() {
       try {
         // Generate a new board
         setGenerateProgress(`Generating board ${count + 1}...`);
-        const generateResponse = await client.solverGenerate(auth, { symmetrical });
+        const generateResponse = await client.solverGenerate(token, { symmetrical });
 
         if (!generateResponse.success || !generateResponse.data) {
           setGenerateProgress(`Error generating board: ${generateResponse.error || 'Unknown error'}`);
@@ -303,7 +303,7 @@ export default function AdminPage() {
 
         // Save the board to the database
         setGenerateProgress(`Saving board ${count + 1}...`);
-        const createResponse = await client.createBoard(auth, {
+        const createResponse = await client.createBoard(token, {
           board: original,
           solution: solution,
           level_uuid: levelUuid,
@@ -329,7 +329,7 @@ export default function AdminPage() {
 
     setIsGenerating(false);
     setGenerateProgress(`Stopped. Generated ${count} boards.`);
-  }, [auth, networkClient, config, symmetrical, levels]);
+  }, [token, networkClient, baseUrl, symmetrical, levels]);
 
   // Stop generating handler
   const handleStopGenerating = useCallback(() => {
@@ -339,7 +339,7 @@ export default function AdminPage() {
   // Fetch a board without techniques
   const fetchBoardWithoutTechniques = useCallback(async (): Promise<Board | null> => {
     try {
-      const response = await fetch(`${config.baseUrl}/api/v1/boards?techniques=0&limit=1`);
+      const response = await fetch(`${baseUrl}/api/v1/boards?techniques=0&limit=1`);
       if (!response.ok) return null;
       const data = await response.json();
       if (data.success && data.data && data.data.length > 0) {
@@ -349,16 +349,16 @@ export default function AdminPage() {
     } catch {
       return null;
     }
-  }, [config.baseUrl]);
+  }, [baseUrl]);
 
   // Update board's techniques field
   const updateBoardTechniques = useCallback(async (boardUuid: string, techniques: number) => {
     try {
-      const response = await fetch(`${config.baseUrl}/api/v1/boards/${boardUuid}`, {
+      const response = await fetch(`${baseUrl}/api/v1/boards/${boardUuid}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${auth.accessToken}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ techniques }),
       });
@@ -367,11 +367,11 @@ export default function AdminPage() {
     } catch {
       return false;
     }
-  }, [config.baseUrl, auth.accessToken]);
+  }, [baseUrl, token]);
 
   // Extract techniques handler - start the extraction process
   const handleExtractTechniques = useCallback(async () => {
-    if (!auth.accessToken) {
+    if (!token) {
       setExtractProgress('Error: Not authenticated');
       return;
     }
@@ -396,7 +396,7 @@ export default function AdminPage() {
     setExtractProgress(`Loading board ${board.uuid.slice(0, 8)}...`);
     loadBoard(board.board, board.solution, { scramble: false });
     clearHint();
-  }, [auth.accessToken, fetchBoardWithoutTechniques, loadBoard, clearHint]);
+  }, [token, fetchBoardWithoutTechniques, loadBoard, clearHint]);
 
   // Stop extraction handler
   const handleStopExtracting = useCallback(() => {
@@ -433,7 +433,7 @@ export default function AdminPage() {
       try {
         while (matchingBoards.length < targetCount && offset < maxOffset) {
           const response = await fetch(
-            `${config.baseUrl}/api/v1/boards?limit=${batchSize}&offset=${offset}`
+            `${baseUrl}/api/v1/boards?limit=${batchSize}&offset=${offset}`
           );
           if (!response.ok) break;
           const result = await response.json();
@@ -457,7 +457,7 @@ export default function AdminPage() {
         return matchingBoards;
       }
     },
-    [config.baseUrl]
+    [baseUrl]
   );
 
   // Main processing effect - drives the state machine
@@ -705,7 +705,7 @@ export default function AdminPage() {
 
   // Start processing
   const handleCreateExamples = useCallback(() => {
-    if (!auth.accessToken) {
+    if (!token) {
       setProgress('Error: Not authenticated');
       return;
     }
@@ -737,7 +737,7 @@ export default function AdminPage() {
     setSavedForBoard(false);
     setIsProcessingHint(false);
     setIsCreating(true);
-  }, [counts, auth.accessToken]);
+  }, [counts, token]);
 
   const handleStopCreating = useCallback(() => {
     abortRef.current = true;
