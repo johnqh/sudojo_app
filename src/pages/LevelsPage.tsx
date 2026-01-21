@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Heading, Text } from '@sudobility/components';
 import { LocalizedLink } from '@/components/layout/LocalizedLink';
@@ -6,7 +6,7 @@ import { useApi } from '@/context/apiContextDef';
 import { useGameDataStore } from '@/stores/gameDataStore';
 import { getInfoService } from '@sudobility/di';
 import { InfoType } from '@sudobility/types';
-import { getBeltForLevel, getBeltIconSvg } from '@sudobility/sudojo_types';
+import { getBeltForLevel, getBeltIconSvg, type Technique } from '@sudobility/sudojo_types';
 import { Section } from '@/components/layout/Section';
 
 /** Belt icon component that renders the martial arts belt SVG */
@@ -24,15 +24,40 @@ export default function LevelsPage() {
 
   const {
     levels,
-    levelsLoading: isLoading,
-    levelsError: error,
+    levelsLoading,
+    levelsError,
     fetchLevels,
+    techniques,
+    techniquesLoading,
+    techniquesError,
+    fetchTechniques,
   } = useGameDataStore();
 
-  // Fetch levels on mount (only fetches if not already fetched)
+  const isLoading = levelsLoading || techniquesLoading;
+  const error = levelsError || techniquesError;
+
+  // Fetch levels and techniques on mount (only fetches if not already fetched)
   useEffect(() => {
     fetchLevels(networkClient, config, auth);
-  }, [networkClient, config, auth, fetchLevels]);
+    fetchTechniques(networkClient, config, auth);
+  }, [networkClient, config, auth, fetchLevels, fetchTechniques]);
+
+  // Create a map of level_uuid to techniques
+  const techniquesByLevel = useMemo(() => {
+    const map = new Map<string, Technique[]>();
+    for (const technique of techniques) {
+      if (technique.level_uuid) {
+        const existing = map.get(technique.level_uuid) || [];
+        existing.push(technique);
+        map.set(technique.level_uuid, existing);
+      }
+    }
+    // Sort techniques by index within each level
+    for (const [key, value] of map) {
+      map.set(key, value.sort((a, b) => a.index - b.index));
+    }
+    return map;
+  }, [techniques]);
 
   // Show error via InfoService instead of rendering on page
   useEffect(() => {
@@ -78,26 +103,37 @@ export default function LevelsPage() {
         )}
 
         <div className="flex flex-col divide-y divide-gray-200 dark:divide-gray-700">
-          {levels.map(level => (
-            <LocalizedLink
-              key={level.uuid}
-              to={`/play/${level.uuid}`}
-              className="flex items-center justify-between py-4 px-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-            >
-              <div className="flex items-center gap-4">
-                <BeltIcon levelIndex={level.index} />
-                <div>
-                  <Text weight="medium">{level.title}</Text>
-                  {level.text && (
-                    <Text size="sm" color="muted">
-                      {level.text}
+          {levels.map(level => {
+            const belt = getBeltForLevel(level.index);
+            const levelTechniques = techniquesByLevel.get(level.uuid) || [];
+            const techniqueNames = levelTechniques.map(t => t.title).join(', ');
+            const subtitle = level.text && techniqueNames
+              ? `${level.text} - ${techniqueNames}`
+              : level.text || techniqueNames || null;
+
+            return (
+              <LocalizedLink
+                key={level.uuid}
+                to={`/play/${level.uuid}`}
+                className="flex items-center justify-between py-4 px-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                <div className="flex items-center gap-4">
+                  <BeltIcon levelIndex={level.index} />
+                  <div>
+                    <Text weight="medium">
+                      Level {level.index}, {belt?.name ?? ''} Belt
                     </Text>
-                  )}
+                    {subtitle && (
+                      <Text size="sm" color="muted">
+                        {subtitle}
+                      </Text>
+                    )}
+                  </div>
                 </div>
-              </div>
-              <Text color="muted">→</Text>
-            </LocalizedLink>
-          ))}
+                <Text color="muted">→</Text>
+              </LocalizedLink>
+            );
+          })}
         </div>
       </Section>
     </>
