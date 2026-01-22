@@ -1,7 +1,7 @@
 {
   "name": "sudojo_app",
   "private": true,
-  "version": "0.0.41",
+  "version": "0.0.42",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -27,7 +27,7 @@
     "@revenuecat/purchases-js": "^1.22.0",
     "@sudobility/auth-components": "^1.0.7",
     "@sudobility/auth_lib": "^0.0.21",
-    "@sudobility/building_blocks": "^0.0.85",
+    "@sudobility/building_blocks": "^0.0.86",
     "@sudobility/components": "^5.0.1",
     "@sudobility/design": "^1.1.18",
     "@sudobility/devops-components": "^2.0.16",
@@ -36,8 +36,8 @@
     "@sudobility/entity_client": "^0.0.17",
     "@sudobility/subscription-components": "^1.0.24",
     "@sudobility/subscription_lib": "^0.0.12",
-    "@sudobility/sudojo_client": "^0.0.33",
-    "@sudobility/sudojo_lib": "^0.0.35",
+    "@sudobility/sudojo_client": "^0.0.34",
+    "@sudobility/sudojo_lib": "^0.0.36",
     "@sudobility/sudojo_types": "^1.2.4",
     "@sudobility/types": "^1.9.48",
     "@tanstack/react-query": "^5.90.5",

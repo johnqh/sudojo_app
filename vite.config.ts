@@ -112,18 +112,14 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: id => {
-          // React core
+          // React core + router together to avoid circular dependency
           if (
             id.includes('node_modules/react/') ||
             id.includes('node_modules/react-dom/') ||
-            id.includes('node_modules/scheduler/')
+            id.includes('node_modules/scheduler/') ||
+            id.includes('node_modules/react-router')
           ) {
             return 'react-vendor';
-          }
-
-          // React Router
-          if (id.includes('node_modules/react-router')) {
-            return 'react-router';
           }
 
           // React Query
@@ -136,14 +132,22 @@ export default defineConfig({
             return 'radix-ui';
           }
 
-          // Firebase
+          // Firebase - separate chunk for lazy loading potential
           if (id.includes('node_modules/firebase/')) {
             return 'firebase';
           }
 
-          // RevenueCat Purchases
+          // RevenueCat - lazy loaded chunk (loaded only for authenticated users)
           if (id.includes('node_modules/@revenuecat/')) {
             return 'revenuecat';
+          }
+
+          // Subscription packages - lazy loaded with RevenueCat
+          if (
+            id.includes('node_modules/@sudobility/subscription-components') ||
+            id.includes('node_modules/@sudobility/subscription_lib')
+          ) {
+            return 'subscription';
           }
 
           // i18next
@@ -165,10 +169,7 @@ export default defineConfig({
             return 'icons';
           }
 
-          // Sudobility packages - split by package
-          if (id.includes('node_modules/@sudobility/components')) {
-            return 'sudobility-components';
-          }
+          // Sudobility sudojo-specific packages (smaller, game-specific)
           if (id.includes('node_modules/@sudobility/sudojo_lib')) {
             return 'sudobility-sudojo-lib';
           }
@@ -178,6 +179,8 @@ export default defineConfig({
           if (id.includes('node_modules/@sudobility/sudojo_types')) {
             return 'sudojo-types';
           }
+
+          // All other @sudobility packages in one chunk (they have interdependencies)
           if (id.includes('node_modules/@sudobility/')) {
             return 'sudobility-core';
           }
@@ -186,8 +189,9 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    include: ['react', 'react-dom', 'react-router-dom', '@tanstack/react-query', '@sudobility/components', '@sudobility/subscription-components'],
-    exclude: ['@sudobility/sudojo_client'],
+    include: ['react', 'react-dom', 'react-router-dom', '@tanstack/react-query', '@sudobility/components'],
+    // Exclude packages that should be lazy loaded
+    exclude: ['@sudobility/sudojo_client', '@sudobility/subscription-components'],
   },
   server: {
     host: true,

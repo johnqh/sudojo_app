@@ -1,14 +1,15 @@
-import { type ReactNode } from 'react';
+import { type ReactNode, useEffect, lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { SudobilityAppWithFirebaseAuth } from '@sudobility/building_blocks/firebase';
+import { useAuthStatus } from '@sudobility/auth-components';
+import {
+  SubscriptionProvider,
+  useSubscriptionContext,
+} from '@sudobility/subscription-components';
 import { CONSTANTS } from './config/constants';
 import { PerformancePanel } from '@sudobility/components';
 import { SettingsProvider } from './context/SettingsContext';
 import { ProgressProvider } from './context/ProgressContext';
-import { SubscriptionProviderWrapper } from './components/providers/SubscriptionProviderWrapper';
-
-// Pages (lazy loaded)
-import { lazy, Suspense } from 'react';
 
 const HomePage = lazy(() => import('./pages/HomePage'));
 const DailyPage = lazy(() => import('./pages/DailyPage'));
@@ -52,14 +53,36 @@ function LanguageHomeRedirect() {
   return <Navigate to={`/${lang || 'en'}`} replace />;
 }
 
+// Auto-initializes subscription when user is authenticated
+function SubscriptionInitializer({ children }: { children: ReactNode }) {
+  const { user, loading: authLoading } = useAuthStatus();
+  const { initialize } = useSubscriptionContext();
+
+  useEffect(() => {
+    // Only initialize for authenticated (non-anonymous) users
+    if (!authLoading && user && !user.isAnonymous) {
+      initialize(user.uid, user.email || undefined);
+    }
+  }, [authLoading, user, initialize]);
+
+  return <>{children}</>;
+}
+
 // Combined app-specific providers (ApiProvider is built into SudobilityAppWithFirebaseAuth)
 function AppProviders({ children }: { children: ReactNode }) {
+  const subscriptionApiKey = CONSTANTS.DEV_MODE
+    ? CONSTANTS.REVENUECAT_API_KEY_SANDBOX
+    : CONSTANTS.REVENUECAT_API_KEY;
+
   return (
     <SettingsProvider>
       <ProgressProvider>
-        <SubscriptionProviderWrapper>
-          {children}
-        </SubscriptionProviderWrapper>
+        <SubscriptionProvider
+          apiKey={subscriptionApiKey}
+          onError={(error) => console.error('[Subscription] Error:', error)}
+        >
+          <SubscriptionInitializer>{children}</SubscriptionInitializer>
+        </SubscriptionProvider>
       </ProgressProvider>
     </SettingsProvider>
   );
