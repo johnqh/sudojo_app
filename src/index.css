@@ -134,7 +134,7 @@ body {
 .technique-content img {
   max-width: 100% !important;
   height: auto !important;
-  border-radius: 0.5rem;
+  border-radius: 0 !important;
   margin: 1rem auto !important;
   display: block;
 }
@@ -168,5 +168,153 @@ body {
 }
 
 .dark .technique-content a:hover {
+  color: #93c5fd !important;
+}
+
+/* Semantic formatting classes for technique explanations */
+.technique-content .fmt-cell {
+  font-family: ui-monospace, SFMono-Regular, monospace !important;
+  background: #dbeafe !important;
+  color: #1e40af !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  font-size: 0.9em !important;
+  font-weight: 600 !important;
+  white-space: nowrap !important;
+}
+
+.dark .technique-content .fmt-cell {
+  background: #1e3a5f !important;
+  color: #93c5fd !important;
+}
+
+.technique-content .fmt-digit {
+  font-family: ui-monospace, SFMono-Regular, monospace !important;
+  background: #dcfce7 !important;
+  color: #166534 !important;
+  padding: 2px 8px !important;
+  border-radius: 4px !important;
+  font-size: 0.95em !important;
+  font-weight: 700 !important;
+}
+
+.dark .technique-content .fmt-digit {
+  background: #14532d !important;
+  color: #86efac !important;
+}
+
+.technique-content .fmt-eliminate {
+  font-family: ui-monospace, SFMono-Regular, monospace !important;
+  background: #fee2e2 !important;
+  color: #991b1b !important;
+  padding: 2px 8px !important;
+  border-radius: 4px !important;
+  font-size: 0.95em !important;
+  font-weight: 600 !important;
+  text-decoration: line-through !important;
+}
+
+.dark .technique-content .fmt-eliminate {
+  background: #450a0a !important;
+  color: #fca5a5 !important;
+}
+
+.technique-content .fmt-house {
+  font-weight: 700 !important;
+  color: #7c3aed !important;
+}
+
+.dark .technique-content .fmt-house {
+  color: #a78bfa !important;
+}
+
+.technique-content .fmt-action {
+  font-weight: 600 !important;
+  color: #dc2626 !important;
+}
+
+.dark .technique-content .fmt-action {
+  color: #f87171 !important;
+}
+
+.technique-content .fmt-result {
+  font-weight: 600 !important;
+  color: #059669 !important;
+}
+
+.dark .technique-content .fmt-result {
+  color: #34d399 !important;
+}
+
+/* Section titles in technique content */
+.technique-content .section-title {
+  font-size: 1.1rem !important;
+  font-weight: 600 !important;
+  color: #374151 !important;
+  margin: 0 0 10px 0 !important;
+}
+
+.dark .technique-content .section-title {
+  color: #e5e7eb !important;
+}
+
+/* How it works box */
+.technique-content .how-it-works-content {
+  background: #f0f9ff !important;
+}
+
+.dark .technique-content .how-it-works-content {
+  background: #1e3a5f !important;
+}
+
+/* Example content box */
+.technique-content .example-content {
+  background: #f8fafc !important;
+}
+
+.dark .technique-content .example-content {
+  background: #1e293b !important;
+}
+
+/* Explanation box inside example */
+.technique-content .explanation {
+  background: white !important;
+  border-left: 4px solid #2563eb !important;
+}
+
+.dark .technique-content .explanation {
+  background: #0f172a !important;
+  border-left-color: #3b82f6 !important;
+}
+
+/* Tips content box */
+.technique-content .tips-content {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%) !important;
+}
+
+.dark .technique-content .tips-content {
+  background: linear-gradient(135deg, #78350f 0%, #92400e 100%) !important;
+}
+
+/* Practice CTA section */
+.technique-content .practice-cta {
+  border-top-color: #e5e7eb !important;
+}
+
+.dark .technique-content .practice-cta {
+  border-top-color: #334155 !important;
+}
+
+/* Cell list styling */
+.technique-content .fmt-cell-list {
+  font-family: ui-monospace, monospace !important;
+  background: #e0e7ff !important;
+  padding: 2px 8px !important;
+  border-radius: 4px !important;
+  font-size: 0.9em !important;
+}
+
+.dark .technique-content .fmt-cell-list {
+  background: #1e3a5f !important;
   color: #93c5fd !important;
 }

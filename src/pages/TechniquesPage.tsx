@@ -13,7 +13,17 @@ import {
   getTechniqueFromHelpFile,
   extractBodyContent,
 } from '@sudobility/sudojo_lib';
+import { getBeltForLevel, getBeltIconSvg, type Technique } from '@sudobility/sudojo_types';
 import { Section } from '@/components/layout/Section';
+
+/** Belt icon component that renders the martial arts belt SVG */
+function BeltIcon({ levelIndex, width = 48, height = 20 }: { levelIndex: number; width?: number; height?: number }) {
+  const belt = getBeltForLevel(levelIndex);
+  if (!belt) return null;
+
+  const svg = getBeltIconSvg(belt.hex, width, height);
+  return <div dangerouslySetInnerHTML={{ __html: svg }} className="flex-shrink-0" />;
+}
 
 // Cache for memoized icon components
 const techniqueIconCache = new Map<string, React.ComponentType<{ className?: string }>>();
@@ -100,17 +110,48 @@ export default function TechniquesPage() {
   const [mobileViewOverride, setMobileViewOverride] = useState<'navigation' | 'content' | null>(null);
   const mobileView = mobileViewOverride ?? (techniqueId ? 'content' : 'navigation');
 
-  // Get techniques from store
+  // Reset mobile view override when URL changes (e.g., browser back/forward navigation)
+  // This ensures we show the techniques list when techniqueId becomes undefined
+  useEffect(() => {
+    if (!techniqueId) {
+      setMobileViewOverride(null);
+    }
+  }, [techniqueId]);
+
+  // Get levels and techniques from store
   const {
+    levels,
+    levelsLoading,
+    fetchLevels,
     techniques,
     techniquesLoading,
     fetchTechniques,
   } = useGameDataStore();
 
-  // Fetch techniques on mount (only fetches if not already fetched)
+  // Fetch levels and techniques on mount (only fetches if not already fetched)
   useEffect(() => {
+    fetchLevels(networkClient, baseUrl, token ?? '');
     fetchTechniques(networkClient, baseUrl, token ?? '');
-  }, [networkClient, baseUrl, token, fetchTechniques]);
+  }, [networkClient, baseUrl, token, fetchLevels, fetchTechniques]);
+
+  // Group techniques by level_uuid
+  const techniquesByLevel = useMemo(() => {
+    const map = new Map<string, Technique[]>();
+    for (const technique of techniques) {
+      if (technique.level_uuid) {
+        const existing = map.get(technique.level_uuid) || [];
+        existing.push(technique);
+        map.set(technique.level_uuid, existing);
+      }
+    }
+    // Sort techniques by index within each level
+    for (const [key, value] of map) {
+      map.set(key, value.sort((a, b) => a.index - b.index));
+    }
+    return map;
+  }, [techniques]);
+
+  const isLoading = levelsLoading || techniquesLoading;
 
   // Fetch learning content for selected technique
   const learningParams = useMemo(
@@ -179,23 +220,44 @@ export default function TechniquesPage() {
   );
 
   const masterContent = (
-    <div className="space-y-1">
-      {techniquesLoading && (
+    <div className="space-y-4">
+      {isLoading && (
         <div className="p-4 text-center">
           <Text color="muted">{t('common.loading')}</Text>
         </div>
       )}
-      {techniques.map(technique => (
-        <MasterListItem
-          key={technique.uuid}
-          isSelected={technique.uuid === techniqueId}
-          onClick={() => handleTechniqueSelect(technique.uuid)}
-          icon={getTechniqueIcon(technique.title)}
-          label={technique.title}
-          description={technique.text ?? undefined}
-        />
-      ))}
-      {!techniquesLoading && techniques.length === 0 && (
+      {!isLoading && levels.map(level => {
+        const belt = getBeltForLevel(level.index);
+        const levelTechniques = techniquesByLevel.get(level.uuid) || [];
+
+        // Skip levels with no techniques
+        if (levelTechniques.length === 0) return null;
+
+        return (
+          <div key={level.uuid} className="space-y-1">
+            {/* Level header with belt icon */}
+            <div className="flex items-center gap-3 px-3 py-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <BeltIcon levelIndex={level.index} />
+              <Text weight="semibold" size="sm">
+                Level {level.index} · {belt?.name} Belt
+              </Text>
+            </div>
+
+            {/* Techniques in this level */}
+            {levelTechniques.map(technique => (
+              <MasterListItem
+                key={technique.uuid}
+                isSelected={technique.uuid === techniqueId}
+                onClick={() => handleTechniqueSelect(technique.uuid)}
+                icon={getTechniqueIcon(technique.title)}
+                label={technique.title}
+                description={technique.text ?? undefined}
+              />
+            ))}
+          </div>
+        );
+      })}
+      {!isLoading && techniques.length === 0 && (
         <div className="p-4 text-center">
           <Text color="muted">{t('techniques.empty')}</Text>
         </div>

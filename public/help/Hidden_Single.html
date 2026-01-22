@@ -1,61 +1,66 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<!DOCTYPE html>
 <html>
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <meta http-equiv="Content-Style-Type" content="text/css">
-    <title>College of Sudobility</title>
-    <meta name="Generator" content="Cocoa HTML Writer">
-    <meta name="CocoaVersion" content="949.35">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style type="text/css">
-    p.p1 {margin: 0.0px 0.0px 12.0px 0.0px}
-    p.p2 {margin: 0.0px 0.0px 8.0px 0.0px}
-    td.td1 {padding: 2.0px 2.0px 2.0px 2.0px}
-    ul.ul1 {list-style-type: disc}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hidden Single - Sudojo</title>
 </head>
 <body>
-    <table cellspacing="0" cellpadding="0">
-        <tbody>
-            <tr>
-                <td class="td1" style="font-size: smaller; text-align: right" valign="middle">
-                    Back to <a href="index.html">Course Catalog</a></td>
-            </tr>
-            <tr>
-                <td valign="middle" class="td1" style="width: 320px">
-                    <p class="p1">
-                        <b>Hidden Single</b></p>
-                </td>
-            </tr>
-            <tr>
-                <td valign="middle" class="td1" style="width: 320px">
-                    <p style="margin: 0.0px 0.0px 12.0px 0.0px; font: 13.0px Courier New">
-                        In a House (Row, Column, or Block), if there is only one possible position for a
-                        candidate, we call it hidden single.</p>
-                    <p style="margin: 0px 0px 12px; font: 13px Courier New">
-                        Let's look at the example:</p>
-                    <p style="margin: 0px 0px 12px; font: 13px Courier New; text-align: center">
-                        <img src="hidden_single_1.png" /></p>
-                    <p style="margin: 0px 0px 12px; font: 13px Courier New">
-                        In Block 1, Column 2 and 3, and Row 3 cannot be 9. Thus, the only possible position
-                        for 9 is R2C1.</p>
-                    <p style="margin: 0px 0px 12px; font: 13px Courier New">
-                        An easier way to spot hidden single is to tap on a clue. Sudobility iPhone software
-                        will automatically gray out all the cells which are not possible for the candidate.</p>
-                    <p style="margin: 0px 0px 12px; font: 13px Courier New; text-align: center">
-                        <img src="hidden_single_2.png" />&nbsp;</p>
-                    <p style="margin: 0px 0px 12px; font: 13px Courier New">
-                        In this example, by tapping clue 4, Sudobility shows the only possible location
-                        for 4 in Block 2 is R1C6.</p>
-                </td>
-            </tr>
-            <tr>
-                <td class="td1" style="font-size: smaller; text-align: right" valign="middle">
-                    Back to <a href="index.html">Course Catalog</a></td>
-            </tr>
-        </tbody>
-    </table>
-    <p class="p2">
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>
+    <!-- Belt Level Badge -->
+    <div class="belt-badge" style="display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 9999px; background: #FFEB3B30; border: 2px solid #FFEB3B; margin-bottom: 20px;">
+        <span class="belt-icon" style="display: inline-block; width: 24px; height: 10px; background: #FFEB3B; border-radius: 2px; border: 1px solid #FFEB3B;"></span>
+        <span style="font-weight: 600; font-size: 0.875rem; color: #374151;">Level 2 · Yellow Belt</span>
+    </div>
+
+    <!-- Overview Section -->
+    <div class="section" style="margin-bottom: 28px;">
+        <h3 class="section-title" style="font-size: 1.1rem; font-weight: 600; color: #374151; margin: 0 0 10px 0;">Overview</h3>
+        <p style="font-size: 1rem; line-height: 1.75; color: #4b5563; margin: 0;">A Hidden Single occurs when a digit can only go in one cell within a house (row, column, or block), even though that cell may have other candidates. The digit is "hidden" among other possibilities but is forced by the constraint of its house.</p>
+    </div>
+
+    <!-- How It Works Section -->
+    <div class="section" style="margin-bottom: 28px;">
+        <h3 class="section-title" style="font-size: 1.1rem; font-weight: 600; color: #374151; margin: 0 0 10px 0;">How It Works</h3>
+        <div class="how-it-works-content" style="background: #f0f9ff; border-radius: 10px; padding: 16px 20px;">
+            <ol>
+<li>For each house (row, column, or block), examine each digit 1-9.</li>
+<li>Count how many cells in that house can contain each digit.</li>
+<li>If a digit can only go in one cell within that house, place it there.</li>
+<li>The cell may have multiple candidates, but within the house, only one cell can hold that specific digit.</li>
+</ol>
+        </div>
+    </div>
+
+    <!-- Example Section -->
+    <div class="section" style="margin-bottom: 28px;">
+        <h3 class="section-title" style="font-size: 1.1rem; font-weight: 600; color: #374151; margin: 0 0 10px 0;">Example</h3>
+        <div class="example-content" style="background: #f8fafc; border-radius: 10px; padding: 20px;">
+            <div class="example-image" style="text-align: center; margin-bottom: 16px;">
+                <img src="hidden_single_1.svg" alt="Hidden Single Example" style="max-width: 100%; height: auto;">
+            </div>
+            <div class="explanation" style="background: white; border-left: 4px solid #2563eb; padding: 16px 20px; border-radius: 0 8px 8px 0; line-height: 1.8;">
+                <p style="margin: 0 0 8px 0;"><strong>Highlighted cells:</strong> <span class="fmt-cell-list" style="font-family: ui-monospace, monospace; background: #e0e7ff; padding: 2px 8px; border-radius: 4px; font-size: 0.9em;">R1C7</span></p>
+                <p style="margin: 0;">Cell <span class="fmt-cell">R1C7</span> Within <span class="fmt-house">Block 3</span> (or Row 1/Column 7), the digit <span class="fmt-digit">7</span> can only go in this cell — it's a <span class="fmt-result">Hidden Single</span>.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tips Section -->
+    <div class="section" style="margin-bottom: 28px;">
+        <h3 class="section-title" style="font-size: 1.1rem; font-weight: 600; color: #374151; margin: 0 0 10px 0;">Tips & Patterns</h3>
+        <div class="tips-content" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 10px; padding: 16px 20px;">
+            <ul>
+<li>Blocks often reveal Hidden Singles more easily than rows or columns.</li>
+<li>Focus on digits that appear frequently elsewhere in the puzzle.</li>
+<li>Hidden Singles become more apparent after eliminations from other techniques.</li>
+</ul>
+        </div>
+    </div>
+
+    <!-- Practice CTA -->
+    <div class="practice-cta" style="text-align: center; padding: 24px 0; border-top: 1px solid #e5e7eb; margin-top: 20px;">
+        <p style="margin: 0 0 12px 0; color: #6b7280; font-size: 0.95rem;">Ready to practice <strong>Hidden Single</strong>?</p>
+        <a href="/" style="display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.95rem;">Start Practice</a>
+    </div>
 </body>
 </html>

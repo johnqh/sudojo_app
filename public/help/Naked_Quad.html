@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>X-Wing - Sudojo</title>
+    <title>Naked Quad - Sudojo</title>
 </head>
 <body>
     <!-- Belt Level Badge -->
@@ -15,7 +15,7 @@
     <!-- Overview Section -->
     <div class="section" style="margin-bottom: 28px;">
         <h3 class="section-title" style="font-size: 1.1rem; font-weight: 600; color: #374151; margin: 0 0 10px 0;">Overview</h3>
-        <p style="font-size: 1rem; line-height: 1.75; color: #4b5563; margin: 0;">X-Wing is a fish pattern using two rows and two columns. When a candidate appears in exactly two cells in two different rows, and these four cells share the same two columns, the candidate can be eliminated from other cells in those columns.</p>
+        <p style="font-size: 1rem; line-height: 1.75; color: #4b5563; margin: 0;">A Naked Quad consists of four cells in a house that together contain exactly four candidates. These four digits must occupy these four cells, allowing elimination from other cells.</p>
     </div>
 
     <!-- How It Works Section -->
@@ -23,10 +23,9 @@
         <h3 class="section-title" style="font-size: 1.1rem; font-weight: 600; color: #374151; margin: 0 0 10px 0;">How It Works</h3>
         <div class="how-it-works-content" style="background: #f0f9ff; border-radius: 10px; padding: 16px 20px;">
             <ol>
-<li>Find a candidate that appears in exactly two cells in a row.</li>
-<li>Find another row where the same candidate appears in exactly two cells in the same columns.</li>
-<li>These four cells form a rectangle. The candidate must be in two diagonal corners.</li>
-<li>Eliminate the candidate from other cells in those two columns.</li>
+<li>Find four cells in a house whose combined candidates total exactly four digits.</li>
+<li>Each cell must contain only subsets of these four candidates.</li>
+<li>Eliminate these four candidates from all other cells in the house.</li>
 </ol>
         </div>
     </div>
@@ -36,11 +35,11 @@
         <h3 class="section-title" style="font-size: 1.1rem; font-weight: 600; color: #374151; margin: 0 0 10px 0;">Example</h3>
         <div class="example-content" style="background: #f8fafc; border-radius: 10px; padding: 20px;">
             <div class="example-image" style="text-align: center; margin-bottom: 16px;">
-                <img src="x-wing_1.svg" alt="X-Wing Example" style="max-width: 100%; height: auto;">
+                <img src="naked_quad_1.svg" alt="Naked Quad Example" style="max-width: 100%; height: auto;">
             </div>
             <div class="explanation" style="background: white; border-left: 4px solid #2563eb; padding: 16px 20px; border-radius: 0 8px 8px 0; line-height: 1.8;">
-                <p style="margin: 0 0 8px 0;"><strong>Highlighted cells:</strong> <span class="fmt-cell-list" style="font-family: ui-monospace, monospace; background: #e0e7ff; padding: 2px 8px; border-radius: 4px; font-size: 0.9em;">R6C2, R6C4, R8C1, R8C2, R8C4</span></p>
-                <p style="margin: 0;">An <span class="fmt-result">X-Wing</span> on candidate <span class="fmt-digit">9</span>: In <span class="fmt-house">Rows 6 and 8</span>, the digit <span class="fmt-digit">9</span> can only appear in <span class="fmt-house">Columns 1 and 2 and 4</span>. This forms a rectangle where <span class="fmt-digit">9</span> must occupy two diagonal corners. <span class="fmt-action">Eliminate</span> <span class="fmt-eliminate">9</span> from all other cells in Columns 1 and 2 and 4.</p>
+                <p style="margin: 0 0 8px 0;"><strong>Highlighted cells:</strong> <span class="fmt-cell-list" style="font-family: ui-monospace, monospace; background: #e0e7ff; padding: 2px 8px; border-radius: 4px; font-size: 0.9em;">R1C1, R1C2, R1C3, R2C1</span></p>
+                <p style="margin: 0;">In <span class="fmt-house">Block 1</span>, cells <span class="fmt-cell">R1C1</span>=<span class="fmt-digit">{1, 6, 7}</span>, <span class="fmt-cell">R1C2</span>=<span class="fmt-digit">{1, 3, 6}</span>, <span class="fmt-cell">R1C3</span>=<span class="fmt-digit">{3, 6, 7}</span>, <span class="fmt-cell">R2C1</span>=<span class="fmt-digit">{6, 7}</span> together contain only <span class="fmt-digit">{1, 3, 6, 7}</span>. This is a <span class="fmt-result">Naked Quad</span> — these four digits must occupy these four cells. <span class="fmt-action">Eliminate</span> <span class="fmt-eliminate">{1, 3, 6, 7}</span> from all other cells in Block 1.</p>
             </div>
         </div>
     </div>
@@ -50,16 +49,16 @@
         <h3 class="section-title" style="font-size: 1.1rem; font-weight: 600; color: #374151; margin: 0 0 10px 0;">Tips & Patterns</h3>
         <div class="tips-content" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 10px; padding: 16px 20px;">
             <ul>
-<li>X-Wings work on rows (eliminating from columns) or columns (eliminating from rows).</li>
-<li>Look for candidates with exactly 2 occurrences per row/column.</li>
-<li>The pattern forms a rectangle - visualize the 'X' shape.</li>
+<li>Naked Quads are uncommon but not as rare as Hidden Quads.</li>
+<li>Look for groups of cells with 2-4 candidates that only use four digits combined.</li>
+<li>Quads are harder to spot visually - use pencilmark highlighting if available.</li>
 </ul>
         </div>
     </div>
 
     <!-- Practice CTA -->
     <div class="practice-cta" style="text-align: center; padding: 24px 0; border-top: 1px solid #e5e7eb; margin-top: 20px;">
-        <p style="margin: 0 0 12px 0; color: #6b7280; font-size: 0.95rem;">Ready to practice <strong>X-Wing</strong>?</p>
+        <p style="margin: 0 0 12px 0; color: #6b7280; font-size: 0.95rem;">Ready to practice <strong>Naked Quad</strong>?</p>
         <a href="/" style="display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.95rem;">Start Practice</a>
     </div>
 </body>
