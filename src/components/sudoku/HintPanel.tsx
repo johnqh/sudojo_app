@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, Text, Button } from '@sudobility/components';
 import type { SolverHintStep } from '@sudobility/sudojo_client';
+import { generateDetailedExplanation, getHintActionSummary } from '@/utils/hintExplanation';
 
 interface HintPanelProps {
   hint: SolverHintStep;
@@ -44,7 +45,10 @@ export default function HintPanel({
               {hint.title}
             </Text>
             <Text size="sm" color="muted">
-              {hint.text}
+              {generateDetailedExplanation(hint)}
+            </Text>
+            <Text size="xs" weight="medium" className="text-green-600 dark:text-green-400 pt-1">
+              {getHintActionSummary(hint)}
             </Text>
             {/* Navigation buttons */}
             <div className="flex gap-2 pt-2">

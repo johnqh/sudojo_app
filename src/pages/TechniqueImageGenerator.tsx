@@ -9,8 +9,11 @@ import { Section } from '@/components/layout/Section';
 import { generateSudokuSvg, svgToDataUrl, downloadSvg } from '@/utils/sudokuSvgGenerator';
 import { techniqueExamples, type TechniqueExample } from '@/data/techniqueExamples';
 
+// Filter out null examples
+const validExamples = techniqueExamples.filter((ex): ex is TechniqueExample => ex !== null);
+
 export default function TechniqueImageGenerator() {
-  const [selectedExample, setSelectedExample] = useState<TechniqueExample>(techniqueExamples[0]);
+  const [selectedExample, setSelectedExample] = useState<TechniqueExample>(validExamples[0]);
   const [darkMode, setDarkMode] = useState(false);
   const [size, setSize] = useState(400);
 
@@ -78,12 +81,12 @@ export default function TechniqueImageGenerator() {
               <select
                 value={selectedExample.id}
                 onChange={(e) => {
-                  const example = techniqueExamples.find((ex) => ex.id === e.target.value);
+                  const example = validExamples.find((ex) => ex.id === e.target.value);
                   if (example) setSelectedExample(example);
                 }}
                 className="w-full p-2 border rounded dark:bg-gray-800 dark:border-gray-600"
               >
-                {techniqueExamples.map((ex) => (
+                {validExamples.map((ex) => (
                   <option key={ex.id} value={ex.id}>
                     {ex.technique} - {ex.id}
                   </option>
