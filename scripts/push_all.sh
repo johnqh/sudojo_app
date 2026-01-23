@@ -27,6 +27,7 @@ PROJECTS=(
     "../sudojo_client:60"
     "../sudojo_lib:60"
     "../sudojo_app:0"
+    "../sudojo_app_rn:0"
 )
 
 # Download reusable script from GitHub
