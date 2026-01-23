@@ -119,7 +119,7 @@ export function generateDetailedExplanation(hint: SolverHintStep): string {
       return explainFullHouse(hint, selectCells);
 
     case 2: // Hidden Single
-      return explainHiddenSingle(hint, selectCells, highlightCells);
+      return explainHiddenSingle(hint, selectCells);
 
     case 3: // Naked Single
       return explainNakedSingle(hint, selectCells);
@@ -186,7 +186,7 @@ export function generateDetailedExplanation(hint: SolverHintStep): string {
 
     default:
       // Generic explanation with action details
-      return generateGenericExplanation(hint, selectCells, removeCells, highlightCells);
+      return generateGenericExplanation(hint, selectCells, removeCells);
   }
 }
 
@@ -221,8 +221,7 @@ function explainFullHouse(
 // Hidden Single: One place for a digit in a house
 function explainHiddenSingle(
   hint: SolverHintStep,
-  selectCells: Array<{ row: number; col: number; digit: string }>,
-  _highlightCells: Array<{ row: number; col: number; digits: string }>
+  selectCells: Array<{ row: number; col: number; digit: string }>
 ): string {
   if (selectCells.length !== 1) return hint.text;
 
@@ -232,7 +231,7 @@ function explainHiddenSingle(
 
   // Determine which house
   const area = hint.areas?.[0];
-  let houseName = area
+  const houseName = area
     ? (area.type === 'row' ? `Row ${area.index + 1}` : area.type === 'column' ? `Column ${area.index + 1}` : `Block ${area.index + 1}`)
     : `Block ${block}`;
 
@@ -819,8 +818,7 @@ function explainALSChain(
 function generateGenericExplanation(
   hint: SolverHintStep,
   selectCells: Array<{ row: number; col: number; digit: string }>,
-  removeCells: Array<{ row: number; col: number; digits: string }>,
-  _highlightCells: Array<{ row: number; col: number; digits: string }>
+  removeCells: Array<{ row: number; col: number; digits: string }>
 ): string {
   const parts: string[] = [];
 

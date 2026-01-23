@@ -106,17 +106,20 @@ export default function TechniquesPage() {
   const { navigate } = useLocalizedNavigate();
   const { networkClient, baseUrl, token } = useApi();
 
-  // Mobile view state - show content when techniqueId is present
-  const [mobileViewOverride, setMobileViewOverride] = useState<'navigation' | 'content' | null>(null);
-  const mobileView = mobileViewOverride ?? (techniqueId ? 'content' : 'navigation');
+  // Mobile view state - track override along with the techniqueId it was set for
+  // This avoids needing a useEffect to reset state when URL changes
+  const [mobileViewOverride, setMobileViewOverride] = useState<{
+    forId: string | undefined;
+    view: 'navigation' | 'content';
+  } | null>(null);
 
-  // Reset mobile view override when URL changes (e.g., browser back/forward navigation)
-  // This ensures we show the techniques list when techniqueId becomes undefined
-  useEffect(() => {
-    if (!techniqueId) {
-      setMobileViewOverride(null);
-    }
-  }, [techniqueId]);
+  // Only use override if it was set for the current techniqueId, otherwise derive from URL
+  const mobileView =
+    mobileViewOverride !== null && mobileViewOverride.forId === techniqueId
+      ? mobileViewOverride.view
+      : techniqueId
+        ? 'content'
+        : 'navigation';
 
   // Get levels and techniques from store
   const {
@@ -177,14 +180,14 @@ export default function TechniquesPage() {
 
   const handleTechniqueSelect = useCallback(
     (uuid: string) => {
-      setMobileViewOverride('content');
+      setMobileViewOverride({ forId: uuid, view: 'content' });
       navigate(`/techniques/${uuid}`);
     },
     [navigate]
   );
 
   const handleBackToNavigation = useCallback(() => {
-    setMobileViewOverride('navigation');
+    setMobileViewOverride({ forId: undefined, view: 'navigation' });
     navigate('/techniques');
   }, [navigate]);
 
