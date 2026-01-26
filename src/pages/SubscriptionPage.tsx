@@ -10,7 +10,7 @@ import { getInfoService } from "@sudobility/di";
 import { InfoType } from "@sudobility/types";
 
 // Offer ID for subscription_lib hooks
-const OFFER_ID = "default";
+const OFFER_ID = import.meta.env.VITE_REVENUECAT_OFFER_ID;
 
 export default function SubscriptionPage() {
   const { t } = useTranslation();

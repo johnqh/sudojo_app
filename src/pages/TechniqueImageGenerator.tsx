@@ -13,12 +13,13 @@ import { techniqueExamples, type TechniqueExample } from '@/data/techniqueExampl
 const validExamples = techniqueExamples.filter((ex): ex is TechniqueExample => ex !== null);
 
 export default function TechniqueImageGenerator() {
-  const [selectedExample, setSelectedExample] = useState<TechniqueExample>(validExamples[0]);
+  const [selectedExample, setSelectedExample] = useState<TechniqueExample | null>(validExamples[0] ?? null);
   const [darkMode, setDarkMode] = useState(false);
   const [size, setSize] = useState(400);
 
-  // Generate SVG for selected example
+  // Generate SVG for selected example (hooks must be called unconditionally)
   const svg = useMemo(() => {
+    if (!selectedExample) return '';
     return generateSudokuSvg({
       puzzle: selectedExample.puzzle,
       pencilmarks: selectedExample.pencilmarks,
@@ -30,6 +31,15 @@ export default function TechniqueImageGenerator() {
   }, [selectedExample, size, darkMode]);
 
   const svgDataUrl = useMemo(() => svgToDataUrl(svg), [svg]);
+
+  // Early return if no examples available (after all hooks)
+  if (!selectedExample) {
+    return (
+      <Section spacing="xl" maxWidth="6xl">
+        <Text color="muted">No technique examples available.</Text>
+      </Section>
+    );
+  }
 
   const handleDownloadSvg = () => {
     const filename = `${selectedExample.technique.toLowerCase().replace(/[^a-z0-9]/g, '_')}_1.svg`;

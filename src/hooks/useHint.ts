@@ -3,11 +3,16 @@
  */
 
 import { useHint as useHintBase } from '@sudobility/sudojo_lib';
-import type { UseHintResult, HintBoardData, HintReceivedData } from '@sudobility/sudojo_lib';
+import type {
+  UseHintResult,
+  HintBoardData,
+  HintReceivedData,
+  HintAccessError,
+} from '@sudobility/sudojo_lib';
 import { useApi } from '@/context/apiContextDef';
 
 // Re-export types from lib
-export type { UseHintResult, HintBoardData, HintReceivedData };
+export type { UseHintResult, HintBoardData, HintReceivedData, HintAccessError };
 
 /** Options for useHint (app-specific - uses useApi internally) */
 export interface UseHintOptions {

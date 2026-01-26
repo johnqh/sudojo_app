@@ -30,12 +30,11 @@ export default function Footer({ variant = 'compact' }: FooterProps) {
   const { t } = useTranslation();
   const onTrack = useBuildingBlocksAnalytics();
   const currentYear = String(new Date().getFullYear());
-  const version = import.meta.env.VITE_APP_VERSION || '0.0.1';
 
   if (variant === 'compact') {
     return (
       <AppFooter
-        version={version}
+        version={__APP_VERSION__}
         copyrightYear={currentYear}
         companyName={t('app.name')}
         companyUrl="/"
@@ -72,7 +71,7 @@ export default function Footer({ variant = 'compact' }: FooterProps) {
         appName: t('app.name'),
       }}
       linkSections={linkSections}
-      version={version}
+      version={__APP_VERSION__}
       copyrightYear={currentYear}
       companyName={t('app.name')}
       companyUrl="/"

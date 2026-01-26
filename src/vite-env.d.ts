@@ -11,14 +11,14 @@ interface ImportMetaEnv {
   readonly VITE_FIREBASE_MEASUREMENT_ID: string;
   // API
   readonly VITE_SUDOJO_API_URL: string;
-  readonly VITE_SOLVER_API_URL: string;
   // RevenueCat
   readonly VITE_REVENUECAT_API_KEY: string;
-  readonly VITE_REVENUECAT_ENTITLEMENT_ID: string;
-  // App
-  readonly VITE_APP_VERSION: string;
+  readonly VITE_REVENUECAT_OFFER_ID: string;
 }
 
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+// Global constants defined in vite.config.ts
+declare const __APP_VERSION__: string;

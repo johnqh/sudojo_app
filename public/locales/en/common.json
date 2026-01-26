@@ -155,7 +155,18 @@
       "previous": "Previous",
       "next": "Next",
       "apply": "Apply",
-      "error": "Hint Error"
+      "error": "Hint Error",
+      "access": {
+        "loginRequired": "Login Required",
+        "loginMessage": "Sign in to access hints for this puzzle.",
+        "loginButton": "Log in to Continue",
+        "subscriptionRequired": "Subscription Required",
+        "subscriptionMessage": "This hint requires a subscription. Subscribe to access all hints and features.",
+        "subscribeButton": "Subscribe",
+        "upgradeRequired": "Upgrade Required",
+        "upgradeMessage": "This advanced hint requires a higher subscription tier.",
+        "upgradeButton": "Upgrade Subscription"
+      }
     },
     "newGame": "New Game",
     "nextPuzzle": "Next Puzzle",

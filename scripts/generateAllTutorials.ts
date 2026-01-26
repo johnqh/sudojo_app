@@ -6,6 +6,8 @@
  * Run with: bun scripts/generateAllTutorials.ts
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import { generateSudokuSvg, type SvgGeneratorOptions, type CandidateHighlight } from '../src/utils/sudokuSvgGenerator';
 import * as fs from 'fs';
 import * as path from 'path';

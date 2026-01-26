@@ -6,6 +6,7 @@ import SudokuCanvas from './SudokuCanvas';
 import SudokuControls from './SudokuControls';
 import CompletionCelebration from './CompletionCelebration';
 import HintPanel from './HintPanel';
+import HintAccessPanel from './HintAccessPanel';
 import GameTimer from './GameTimer';
 import ProgressPie from './ProgressPie';
 import { useHint } from '@/hooks/useHint';
@@ -162,6 +163,7 @@ export default function SudokuGame({ puzzle, solution, showErrors = true, showTi
     canApply,
     isLoading: isHintLoading,
     error: hintError,
+    accessError,
     getHint,
     nextStep,
     previousStep,
@@ -249,6 +251,11 @@ export default function SudokuGame({ puzzle, solution, showErrors = true, showTi
           onApply={handleApplyHint}
           onDismiss={clearHint}
         />
+      )}
+
+      {/* Hint access error panel - shown when user needs auth/subscription */}
+      {accessError && (
+        <HintAccessPanel accessError={accessError} onDismiss={clearHint} />
       )}
 
       {/* Controls - hidden during hint mode */}

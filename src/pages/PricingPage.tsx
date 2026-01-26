@@ -14,7 +14,7 @@ import { useLocalizedNavigate } from "../hooks/useLocalizedNavigate";
 import { useBuildingBlocksAnalytics } from "../hooks/useBuildingBlocksAnalytics";
 
 // Offer ID for subscription_lib hooks
-const OFFER_ID = "default";
+const OFFER_ID = import.meta.env.VITE_REVENUECAT_OFFER_ID;
 
 // Package ID to entitlement mapping (for feature lookup)
 const PACKAGE_ENTITLEMENT_MAP: Record<string, string> = {

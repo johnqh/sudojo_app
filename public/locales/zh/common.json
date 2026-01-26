@@ -151,7 +151,19 @@
       "step": "第 {{current}} 步，共 {{total}} 步",
       "previous": "上一步",
       "next": "下一步",
-      "apply": "应用"
+      "apply": "应用",
+      "error": "提示错误",
+      "access": {
+        "loginRequired": "需要登录",
+        "loginMessage": "请登录以获取此谜题的提示。",
+        "loginButton": "登录继续",
+        "subscriptionRequired": "需要订阅",
+        "subscriptionMessage": "此提示需要订阅。订阅以获取所有提示和功能。",
+        "subscribeButton": "订阅",
+        "upgradeRequired": "需要升级",
+        "upgradeMessage": "此高级提示需要更高的订阅等级。",
+        "upgradeButton": "升级订阅"
+      }
     },
     "newGame": "新游戏",
     "nextPuzzle": "下一题",
