@@ -1,7 +1,7 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Heading, Text, Button } from '@sudobility/components';
-import { useDailyGame } from '@sudobility/sudojo_lib';
+import { useDailyGame, useGamePlay } from '@sudobility/sudojo_lib';
 import { SudokuGame } from '@/components/sudoku';
 import { useApi } from '@/context/apiContextDef';
 import { useProgress } from '@/context/ProgressContext';
@@ -30,6 +30,28 @@ export default function DailyPage() {
 
   const alreadyCompleted = dailyDate ? isCompleted('daily', dailyDate) : false;
 
+  // Current game management
+  const { currentGame, startGame, updateProgress, clearGame } = useGamePlay();
+
+  // Check if we're resuming the same daily game
+  const isResumingGame = useMemo(() => {
+    return (
+      currentGame?.source === 'daily' &&
+      currentGame?.meta.dailyDate === dailyDate &&
+      currentGame?.puzzle === daily?.board
+    );
+  }, [currentGame, dailyDate, daily?.board]);
+
+  // Start/update current game when daily loads
+  useEffect(() => {
+    if (status === 'success' && daily && dailyDate && !alreadyCompleted) {
+      // Only start a new game if not resuming the same one
+      if (!isResumingGame) {
+        startGame('daily', daily.board, daily.solution, { dailyDate });
+      }
+    }
+  }, [status, daily, dailyDate, alreadyCompleted, isResumingGame, startGame]);
+
   // Show error via InfoService instead of rendering on page
   useEffect(() => {
     if (status === 'error') {
@@ -38,10 +60,11 @@ export default function DailyPage() {
   }, [status, t]);
 
   const handleComplete = useCallback((timeSeconds: number) => {
+    clearGame(); // Clear current game on completion
     if (dailyDate && !alreadyCompleted) {
       markCompleted({ type: 'daily', id: dailyDate, timeSeconds });
     }
-  }, [dailyDate, alreadyCompleted, markCompleted]);
+  }, [dailyDate, alreadyCompleted, markCompleted, clearGame]);
 
   return (
     <Section spacing="xl">
@@ -100,6 +123,10 @@ export default function DailyPage() {
           solution={daily.solution}
           showErrors={settings.showErrors}
           onComplete={handleComplete}
+          onProgressUpdate={updateProgress}
+          initialInput={isResumingGame ? currentGame?.inputString : undefined}
+          initialPencilmarks={isResumingGame ? currentGame?.pencilmarksString : undefined}
+          initialElapsedTime={isResumingGame ? currentGame?.elapsedTime : undefined}
         />
       )}
     </Section>

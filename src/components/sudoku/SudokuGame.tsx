@@ -21,17 +21,43 @@ interface SudokuGameProps {
   showErrors?: boolean;
   showTimer?: boolean;
   onComplete?: (timeSeconds: number) => void;
+  /** Callback for progress updates (for current game persistence) */
+  onProgressUpdate?: (
+    inputString: string,
+    pencilmarksString: string,
+    isPencilMode: boolean,
+    elapsedTime: number
+  ) => void;
+  /** Initial input string when resuming a game */
+  initialInput?: string;
+  /** Initial pencilmarks string when resuming a game */
+  initialPencilmarks?: string;
+  /** Initial elapsed time when resuming a game */
+  initialElapsedTime?: number;
 }
 
-export default function SudokuGame({ puzzle, solution, showErrors = true, showTimer = true, onComplete }: SudokuGameProps) {
+export default function SudokuGame({
+  puzzle,
+  solution,
+  showErrors = true,
+  showTimer = true,
+  onComplete,
+  onProgressUpdate,
+  initialInput,
+  initialPencilmarks,
+  initialElapsedTime,
+}: SudokuGameProps) {
   const { t } = useTranslation();
   const { resolvedTheme } = useTheme();
   const isDarkMode = resolvedTheme === 'dark';
   const [showCelebration, setShowCelebration] = useState(false);
   const prevCompletedRef = useRef(false);
 
-  // Game timer
-  const { formattedTime, isRunning, stop: stopTimer } = useGameTimer({ autoStart: true });
+  // Game timer (with optional initial time for resume)
+  const { formattedTime, elapsedSeconds, isRunning, stop: stopTimer } = useGameTimer({
+    autoStart: true,
+    initialTime: initialElapsedTime,
+  });
 
   const {
     board,
@@ -51,12 +77,39 @@ export default function SudokuGame({ puzzle, solution, showErrors = true, showTi
     applyHintData,
     getInputString,
     getPencilmarksString,
+    getScrambledPuzzle,
   } = useSudoku();
 
-  // Load the puzzle on mount
+  // Track if we've applied resume data
+  const hasAppliedResumeRef = useRef(false);
+
+  // Load the puzzle on mount (scramble enabled to prevent puzzle recognition)
   useEffect(() => {
-    loadBoard(puzzle, solution, { scramble: false });
+    loadBoard(puzzle, solution, { scramble: true });
+    hasAppliedResumeRef.current = false;
   }, [puzzle, solution, loadBoard]);
+
+  // Apply initial input/pencilmarks when resuming (after board is loaded)
+  useEffect(() => {
+    if (board && initialInput && !hasAppliedResumeRef.current) {
+      hasAppliedResumeRef.current = true;
+      applyHintData(initialInput, initialPencilmarks ?? null, false);
+    }
+  }, [board, initialInput, initialPencilmarks, applyHintData]);
+
+  // Report progress updates (for current game persistence)
+  useEffect(() => {
+    if (!board || !onProgressUpdate) return;
+    // Don't report if game is completed
+    if (isCompleted) return;
+
+    onProgressUpdate(
+      getInputString(),
+      getPencilmarksString(),
+      isPencilMode,
+      elapsedSeconds
+    );
+  }, [board, isPencilMode, elapsedSeconds, isCompleted, onProgressUpdate, getInputString, getPencilmarksString]);
 
   // Handle completion - trigger celebration when puzzle is first completed
   useEffect(() => {
@@ -170,7 +223,7 @@ export default function SudokuGame({ puzzle, solution, showErrors = true, showTi
     clearHint,
     applyHint,
   } = useHint({
-    puzzle,
+    puzzle: getScrambledPuzzle(),  // Use scrambled puzzle for solver API
     userInput: getInputString(),
     pencilmarks: getPencilmarksString(),
     autoPencilmarks: play?.settings.autoPencilmarks ?? false,

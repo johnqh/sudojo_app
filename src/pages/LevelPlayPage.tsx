@@ -1,8 +1,8 @@
-import { useCallback, useState, useEffect } from 'react';
+import { useCallback, useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Heading, Text, Button } from '@sudobility/components';
-import { useLevelGame } from '@sudobility/sudojo_lib';
+import { useLevelGame, useGamePlay } from '@sudobility/sudojo_lib';
 import { SudokuGame } from '@/components/sudoku';
 import { useApi } from '@/context/apiContextDef';
 import { useBreadcrumbTitle } from '@/hooks/useBreadcrumbTitle';
@@ -48,6 +48,31 @@ export default function LevelPlayPage() {
     enabled: !!levelId,
   });
 
+  // Current game management
+  const { currentGame, startGame, updateProgress, clearGame } = useGamePlay();
+
+  // Check if we're resuming the same level game
+  const isResumingGame = useMemo(() => {
+    return (
+      currentGame?.source === 'level' &&
+      currentGame?.meta.levelId === levelId &&
+      currentGame?.puzzle === board?.board
+    );
+  }, [currentGame, levelId, board?.board]);
+
+  // Start/update current game when level board loads
+  useEffect(() => {
+    if (status === 'success' && board && levelId) {
+      // Only start a new game if not resuming the same one
+      if (!isResumingGame) {
+        startGame('level', board.board, board.solution, {
+          levelId,
+          levelTitle: level?.title,
+        });
+      }
+    }
+  }, [status, board, levelId, level?.title, isResumingGame, startGame]);
+
   // Show error via InfoService instead of rendering on page
   useEffect(() => {
     if (status === 'error') {
@@ -57,15 +82,17 @@ export default function LevelPlayPage() {
 
   const handleComplete = useCallback((timeSeconds: number) => {
     setCompleted(true);
+    clearGame(); // Clear current game on completion
     if (levelId) {
       markCompleted({ type: 'level', id: levelId, timeSeconds });
     }
-  }, [levelId, markCompleted]);
+  }, [levelId, markCompleted, clearGame]);
 
   const handleNextPuzzle = useCallback(() => {
     setCompleted(false);
+    clearGame(); // Clear current game when getting next puzzle
     nextPuzzle();
-  }, [nextPuzzle]);
+  }, [nextPuzzle, clearGame]);
 
   return (
     <Section spacing="xl">
@@ -123,6 +150,10 @@ export default function LevelPlayPage() {
             solution={board.solution}
             showErrors={settings.showErrors}
             onComplete={handleComplete}
+            onProgressUpdate={updateProgress}
+            initialInput={isResumingGame ? currentGame?.inputString : undefined}
+            initialPencilmarks={isResumingGame ? currentGame?.pencilmarksString : undefined}
+            initialElapsedTime={isResumingGame ? currentGame?.elapsedTime : undefined}
           />
 
           {completed && (

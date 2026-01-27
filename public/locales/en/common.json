@@ -202,6 +202,13 @@
       "emojis": "Emojis"
     }
   },
+  "play": {
+    "continue": "Continue Last Sudoku",
+    "continueDaily": "Daily Puzzle",
+    "continueLevel": "{{level}}",
+    "continuePuzzle": "Level Puzzle",
+    "continueEntered": "Your Puzzle"
+  },
   "levels": {
     "title": "Levels",
     "level": "Level {{number}}",

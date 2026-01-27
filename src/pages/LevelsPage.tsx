@@ -1,6 +1,8 @@
 import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { PlayIcon, PencilSquareIcon } from '@heroicons/react/24/solid';
 import { Heading, Text } from '@sudobility/components';
+import { useGamePlay } from '@sudobility/sudojo_lib';
 import { LocalizedLink } from '@/components/layout/LocalizedLink';
 import { useApi } from '@/context/apiContextDef';
 import { useGameDataStore } from '@/stores/gameDataStore';
@@ -10,7 +12,7 @@ import { getBeltForLevel, getBeltIconSvg, type Technique } from '@sudobility/sud
 import { Section } from '@/components/layout/Section';
 
 /** Belt icon component that renders the martial arts belt SVG */
-function BeltIcon({ levelIndex, width = 60, height = 24 }: { levelIndex: number; width?: number; height?: number }) {
+function BeltIcon({ levelIndex, width = 48, height = 20 }: { levelIndex: number; width?: number; height?: number }) {
   const belt = getBeltForLevel(levelIndex);
   if (!belt) return null;
 
@@ -32,6 +34,37 @@ export default function LevelsPage() {
     techniquesError,
     fetchTechniques,
   } = useGameDataStore();
+
+  // Current game for "Continue" button
+  const { currentGame, hasCurrentGame } = useGamePlay();
+
+  // Get continue path based on game source
+  const getContinuePath = () => {
+    if (!currentGame) return '/play';
+    switch (currentGame.source) {
+      case 'daily':
+        return '/daily';
+      case 'level':
+        return `/play/${currentGame.meta.levelId}`;
+      case 'entered':
+        return '/play/enter';
+    }
+  };
+
+  // Get continue description text
+  const getContinueDescription = () => {
+    if (!currentGame) return '';
+    switch (currentGame.source) {
+      case 'daily':
+        return t('play.continueDaily');
+      case 'level':
+        return currentGame.meta.levelTitle
+          ? t('play.continueLevel', { level: currentGame.meta.levelTitle })
+          : t('play.continuePuzzle');
+      case 'entered':
+        return t('play.continueEntered');
+    }
+  };
 
   const isLoading = levelsLoading || techniquesLoading;
   const error = levelsError || techniquesError;
@@ -74,11 +107,38 @@ export default function LevelsPage() {
           {t('nav.play')}
         </Heading>
         <div className="flex flex-col divide-y divide-gray-200 dark:divide-gray-700">
+          {/* Continue Last Sudoku button */}
+          {hasCurrentGame && currentGame && (
+            <LocalizedLink
+              to={getContinuePath()}
+              className="flex items-center justify-between py-4 px-2 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors rounded-lg mb-2"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-12 flex justify-center flex-shrink-0">
+                  <PlayIcon className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                  <Text weight="medium" className="text-blue-600 dark:text-blue-400">
+                    {t('play.continue')}
+                  </Text>
+                  <Text size="sm" color="muted">
+                    {getContinueDescription()}
+                  </Text>
+                </div>
+              </div>
+              <Text color="muted">→</Text>
+            </LocalizedLink>
+          )}
           <LocalizedLink
             to="/play/enter"
             className="flex items-center justify-between py-4 px-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
           >
-            <Text weight="medium">{t('nav.enter')}</Text>
+            <div className="flex items-center gap-4">
+              <div className="w-12 flex justify-center flex-shrink-0">
+                <PencilSquareIcon className="w-8 h-8 text-gray-500 dark:text-gray-400" />
+              </div>
+              <Text weight="medium">{t('nav.enter')}</Text>
+            </div>
             <Text color="muted">→</Text>
           </LocalizedLink>
         </div>

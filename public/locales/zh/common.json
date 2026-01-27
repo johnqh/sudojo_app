@@ -199,6 +199,13 @@
       "emojis": "表情符号"
     }
   },
+  "play": {
+    "continue": "继续上次的数独",
+    "continueDaily": "每日谜题",
+    "continueLevel": "{{level}}",
+    "continuePuzzle": "级别谜题",
+    "continueEntered": "自定义谜题"
+  },
   "levels": {
     "title": "级别",
     "level": "第 {{number}} 级",

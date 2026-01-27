@@ -1,6 +1,7 @@
-import { useState, useCallback, useEffect, lazy, Suspense } from 'react';
+import { useState, useCallback, useEffect, lazy, Suspense, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, Text, Button } from '@sudobility/components';
+import { useGamePlay } from '@sudobility/sudojo_lib';
 import SudokuCanvas from './SudokuCanvas';
 import SudokuGame from './SudokuGame';
 import EntryControls from './EntryControls';
@@ -39,13 +40,29 @@ export default function EnterBoard({ showErrors = true }: EnterBoardProps) {
     setCellsFromPuzzle,
   } = useBoardEntry();
 
+  // Current game management
+  const { currentGame, startGame, updateProgress, clearGame } = useGamePlay();
+
+  // Check if we're resuming an entered game
+  const isResumingGame = useMemo(() => {
+    return (
+      currentGame?.source === 'entered' &&
+      validatedPuzzle &&
+      currentGame?.puzzle === validatedPuzzle.puzzle
+    );
+  }, [currentGame, validatedPuzzle]);
+
   // Transition to play mode when puzzle is validated
   useEffect(() => {
     if (validatedPuzzle) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setMode('play');
+      // Start current game tracking (only if not resuming)
+      if (!isResumingGame) {
+        startGame('entered', validatedPuzzle.puzzle, validatedPuzzle.solution, {});
+      }
     }
-  }, [validatedPuzzle]);
+  }, [validatedPuzzle, isResumingGame, startGame]);
 
   // Show validation error via InfoService instead of rendering on page
   useEffect(() => {
@@ -126,13 +143,15 @@ export default function EnterBoard({ showErrors = true }: EnterBoardProps) {
   const handleComplete = useCallback(() => {
     // Celebration is handled automatically by SudokuGame
     // We intentionally don't save to progress
-  }, []);
+    clearGame(); // Clear current game on completion
+  }, [clearGame]);
 
   // Handle going back to entry mode
   const handleBackToEntry = useCallback(() => {
+    clearGame(); // Clear current game when going back
     reset();
     setMode('entry');
-  }, [reset]);
+  }, [reset, clearGame]);
 
   // Handle switching to scan mode
   const handleScanMode = useCallback(() => {
@@ -160,6 +179,10 @@ export default function EnterBoard({ showErrors = true }: EnterBoardProps) {
           showErrors={showErrors}
           showTimer={true}
           onComplete={handleComplete}
+          onProgressUpdate={updateProgress}
+          initialInput={isResumingGame ? currentGame?.inputString : undefined}
+          initialPencilmarks={isResumingGame ? currentGame?.pencilmarksString : undefined}
+          initialElapsedTime={isResumingGame ? currentGame?.elapsedTime : undefined}
         />
 
         {/* Back to entry button */}
