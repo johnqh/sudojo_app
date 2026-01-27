@@ -1,6 +1,6 @@
 import { useEffect, useCallback, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSudoku } from '@sudobility/sudojo_lib';
+import { useSudoku, useHint } from '@sudobility/sudojo_lib';
 import { Card, CardContent, Text } from '@sudobility/components';
 import SudokuCanvas from './SudokuCanvas';
 import SudokuControls from './SudokuControls';
@@ -9,9 +9,9 @@ import HintPanel from './HintPanel';
 import HintAccessPanel from './HintAccessPanel';
 import GameTimer from './GameTimer';
 import ProgressPie from './ProgressPie';
-import { useHint } from '@/hooks/useHint';
 import { useGameTimer } from '@/hooks/useGameTimer';
 import { useTheme } from '@/hooks/useTheme';
+import { useApi } from '@/context/apiContextDef';
 import { getInfoService } from '@sudobility/di';
 import { InfoType } from '@sudobility/types';
 
@@ -49,6 +49,7 @@ export default function SudokuGame({
 }: SudokuGameProps) {
   const { t } = useTranslation();
   const { resolvedTheme } = useTheme();
+  const { networkClient, baseUrl, token } = useApi();
   const isDarkMode = resolvedTheme === 'dark';
   const [showCelebration, setShowCelebration] = useState(false);
   const prevCompletedRef = useRef(false);
@@ -223,6 +224,9 @@ export default function SudokuGame({
     clearHint,
     applyHint,
   } = useHint({
+    networkClient,
+    baseUrl,
+    token: token ?? '',
     puzzle: getScrambledPuzzle(),  // Use scrambled puzzle for solver API
     userInput: getInputString(),
     pencilmarks: getPencilmarksString(),

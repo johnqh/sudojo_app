@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Card, CardContent, Text, Button } from '@sudobility/components';
 import { useAuthStatus } from '@sudobility/auth-components';
 import { useLocalizedNavigate } from '@/hooks/useLocalizedNavigate';
-import type { HintAccessError } from '@/hooks/useHint';
+import type { HintAccessError } from '@sudobility/sudojo_lib';
 
 interface HintAccessPanelProps {
   accessError: HintAccessError;

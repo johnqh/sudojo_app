@@ -18,10 +18,9 @@ import {
   type TechniquePracticeCountItem,
   type TechniqueExample,
 } from '@sudobility/sudojo_types';
-import { useSudoku } from '@sudobility/sudojo_lib';
+import { useSudoku, useHint, type HintReceivedData } from '@sudobility/sudojo_lib';
 import { useLocalizedNavigate } from '@/hooks/useLocalizedNavigate';
 import { useApi } from '@/context/apiContextDef';
-import { useHint, type HintReceivedData } from '@/hooks/useHint';
 import { createSudojoClient } from '@sudobility/sudojo_client';
 
 
@@ -194,6 +193,9 @@ export default function AdminPage() {
     applyHint,
     clearHint,
   } = useHint({
+    networkClient,
+    baseUrl,
+    token: token ?? '',
     puzzle,
     userInput: getInputString(),
     pencilmarks: getPencilmarksString(),
@@ -901,6 +903,13 @@ export default function AdminPage() {
 
   // Effect to handle practice generation - load example and process hints
   useEffect(() => {
+    console.log('[Practice] First effect running:', {
+      isGeneratingPractices,
+      practiceTargetTechnique,
+      hasCurrentExample: !!currentPracticeExample,
+      practiceExampleIndex,
+      practiceExamplesLength: practiceExamples.length,
+    });
     if (!isGeneratingPractices || generatePracticesAbortRef.current) return;
     if (!practiceTargetTechnique) return;
 
@@ -959,6 +968,7 @@ export default function AdminPage() {
 
     // Need to load an example if we don't have one
     if (!currentPracticeExample && practiceExamples.length > 0) {
+      console.log('[Practice] Loading example - index:', practiceExampleIndex, 'total:', practiceExamples.length);
       if (practiceExampleIndex >= practiceExamples.length) {
         // No more examples, move to next technique
         const currentIndex = practiceCounts.findIndex(
@@ -985,11 +995,13 @@ export default function AdminPage() {
       setIsPracticeProcessingHint(false);
       setPracticesProgress(`Loading example ${practiceExampleIndex + 1}/${practiceExamples.length}...`);
 
-      // Load the example's board state
+      // Load the example's board state (all filled cells become "givens")
       loadBoard(example.board, example.solution, { scramble: false });
-      // Apply pencilmarks if available
+      // Apply pencilmarks without modifying user input
+      // Pass empty user string ('0'.repeat(81)) since the board is already loaded as the puzzle
+      // This ensures the solver receives: original=example.board, user=all zeros
       if (example.pencilmarks) {
-        applyHintData(example.board, example.pencilmarks, false);
+        applyHintData('0'.repeat(81), example.pencilmarks, false);
       }
       clearHint();
     }
@@ -997,13 +1009,38 @@ export default function AdminPage() {
 
   // Effect to handle practice hint processing
   useEffect(() => {
-    if (!isGeneratingPractices || generatePracticesAbortRef.current) return;
-    if (!currentPracticeExample || !play || !practiceTargetTechnique) return;
-    if (isHintLoading) return;
-    if (isPracticeProcessingHint) return;
+    console.log('[Practice] Hint effect running:', {
+      isGeneratingPractices,
+      hasCurrentExample: !!currentPracticeExample,
+      hasPlay: !!play,
+      practiceTargetTechnique,
+      isHintLoading,
+      isPracticeProcessingHint,
+      hintTitle: hint?.title || 'NO HINT',
+      hintError: hintError || 'NO ERROR',
+      iteration: practiceIterationRef.current,
+    });
+
+    if (!isGeneratingPractices || generatePracticesAbortRef.current) {
+      console.log('[Practice] Returning: not generating or aborted');
+      return;
+    }
+    if (!currentPracticeExample || !play || !practiceTargetTechnique) {
+      console.log('[Practice] Returning: missing example/play/technique');
+      return;
+    }
+    if (isHintLoading) {
+      console.log('[Practice] Returning: hint loading');
+      return;
+    }
+    if (isPracticeProcessingHint) {
+      console.log('[Practice] Returning: processing hint');
+      return;
+    }
 
     // Check iteration limit
     if (practiceIterationRef.current >= MAX_PRACTICE_ATTEMPTS || hintError) {
+      console.log('[Practice] Skipping to next - iteration:', practiceIterationRef.current, 'hintError:', hintError);
       // Skip to next example
       setPracticeExampleIndex(prev => prev + 1);
       setCurrentPracticeExample(null);
@@ -1071,6 +1108,7 @@ export default function AdminPage() {
           }
 
           // Move to next example
+          console.log('[Practice] Practice saved, moving to next example');
           setPracticeExampleIndex(prev => prev + 1);
           setCurrentPracticeExample(null);
           setIsPracticeProcessingHint(false);
@@ -1101,10 +1139,11 @@ export default function AdminPage() {
     }
 
     // No hint yet, request one
-    if (!hint && !hintError) {
-      setPracticesProgress(`Getting hint for example ${practiceExampleIndex + 1} (attempt ${practiceIterationRef.current + 1})...`);
-      getHint();
-    }
+    // Note: At this point, hint is falsy (if truthy, we would have returned above)
+    // and hintError is falsy (if truthy, we would have returned at line 1042)
+    console.log('[Practice] Requesting hint for example', practiceExampleIndex + 1);
+    setPracticesProgress(`Getting hint for example ${practiceExampleIndex + 1} (attempt ${practiceIterationRef.current + 1})...`);
+    getHint();
   }, [isGeneratingPractices, currentPracticeExample, play, hint, isHintLoading, hintError, isPracticeProcessingHint, practiceTargetTechnique, practiceCounts, practiceExampleIndex, baseUrl, token, getPencilmarksString, applyHint, applyHintData, getHint, clearHint]);
 
   // Calculate totals
