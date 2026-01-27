@@ -491,7 +491,7 @@ const TECHNIQUES: Record<number, TechniqueInfo> = {
   4: {
     name: 'Hidden Pair',
     file: 'Hidden_Pair',
-    level: 4, // Green Belt
+    level: 3, // Orange Belt
     overview: 'A Hidden Pair occurs when two candidates appear in exactly two cells within a house, even though those cells may contain other candidates. Since those two digits must go in those two cells, all other candidates can be eliminated from them.',
     howItWorks: `<ol>
 <li>Within a house, find two digits that appear as candidates in exactly the same two cells.</li>
@@ -1147,12 +1147,6 @@ const HTML_TEMPLATE = `<!DOCTYPE html>
     <title>{{NAME}} - Sudojo</title>
 </head>
 <body>
-    <!-- Belt Level Badge -->
-    <div class="belt-badge" style="display: inline-flex; align-items: center; gap: 10px; padding: 8px 16px; border-radius: 9999px; background: {{BELT_BG}}; border: 2px solid {{BELT_BORDER}}; margin-bottom: 20px;">
-        <img src="belt_{{LEVEL}}.svg" alt="{{BELT_NAME}} Belt" style="width: 48px; height: 20px; flex-shrink: 0;" />
-        <span style="font-weight: 600; font-size: 0.9rem; color: {{BELT_TEXT}};">Level {{LEVEL}} · {{BELT_NAME}} Belt</span>
-    </div>
-
     <!-- Overview Section -->
     <div class="section" style="margin-bottom: 28px;">
         <h3 class="section-title" style="font-size: 1.1rem; font-weight: 600; color: #374151; margin: 0 0 10px 0;">Overview</h3>
@@ -1192,7 +1186,7 @@ const HTML_TEMPLATE = `<!DOCTYPE html>
     <!-- Practice CTA -->
     <div class="practice-cta" style="text-align: center; padding: 24px 0; border-top: 1px solid #e5e7eb; margin-top: 20px;">
         <p style="margin: 0 0 12px 0; color: #6b7280; font-size: 0.95rem;">Ready to practice <strong>{{NAME}}</strong>?</p>
-        <a href="/" style="display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.95rem;">Start Practice</a>
+        <a href="/" class="btn-primary" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; background-color: #2563eb; color: white; padding: 10px 24px; border-radius: 6px; text-decoration: none; font-weight: 500; font-size: 0.875rem; transition: background-color 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05);" onmouseover="this.style.backgroundColor='#1d4ed8'" onmouseout="this.style.backgroundColor='#2563eb'">Start Practice</a>
     </div>
 </body>
 </html>`;
@@ -1600,41 +1594,6 @@ function generateSvgForExample(example: ExampleData): string {
   return generateSudokuSvg(options);
 }
 
-// Helper to get belt styling based on level
-function getBeltStyles(level: number): { hex: string; bg: string; border: string; text: string; name: string } {
-  const belt = BELT_COLORS[level] || BELT_COLORS[1];
-  const hex = belt.hex;
-
-  // Calculate appropriate background, border, and text colors based on belt color
-  // For light belts (White, Yellow), use darker text; for dark belts, use lighter text
-  const isLightBelt = level <= 3; // White, Yellow, Orange
-  const isDarkBelt = level >= 7; // Brown, Red, Black
-
-  let bg: string;
-  let border: string;
-  let text: string;
-
-  if (level === 1) { // White belt
-    bg = '#f9fafb';
-    border = '#d1d5db';
-    text = '#374151';
-  } else if (level === 9) { // Black belt
-    bg = '#1f2937';
-    border = '#4b5563';
-    text = '#f9fafb';
-  } else if (isDarkBelt) {
-    bg = hex + '20'; // 12% opacity
-    border = hex;
-    text = '#374151';
-  } else {
-    bg = hex + '30'; // 19% opacity
-    border = hex;
-    text = '#374151';
-  }
-
-  return { hex, bg, border, text, name: belt.name };
-}
-
 function generateHtml(techniqueId: number, technique: TechniqueInfo, example: ExampleData | null): string {
   let cellList = 'N/A';
   let specificExplanation = 'No example available for this technique.';
@@ -1646,16 +1605,8 @@ function generateHtml(techniqueId: number, technique: TechniqueInfo, example: Ex
     specificExplanation = technique.getSpecificExplanation(cells, example.board, example.pencilmarks || '', example.solution || '');
   }
 
-  const beltStyles = getBeltStyles(technique.level);
-
   return HTML_TEMPLATE
     .replace(/{{NAME}}/g, technique.name)
-    .replace(/{{LEVEL}}/g, String(technique.level))
-    .replace(/{{BELT_NAME}}/g, beltStyles.name)
-    .replace(/{{BELT_HEX}}/g, beltStyles.hex)
-    .replace(/{{BELT_BG}}/g, beltStyles.bg)
-    .replace(/{{BELT_BORDER}}/g, beltStyles.border)
-    .replace(/{{BELT_TEXT}}/g, beltStyles.text)
     .replace(/{{OVERVIEW}}/g, technique.overview)
     .replace(/{{HOW_IT_WORKS}}/g, technique.howItWorks)
     .replace(/{{IMAGE_FILE}}/g, `${technique.file.toLowerCase()}_1.svg`)

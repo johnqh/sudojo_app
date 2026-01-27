@@ -27,6 +27,7 @@ const TermsPage = lazy(() => import('./pages/TermsPage'));
 const CookiesPage = lazy(() => import('./pages/CookiesPage'));
 const SitemapPage = lazy(() => import('./pages/SitemapPage'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
+const PracticePage = lazy(() => import('./pages/PracticePage'));
 
 // Layout components
 import LanguageValidator, { LanguageRedirect } from './components/layout/LanguageValidator';
@@ -128,6 +129,7 @@ function AppRoutes() {
             <Route path="play/:levelId" element={<LevelPlayPage />} />
             <Route path="techniques" element={<TechniquesPage />} />
             <Route path="techniques/:techniqueId" element={<TechniquesPage />} />
+            <Route path="practice/:techniqueId" element={<PracticePage />} />
             <Route
               path="admin"
               element={

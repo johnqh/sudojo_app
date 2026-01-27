@@ -1,7 +1,7 @@
 import React, { useMemo, useCallback, useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { MasterDetailLayout, MasterListItem, Text, Card, CardContent } from '@sudobility/components';
+import { MasterDetailLayout, MasterListItem, Text, Card, CardContent, Button } from '@sudobility/components';
 import { useSudojoLearning } from '@sudobility/sudojo_client';
 import { useLocalizedNavigate } from '@/hooks/useLocalizedNavigate';
 import { useApi } from '@/context/apiContextDef';
@@ -271,8 +271,36 @@ export default function TechniquesPage() {
   const helpFileUrl = selectedTechnique ? getHelpFileUrl(selectedTechnique.title) : null;
   const { content: htmlContent, isLoading: htmlLoading } = useHtmlContent(helpFileUrl);
 
+  // Get the level for the selected technique to display belt badge
+  const selectedLevel = selectedTechnique
+    ? levels.find(l => l.uuid === selectedTechnique.level_uuid)
+    : null;
+  const selectedBelt = selectedLevel ? getBeltForLevel(selectedLevel.index) : null;
+
   const detailContent = selectedTechnique ? (
     <div className="h-full flex flex-col">
+      {/* Belt Level Badge and Practice CTA */}
+      <div className="flex items-center gap-4 mb-5 flex-wrap">
+        {selectedLevel && selectedBelt && (
+          <div
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 dark:bg-gray-800"
+            style={{ border: `1px solid ${selectedBelt.hex}` }}
+          >
+            <BeltIcon levelIndex={selectedLevel.index} width={24} height={10} />
+            <span className="font-medium text-xs text-gray-600 dark:text-gray-300">
+              Level {selectedLevel.index} · {selectedBelt.name} Belt
+            </span>
+          </div>
+        )}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate(`/practice/${selectedTechnique.uuid}`)}
+        >
+          {t('techniques.startPractice', 'Start Practice')}
+        </Button>
+      </div>
+
       {/* Embedded HTML instructions */}
       {htmlLoading && (
         <div className="p-4 text-center">

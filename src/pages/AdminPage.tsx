@@ -15,6 +15,8 @@ import {
   techniqueToBit,
   type Board,
   type Level,
+  type TechniquePracticeCountItem,
+  type TechniqueExample,
 } from '@sudobility/sudojo_types';
 import { useSudoku } from '@sudobility/sudojo_lib';
 import { useLocalizedNavigate } from '@/hooks/useLocalizedNavigate';
@@ -86,6 +88,21 @@ export default function AdminPage() {
   const iterationCountRef = useRef(0);
   const [isProcessingHint, setIsProcessingHint] = useState(false); // Prevent concurrent hint requests
   const MAX_ITERATIONS = 200;
+  const MAX_PRACTICE_ATTEMPTS = 100; // Max solver attempts per example before skipping
+
+  // Practices section state
+  const [practiceCounts, setPracticeCounts] = useState<TechniquePracticeCountItem[]>([]);
+  const [isPracticesLoading, setIsPracticesLoading] = useState(false);
+  const [isGeneratingPractices, setIsGeneratingPractices] = useState(false);
+  const [practicesProgress, setPracticesProgress] = useState<string>('');
+  const generatePracticesAbortRef = useRef(false);
+  const practiceIterationRef = useRef(0);
+  const [practiceTargetTechnique, setPracticeTargetTechnique] = useState<TechniqueId | null>(null);
+  const [practiceExamples, setPracticeExamples] = useState<TechniqueExample[]>([]);
+  const [practiceExampleIndex, setPracticeExampleIndex] = useState(0);
+  const [currentPracticeExample, setCurrentPracticeExample] = useState<TechniqueExample | null>(null);
+  const [isPracticeProcessingHint, setIsPracticeProcessingHint] = useState(false);
+  const practiceLocalCountsRef = useRef<Record<string, number>>({});
 
   // Use the game hooks
   const {
@@ -211,6 +228,36 @@ export default function AdminPage() {
       fetchCounts();
     }
   }, [section, fetchCounts]);
+
+  // Fetch practice counts
+  const fetchPracticeCounts = useCallback(async () => {
+    setIsPracticesLoading(true);
+    try {
+      const response = await fetch(`${baseUrl}/api/v1/practices/counts`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data) {
+          setPracticeCounts(data.data);
+          // Initialize local counts ref
+          const countsMap: Record<string, number> = {};
+          for (const item of data.data) {
+            countsMap[item.technique_uuid] = item.count;
+          }
+          practiceLocalCountsRef.current = countsMap;
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch practice counts:', error);
+    } finally {
+      setIsPracticesLoading(false);
+    }
+  }, [baseUrl]);
+
+  useEffect(() => {
+    if (section === 'practices') {
+      fetchPracticeCounts();
+    }
+  }, [section, fetchPracticeCounts]);
 
   // Fetch board counts for boards/techniques section
   const fetchBoardCounts = useCallback(async () => {
@@ -745,6 +792,321 @@ export default function AdminPage() {
     setProgress('Stopped');
   }, []);
 
+  // Fetch examples for a specific technique by primary_technique
+  const fetchExamplesForTechnique = useCallback(
+    async (techniqueId: TechniqueId): Promise<TechniqueExample[]> => {
+      try {
+        const response = await fetch(
+          `${baseUrl}/api/v1/examples?technique=${techniqueId}`
+        );
+        if (!response.ok) return [];
+        const result = await response.json();
+        if (result.success && result.data) {
+          return result.data as TechniqueExample[];
+        }
+        return [];
+      } catch {
+        return [];
+      }
+    },
+    [baseUrl]
+  );
+
+  // Generate practices handler
+  const handleGeneratePractices = useCallback(async () => {
+    if (!token) {
+      setPracticesProgress('Error: Not authenticated');
+      return;
+    }
+
+    generatePracticesAbortRef.current = false;
+    setPracticesProgress('Starting practice generation...');
+    setIsGeneratingPractices(true);
+
+    // Find first technique that needs practices
+    let startTechnique: TechniquePracticeCountItem | null = null;
+    for (const item of practiceCounts) {
+      if (item.count < TARGET_PER_TECHNIQUE) {
+        startTechnique = item;
+        break;
+      }
+    }
+
+    if (!startTechnique) {
+      setPracticesProgress('All techniques have enough practices!');
+      setIsGeneratingPractices(false);
+      return;
+    }
+
+    // Find the TechniqueId for this technique by matching title
+    const techniqueId = TECHNIQUE_TITLE_TO_ID[startTechnique.technique_title];
+    if (!techniqueId) {
+      setPracticesProgress(`Error: Unknown technique title "${startTechnique.technique_title}"`);
+      setIsGeneratingPractices(false);
+      return;
+    }
+
+    setPracticeTargetTechnique(techniqueId);
+    setPracticeExamples([]);
+    setPracticeExampleIndex(0);
+    setCurrentPracticeExample(null);
+    setIsPracticeProcessingHint(false);
+    practiceIterationRef.current = 0;
+
+    setPracticesProgress(`Fetching examples for ${startTechnique.technique_title}...`);
+    const examples = await fetchExamplesForTechnique(techniqueId);
+    if (examples.length === 0) {
+      setPracticesProgress(`No examples found for ${startTechnique.technique_title}`);
+      setIsGeneratingPractices(false);
+      return;
+    }
+
+    setPracticeExamples(examples);
+  }, [token, practiceCounts, fetchExamplesForTechnique]);
+
+  // Stop generating practices
+  const handleStopGeneratingPractices = useCallback(() => {
+    generatePracticesAbortRef.current = true;
+    setIsGeneratingPractices(false);
+    setPracticeTargetTechnique(null);
+    setPracticeExamples([]);
+    setCurrentPracticeExample(null);
+    setPracticesProgress('Stopped');
+  }, []);
+
+  // Delete all practices handler
+  const handleDeleteAllPractices = useCallback(async () => {
+    if (!token) return;
+    if (!confirm('Are you sure you want to delete ALL practices?')) return;
+
+    setPracticesProgress('Deleting all practices...');
+    try {
+      const response = await fetch(`${baseUrl}/api/v1/practices?confirm=true`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setPracticesProgress(`Deleted ${data.data?.deleted || 0} practices`);
+        fetchPracticeCounts();
+      } else {
+        setPracticesProgress('Error deleting practices');
+      }
+    } catch (error) {
+      setPracticesProgress(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }, [token, baseUrl, fetchPracticeCounts]);
+
+  // Effect to handle practice generation - load example and process hints
+  useEffect(() => {
+    if (!isGeneratingPractices || generatePracticesAbortRef.current) return;
+    if (!practiceTargetTechnique) return;
+
+    // Check if current technique has enough practices
+    const currentTechniqueItem = practiceCounts.find(
+      p => TECHNIQUE_TITLE_TO_ID[p.technique_title] === practiceTargetTechnique
+    );
+    const currentCount = currentTechniqueItem
+      ? practiceLocalCountsRef.current[currentTechniqueItem.technique_uuid] || 0
+      : 0;
+
+    if (currentCount >= TARGET_PER_TECHNIQUE) {
+      // Move to next technique
+      const currentIndex = practiceCounts.findIndex(
+        p => TECHNIQUE_TITLE_TO_ID[p.technique_title] === practiceTargetTechnique
+      );
+      let nextIndex = currentIndex + 1;
+      while (nextIndex < practiceCounts.length) {
+        const nextItem = practiceCounts[nextIndex];
+        if (nextItem && (practiceLocalCountsRef.current[nextItem.technique_uuid] || 0) < TARGET_PER_TECHNIQUE) {
+          break;
+        }
+        nextIndex++;
+      }
+
+      if (nextIndex >= practiceCounts.length) {
+        setIsGeneratingPractices(false);
+        setPracticesProgress('Done!');
+        return;
+      }
+
+      const nextItem = practiceCounts[nextIndex]!;
+      const nextTechniqueId = TECHNIQUE_TITLE_TO_ID[nextItem.technique_title];
+      if (!nextTechniqueId) {
+        setIsGeneratingPractices(false);
+        setPracticesProgress('Error: Unknown technique');
+        return;
+      }
+
+      setPracticeTargetTechnique(nextTechniqueId);
+      setPracticeExamples([]);
+      setPracticeExampleIndex(0);
+      setCurrentPracticeExample(null);
+      practiceIterationRef.current = 0;
+
+      setPracticesProgress(`Fetching examples for ${nextItem.technique_title}...`);
+      fetchExamplesForTechnique(nextTechniqueId).then(examples => {
+        if (examples.length === 0) {
+          setPracticesProgress(`No examples found for ${nextItem.technique_title}`);
+        } else {
+          setPracticeExamples(examples);
+        }
+      });
+      return;
+    }
+
+    // Need to load an example if we don't have one
+    if (!currentPracticeExample && practiceExamples.length > 0) {
+      if (practiceExampleIndex >= practiceExamples.length) {
+        // No more examples, move to next technique
+        const currentIndex = practiceCounts.findIndex(
+          p => TECHNIQUE_TITLE_TO_ID[p.technique_title] === practiceTargetTechnique
+        );
+        if (currentIndex + 1 < practiceCounts.length) {
+          const nextItem = practiceCounts[currentIndex + 1]!;
+          const nextTechniqueId = TECHNIQUE_TITLE_TO_ID[nextItem.technique_title];
+          if (nextTechniqueId) {
+            setPracticeTargetTechnique(nextTechniqueId);
+            setPracticeExamples([]);
+            setPracticeExampleIndex(0);
+          }
+        } else {
+          setIsGeneratingPractices(false);
+          setPracticesProgress('Done!');
+        }
+        return;
+      }
+
+      const example = practiceExamples[practiceExampleIndex]!;
+      setCurrentPracticeExample(example);
+      practiceIterationRef.current = 0;
+      setIsPracticeProcessingHint(false);
+      setPracticesProgress(`Loading example ${practiceExampleIndex + 1}/${practiceExamples.length}...`);
+
+      // Load the example's board state
+      loadBoard(example.board, example.solution, { scramble: false });
+      // Apply pencilmarks if available
+      if (example.pencilmarks) {
+        applyHintData(example.board, example.pencilmarks, false);
+      }
+      clearHint();
+    }
+  }, [isGeneratingPractices, practiceTargetTechnique, practiceCounts, practiceExamples, practiceExampleIndex, currentPracticeExample, fetchExamplesForTechnique, loadBoard, applyHintData, clearHint]);
+
+  // Effect to handle practice hint processing
+  useEffect(() => {
+    if (!isGeneratingPractices || generatePracticesAbortRef.current) return;
+    if (!currentPracticeExample || !play || !practiceTargetTechnique) return;
+    if (isHintLoading) return;
+    if (isPracticeProcessingHint) return;
+
+    // Check iteration limit
+    if (practiceIterationRef.current >= MAX_PRACTICE_ATTEMPTS || hintError) {
+      // Skip to next example
+      setPracticeExampleIndex(prev => prev + 1);
+      setCurrentPracticeExample(null);
+      clearHint();
+      return;
+    }
+
+    // If we have a hint, check if it matches target technique
+    if (hint) {
+      const hintTechniqueId = TECHNIQUE_TITLE_TO_ID[hint.title];
+
+      if (hintTechniqueId === practiceTargetTechnique) {
+        // Found matching technique! Save the current board state as a practice
+        const boardString = play.board
+          ? play.board.cells.map(c => {
+              if (c.given !== null) return String(c.given);
+              if (c.input !== null) return String(c.input);
+              return '0';
+            }).join('')
+          : '';
+        const pencilmarks = getPencilmarksString();
+
+        // Find the technique_uuid for this technique
+        const techniqueItem = practiceCounts.find(
+          p => TECHNIQUE_TITLE_TO_ID[p.technique_title] === practiceTargetTechnique
+        );
+        if (!techniqueItem) {
+          setPracticeExampleIndex(prev => prev + 1);
+          setCurrentPracticeExample(null);
+          clearHint();
+          return;
+        }
+
+        setPracticesProgress(`Saving practice for ${hint.title}...`);
+        setIsPracticeProcessingHint(true);
+
+        // Save the practice
+        fetch(`${baseUrl}/api/v1/practices`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            technique_uuid: techniqueItem.technique_uuid,
+            board: boardString,
+            pencilmarks: pencilmarks || null,
+            solution: currentPracticeExample.solution,
+            hint_data: JSON.stringify(hint),
+            source_example_uuid: currentPracticeExample.uuid,
+          }),
+        }).then(response => {
+          if (response.ok) {
+            const newCount = (practiceLocalCountsRef.current[techniqueItem.technique_uuid] || 0) + 1;
+            practiceLocalCountsRef.current[techniqueItem.technique_uuid] = newCount;
+
+            // Update UI counts
+            setPracticeCounts(prev => prev.map(p =>
+              p.technique_uuid === techniqueItem.technique_uuid
+                ? { ...p, count: newCount }
+                : p
+            ));
+
+            setPracticesProgress(`Saved practice for ${hint.title} (${newCount}/${TARGET_PER_TECHNIQUE})`);
+          }
+
+          // Move to next example
+          setPracticeExampleIndex(prev => prev + 1);
+          setCurrentPracticeExample(null);
+          setIsPracticeProcessingHint(false);
+          clearHint();
+        }).catch(err => {
+          console.error('Failed to save practice:', err);
+          setPracticeExampleIndex(prev => prev + 1);
+          setCurrentPracticeExample(null);
+          setIsPracticeProcessingHint(false);
+          clearHint();
+        });
+        return;
+      }
+
+      // Not the target technique - apply hint and continue
+      setIsPracticeProcessingHint(true);
+      const hintData = applyHint();
+      if (hintData) {
+        applyHintData(hintData.user, hintData.pencilmarks, hintData.autoPencilmarks);
+      }
+      setTimeout(() => {
+        if (!generatePracticesAbortRef.current && isGeneratingPractices) {
+          practiceIterationRef.current++;
+          setIsPracticeProcessingHint(false);
+        }
+      }, 50);
+      return;
+    }
+
+    // No hint yet, request one
+    if (!hint && !hintError) {
+      setPracticesProgress(`Getting hint for example ${practiceExampleIndex + 1} (attempt ${practiceIterationRef.current + 1})...`);
+      getHint();
+    }
+  }, [isGeneratingPractices, currentPracticeExample, play, hint, isHintLoading, hintError, isPracticeProcessingHint, practiceTargetTechnique, practiceCounts, practiceExampleIndex, baseUrl, token, getPencilmarksString, applyHint, applyHintData, getHint, clearHint]);
+
   // Calculate totals
   const totalCaptured = Object.values(counts).reduce((sum, c) => sum + c, 0);
   const totalNeeded = TECHNIQUE_ORDER.length * TARGET_PER_TECHNIQUE;
@@ -754,6 +1116,7 @@ export default function AdminPage() {
     { id: 'boards', label: 'Boards', description: 'Board management' },
     { id: 'techniques', label: 'Techniques', description: 'Technique management' },
     { id: 'examples', label: 'Examples', description: 'Technique example management' },
+    { id: 'practices', label: 'Practices', description: 'Technique practice management' },
   ];
 
   const masterContent = (
@@ -904,6 +1267,58 @@ export default function AdminPage() {
         )}
       </div>
     </div>
+  ) : section === 'practices' ? (
+    <div className="space-y-6">
+      {/* Summary */}
+      <div className="flex items-center justify-between">
+        <Text weight="medium">
+          Total: {practiceCounts.reduce((sum, p) => sum + p.count, 0)} / {practiceCounts.length * TARGET_PER_TECHNIQUE}
+        </Text>
+        {isPracticesLoading && <Text color="muted">Loading...</Text>}
+      </div>
+
+      {/* Progress message */}
+      {practicesProgress && (
+        <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+          <Text size="sm">{practicesProgress}</Text>
+        </div>
+      )}
+
+      {/* Technique list with practice counts */}
+      <div className="space-y-2">
+        {practiceCounts.map(item => {
+          const isFull = item.count >= TARGET_PER_TECHNIQUE;
+          return (
+            <div
+              key={item.technique_uuid}
+              className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/50"
+            >
+              <Text>{item.technique_title}</Text>
+              <Text color={isFull ? 'success' : 'muted'}>
+                {item.count} / {TARGET_PER_TECHNIQUE}
+                {isFull && ' ✓'}
+              </Text>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Generate Practices CTA */}
+      <div className="pt-4 border-t space-y-2">
+        {isGeneratingPractices ? (
+          <Button onClick={handleStopGeneratingPractices} variant="destructive" className="w-full">
+            Stop
+          </Button>
+        ) : (
+          <Button onClick={handleGeneratePractices} disabled={isPracticesLoading} className="w-full">
+            Generate Practices
+          </Button>
+        )}
+        <Button onClick={handleDeleteAllPractices} variant="outline" className="w-full" disabled={isGeneratingPractices}>
+          Delete All
+        </Button>
+      </div>
+    </div>
   ) : (
     <div className="flex items-center justify-center h-full text-center">
       <Text color="muted">Select a section</Text>
@@ -916,7 +1331,7 @@ export default function AdminPage() {
         masterTitle={t('nav.admin', 'Admin')}
         masterContent={masterContent}
         detailContent={detailContent}
-        detailTitle={section === 'boards' ? 'Boards' : section === 'techniques' ? 'Techniques' : section === 'examples' ? 'Examples' : undefined}
+        detailTitle={section === 'boards' ? 'Boards' : section === 'techniques' ? 'Techniques' : section === 'examples' ? 'Examples' : section === 'practices' ? 'Practices' : undefined}
         mobileView={mobileView}
         onBackToNavigation={handleBackToNavigation}
         masterWidth={280}
