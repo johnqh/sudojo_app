@@ -46,6 +46,14 @@ export default function AdminPage() {
   const { navigate } = useLocalizedNavigate();
   const { networkClient, baseUrl, token } = useApi();
 
+  // Log once on mount to verify latest code is running
+  useEffect(() => {
+    console.log('[AdminPage] Component mounted - DEBUG VERSION 2');
+    console.log('[AdminPage] networkClient:', !!networkClient);
+    console.log('[AdminPage] baseUrl:', baseUrl);
+    console.log('[AdminPage] token present:', !!token);
+  }, []);
+
   const [mobileViewOverride, setMobileViewOverride] = useState<'navigation' | 'content' | null>(null);
   const mobileView = mobileViewOverride ?? (section ? 'content' : 'navigation');
 
@@ -120,6 +128,14 @@ export default function AdminPage() {
 
   // Hint received callback - this intercepts hints before state updates
   const handleHintReceived = useCallback((data: HintReceivedData) => {
+    console.log('[Practice] ===== HINT RECEIVED (onHintReceived callback) =====');
+    console.log('[Practice] Hint title:', data.hint.title);
+    console.log('[Practice] Hint technique ID:', TECHNIQUE_TITLE_TO_ID[data.hint.title]);
+    console.log('[Practice] All hints count:', data.hints.length);
+    console.log('[Practice] Board data user:', data.boardData.user?.substring(0, 30) + '...');
+    console.log('[Practice] Board data pencilmarks:', data.boardData.pencilmarks?.substring(0, 50) || 'NONE');
+    console.log('[Practice] ================================================');
+
     const hintTechniqueId = TECHNIQUE_TITLE_TO_ID[data.hint.title];
 
     // Handle extraction mode - accumulate techniques bitfield
@@ -187,6 +203,7 @@ export default function AdminPage() {
 
   const {
     hint,
+    hints,
     isLoading: isHintLoading,
     error: hintError,
     getHint,
@@ -202,6 +219,18 @@ export default function AdminPage() {
     autoPencilmarks: play?.settings.autoPencilmarks ?? true,
     onHintReceived: handleHintReceived,
   });
+
+  // Debug effect: log whenever hint state changes
+  useEffect(() => {
+    console.log('[Practice] useHint state changed:', {
+      hintTitle: hint?.title || 'NO HINT',
+      hintsCount: hints?.length || 0,
+      isHintLoading,
+      hintError: hintError || 'NO ERROR',
+      puzzleLength: puzzle.length,
+      puzzlePreview: puzzle.substring(0, 20) + '...',
+    });
+  }, [hint, hints, isHintLoading, hintError, puzzle]);
 
   // Fetch counts
   const fetchCounts = useCallback(async () => {
@@ -906,9 +935,12 @@ export default function AdminPage() {
     console.log('[Practice] First effect running:', {
       isGeneratingPractices,
       practiceTargetTechnique,
+      practiceTargetTechniqueName: practiceTargetTechnique ? getTechniqueName(practiceTargetTechnique) : 'NONE',
       hasCurrentExample: !!currentPracticeExample,
       practiceExampleIndex,
       practiceExamplesLength: practiceExamples.length,
+      currentPuzzleLength: puzzle.length,
+      currentPuzzlePreview: puzzle.substring(0, 20) + '...',
     });
     if (!isGeneratingPractices || generatePracticesAbortRef.current) return;
     if (!practiceTargetTechnique) return;
@@ -990,35 +1022,69 @@ export default function AdminPage() {
       }
 
       const example = practiceExamples[practiceExampleIndex]!;
+      console.log('[Practice] Loading example:', {
+        exampleIndex: practiceExampleIndex,
+        exampleUuid: example.uuid,
+        exampleBoard: example.board.substring(0, 30) + '...',
+        exampleBoardLength: example.board.length,
+        exampleHasPencilmarks: !!example.pencilmarks,
+        examplePencilmarksPreview: example.pencilmarks?.substring(0, 50) + '...',
+        exampleSolution: example.solution?.substring(0, 30) + '...',
+        targetTechnique: practiceTargetTechnique,
+        targetTechniqueName: practiceTargetTechnique ? getTechniqueName(practiceTargetTechnique) : 'NONE',
+      });
       setCurrentPracticeExample(example);
       practiceIterationRef.current = 0;
       setIsPracticeProcessingHint(false);
       setPracticesProgress(`Loading example ${practiceExampleIndex + 1}/${practiceExamples.length}...`);
 
       // Load the example's board state (all filled cells become "givens")
+      console.log('[Practice] Calling loadBoard with:', {
+        board: example.board.substring(0, 30) + '...',
+        solution: example.solution?.substring(0, 30) + '...',
+      });
       loadBoard(example.board, example.solution, { scramble: false });
       // Apply pencilmarks without modifying user input
       // Pass empty user string ('0'.repeat(81)) since the board is already loaded as the puzzle
       // This ensures the solver receives: original=example.board, user=all zeros
       if (example.pencilmarks) {
+        console.log('[Practice] Calling applyHintData with pencilmarks:', example.pencilmarks.substring(0, 50) + '...');
         applyHintData('0'.repeat(81), example.pencilmarks, false);
       }
+      console.log('[Practice] Calling clearHint');
       clearHint();
     }
   }, [isGeneratingPractices, practiceTargetTechnique, practiceCounts, practiceExamples, practiceExampleIndex, currentPracticeExample, fetchExamplesForTechnique, loadBoard, applyHintData, clearHint]);
 
   // Effect to handle practice hint processing
   useEffect(() => {
+    // Compute current board state for logging
+    const currentPuzzleForLog = puzzle;
+    const currentUserInputForLog = getInputString();
+    const currentPencilmarksForLog = getPencilmarksString();
+
     console.log('[Practice] Hint effect running:', {
       isGeneratingPractices,
       hasCurrentExample: !!currentPracticeExample,
+      currentExampleUuid: currentPracticeExample?.uuid?.substring(0, 8) || 'NONE',
       hasPlay: !!play,
       practiceTargetTechnique,
+      practiceTargetTechniqueName: practiceTargetTechnique ? getTechniqueName(practiceTargetTechnique) : 'NONE',
       isHintLoading,
       isPracticeProcessingHint,
       hintTitle: hint?.title || 'NO HINT',
       hintError: hintError || 'NO ERROR',
       iteration: practiceIterationRef.current,
+      // Current board state being used for hint
+      puzzleLength: currentPuzzleForLog.length,
+      puzzlePreview: currentPuzzleForLog.substring(0, 30) + '...',
+      userInputLength: currentUserInputForLog.length,
+      userInputPreview: currentUserInputForLog.substring(0, 30) + '...',
+      hasPencilmarks: !!currentPencilmarksForLog,
+      pencilmarksPreview: currentPencilmarksForLog?.substring(0, 30) + '...',
+      hasToken: !!token,
+      tokenLength: token?.length || 0,
+      baseUrl,
     });
 
     if (!isGeneratingPractices || generatePracticesAbortRef.current) {
@@ -1026,21 +1092,30 @@ export default function AdminPage() {
       return;
     }
     if (!currentPracticeExample || !play || !practiceTargetTechnique) {
-      console.log('[Practice] Returning: missing example/play/technique');
+      console.log('[Practice] Returning: missing example/play/technique', {
+        hasExample: !!currentPracticeExample,
+        hasPlay: !!play,
+        hasTechnique: !!practiceTargetTechnique,
+      });
       return;
     }
     if (isHintLoading) {
-      console.log('[Practice] Returning: hint loading');
+      console.log('[Practice] Returning: hint loading (API call in progress)');
       return;
     }
     if (isPracticeProcessingHint) {
-      console.log('[Practice] Returning: processing hint');
+      console.log('[Practice] Returning: processing hint (applying hint data)');
       return;
     }
 
     // Check iteration limit
     if (practiceIterationRef.current >= MAX_PRACTICE_ATTEMPTS || hintError) {
-      console.log('[Practice] Skipping to next - iteration:', practiceIterationRef.current, 'hintError:', hintError);
+      console.log('[Practice] Skipping to next example due to error or max iterations:', {
+        iteration: practiceIterationRef.current,
+        maxAttempts: MAX_PRACTICE_ATTEMPTS,
+        hintError: hintError,
+        hintErrorType: typeof hintError,
+      });
       // Skip to next example
       setPracticeExampleIndex(prev => prev + 1);
       setCurrentPracticeExample(null);
@@ -1141,10 +1216,23 @@ export default function AdminPage() {
     // No hint yet, request one
     // Note: At this point, hint is falsy (if truthy, we would have returned above)
     // and hintError is falsy (if truthy, we would have returned at line 1042)
-    console.log('[Practice] Requesting hint for example', practiceExampleIndex + 1);
+    const currentPuzzle = puzzle;
+    const currentUserInput = getInputString();
+    const currentPencilmarks = getPencilmarksString();
+    console.log('[Practice] ===== REQUESTING HINT =====');
+    console.log('[Practice] Target technique:', practiceTargetTechnique, '-', getTechniqueName(practiceTargetTechnique));
+    console.log('[Practice] Example:', practiceExampleIndex + 1, '/', practiceExamples.length);
+    console.log('[Practice] Iteration:', practiceIterationRef.current + 1);
+    console.log('[Practice] Puzzle (original):', currentPuzzle);
+    console.log('[Practice] UserInput:', currentUserInput);
+    console.log('[Practice] Pencilmarks:', currentPencilmarks?.substring(0, 100) || 'NONE');
+    console.log('[Practice] Token present:', !!token, 'length:', token?.length || 0);
+    console.log('[Practice] BaseUrl:', baseUrl);
+    console.log('[Practice] Example board matches puzzle?', currentPracticeExample?.board === currentPuzzle);
+    console.log('[Practice] ===========================');
     setPracticesProgress(`Getting hint for example ${practiceExampleIndex + 1} (attempt ${practiceIterationRef.current + 1})...`);
     getHint();
-  }, [isGeneratingPractices, currentPracticeExample, play, hint, isHintLoading, hintError, isPracticeProcessingHint, practiceTargetTechnique, practiceCounts, practiceExampleIndex, baseUrl, token, getPencilmarksString, applyHint, applyHintData, getHint, clearHint]);
+  }, [isGeneratingPractices, currentPracticeExample, play, hint, isHintLoading, hintError, isPracticeProcessingHint, practiceTargetTechnique, practiceCounts, practiceExampleIndex, practiceExamples, baseUrl, token, puzzle, getInputString, getPencilmarksString, applyHint, applyHintData, getHint, clearHint]);
 
   // Calculate totals
   const totalCaptured = Object.values(counts).reduce((sum, c) => sum + c, 0);
