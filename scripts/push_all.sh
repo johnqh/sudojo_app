@@ -24,6 +24,7 @@ BASE_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 PROJECTS=(
     "../sudojo_types:60"
     "../sudojo_api:0"
+    "../sudojo_ocr:0"
     "../sudojo_client:60"
     "../sudojo_lib:60"
     "../sudojo_app:0"

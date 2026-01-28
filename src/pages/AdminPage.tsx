@@ -880,7 +880,7 @@ export default function AdminPage() {
         setPracticesProgress(`${techniqueItem.technique_title}: Example ${exampleIdx + 1}/${examples.length} (${count}/${TARGET_PER_TECHNIQUE})`);
 
         // Current board state - start from the example
-        let currentBoard = example.board;
+        const currentBoard = example.board;
         let currentUser = '0'.repeat(81);
         let currentPencilmarks = example.pencilmarks || ','.repeat(80);
         let autoPencilmarks = false;
@@ -975,6 +975,248 @@ export default function AdminPage() {
     generatePracticesAbortRef.current = true;
     setPracticesProgress('Stopping...');
   }, []);
+
+  // Generate more practices from random puzzles (not from examples)
+  const handleGenerateMorePractices = useCallback(async () => {
+    if (!token || !networkClient) {
+      setPracticesProgress('Error: Not authenticated');
+      return;
+    }
+
+    generatePracticesAbortRef.current = false;
+    setIsGeneratingPractices(true);
+
+    const client = createSudojoClient(networkClient, baseUrl);
+    const localCounts: Record<string, number> = {};
+
+    // Initialize local counts from current state
+    for (const item of practiceCounts) {
+      localCounts[item.technique_uuid] = item.count;
+    }
+
+    const MAX_ITERATIONS_PER_PUZZLE = 200;
+    const MAX_PUZZLES = 500;
+
+    try {
+      // Step 1: Fetch all levels and find the one with highest index
+      setPracticesProgress('Fetching levels...');
+      const levelsResponse = await fetch(`${baseUrl}/api/v1/levels`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!levelsResponse.ok) {
+        setPracticesProgress('Error: Failed to fetch levels');
+        setIsGeneratingPractices(false);
+        return;
+      }
+      const levelsData = await levelsResponse.json();
+      const levels: Level[] = levelsData.data || [];
+      if (levels.length === 0) {
+        setPracticesProgress('Error: No levels found');
+        setIsGeneratingPractices(false);
+        return;
+      }
+
+      // Find level with highest index
+      const highestLevel = levels.reduce((max, level) =>
+        (level.index ?? 0) > (max.index ?? 0) ? level : max
+      );
+
+      // Step 2: Fetch puzzles for the highest level
+      setPracticesProgress(`Fetching puzzles for level "${highestLevel.title}"...`);
+      const boardsResponse = await fetch(
+        `${baseUrl}/api/v1/boards?level_uuid=${highestLevel.uuid}&limit=${MAX_PUZZLES}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (!boardsResponse.ok) {
+        setPracticesProgress('Error: Failed to fetch boards');
+        setIsGeneratingPractices(false);
+        return;
+      }
+      const boardsData = await boardsResponse.json();
+      const boards: Board[] = boardsData.data || [];
+      if (boards.length === 0) {
+        setPracticesProgress('Error: No boards found for highest level');
+        setIsGeneratingPractices(false);
+        return;
+      }
+
+      setPracticesProgress(`Found ${boards.length} puzzles. Starting generation...`);
+
+      // Step 3: Loop through puzzles
+      for (let puzzleIdx = 0; puzzleIdx < boards.length; puzzleIdx++) {
+        if (generatePracticesAbortRef.current) break;
+
+        // Get techniques that still need practices
+        const techniquesNeeded: { techniqueId: number; techniqueUuid: string; title: string }[] = [];
+        for (const item of practiceCounts) {
+          const count = localCounts[item.technique_uuid] || 0;
+          if (count < TARGET_PER_TECHNIQUE) {
+            const techniqueId = TECHNIQUE_TITLE_TO_ID[item.technique_title];
+            if (techniqueId) {
+              techniquesNeeded.push({
+                techniqueId,
+                techniqueUuid: item.technique_uuid,
+                title: item.technique_title,
+              });
+            }
+          }
+        }
+
+        // If all techniques have enough practices, we're done
+        if (techniquesNeeded.length === 0) {
+          setPracticesProgress('All techniques have enough practices!');
+          break;
+        }
+
+        const board = boards[puzzleIdx]!;
+
+        setPracticesProgress(`Puzzle ${puzzleIdx + 1}/${boards.length}: Processing (${techniquesNeeded.length} techniques needed)`);
+
+        // Current board state - Board type uses 'board' property for the puzzle string
+        const currentOriginal = board.board;
+        let currentUser = '0'.repeat(81);
+        let currentPencilmarks = ','.repeat(80);
+        let autoPencilmarks = false;
+
+        // Loop: solve the puzzle step by step
+        for (let iteration = 0; iteration < MAX_ITERATIONS_PER_PUZZLE; iteration++) {
+          if (generatePracticesAbortRef.current) break;
+
+          // Refresh techniques needed (might have changed after saving a practice)
+          const currentTechniquesNeeded: { techniqueId: number; techniqueUuid: string; title: string }[] = [];
+          for (const item of practiceCounts) {
+            const count = localCounts[item.technique_uuid] || 0;
+            if (count < TARGET_PER_TECHNIQUE) {
+              const techniqueId = TECHNIQUE_TITLE_TO_ID[item.technique_title];
+              if (techniqueId) {
+                currentTechniquesNeeded.push({
+                  techniqueId,
+                  techniqueUuid: item.technique_uuid,
+                  title: item.technique_title,
+                });
+              }
+            }
+          }
+
+          if (currentTechniquesNeeded.length === 0) {
+            // All techniques have enough practices
+            break;
+          }
+
+          const currentTechniqueIds = currentTechniquesNeeded.map(t => t.techniqueId).join(',');
+
+          // Step 4: Try with technique filter first
+          try {
+            const filteredResponse = await client.solverSolve(token, {
+              original: currentOriginal,
+              user: currentUser,
+              autoPencilmarks,
+              pencilmarks: currentPencilmarks,
+              techniques: currentTechniqueIds,
+            });
+
+            if (filteredResponse.success && filteredResponse.data?.hints?.steps?.length) {
+              // Found a hint for one of the needed techniques!
+              const hintStep = filteredResponse.data.hints.steps[0]!;
+              const hintTechniqueId = TECHNIQUE_TITLE_TO_ID[hintStep.title];
+
+              // Find the matching technique info
+              const matchedTechnique = currentTechniquesNeeded.find(t => t.techniqueId === hintTechniqueId);
+              if (matchedTechnique) {
+                // Merge original + user into a single board for the practice
+                const mergedBoard = currentOriginal.split('').map((char: string, i: number) => {
+                  const userChar = currentUser[i];
+                  return userChar && userChar !== '0' ? userChar : char;
+                }).join('');
+
+                // Get solution by validating the merged board
+                const validateResponse = await client.solverValidate(token, { original: mergedBoard });
+                const solution = validateResponse.data?.board?.board?.solution || null;
+
+                // Save the practice
+                const saveResponse = await fetch(`${baseUrl}/api/v1/practices`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                  },
+                  body: JSON.stringify({
+                    technique_uuid: matchedTechnique.techniqueUuid,
+                    board: mergedBoard,
+                    pencilmarks: currentPencilmarks || null,
+                    solution,
+                    hint_data: JSON.stringify(hintStep),
+                  }),
+                });
+
+                if (saveResponse.ok) {
+                  const newCount = (localCounts[matchedTechnique.techniqueUuid] || 0) + 1;
+                  localCounts[matchedTechnique.techniqueUuid] = newCount;
+
+                  // Update UI
+                  setPracticeCounts(prev => prev.map(p =>
+                    p.technique_uuid === matchedTechnique.techniqueUuid
+                      ? { ...p, count: newCount }
+                      : p
+                  ));
+                  setPracticesProgress(`Puzzle ${puzzleIdx + 1}: Saved ${matchedTechnique.title} (${newCount}/${TARGET_PER_TECHNIQUE})`);
+                }
+              }
+
+              // Apply the hint and continue solving (might find more techniques)
+              const boardData = filteredResponse.data.board?.board;
+              if (boardData) {
+                currentUser = boardData.user || currentUser;
+                currentPencilmarks = boardData.pencilmarks?.pencilmarks || currentPencilmarks;
+                autoPencilmarks = boardData.pencilmarks?.auto ?? autoPencilmarks;
+              }
+              continue; // Continue solving the same puzzle
+            }
+          } catch (err) {
+            // Filtered call failed - continue to try unfiltered
+            console.log('Filtered solver call failed, trying unfiltered:', err);
+          }
+
+          // Step 5: No hint for filtered techniques, try without filter (same board state!)
+          try {
+            const unfilteredResponse = await client.solverSolve(token, {
+              original: currentOriginal,
+              user: currentUser,
+              autoPencilmarks,
+              pencilmarks: currentPencilmarks,
+            });
+
+            if (!unfilteredResponse.success || !unfilteredResponse.data?.hints?.steps?.length) {
+              // No more hints available - puzzle is solved or stuck
+              break;
+            }
+
+            // Apply the hint to progress the puzzle
+            const boardData = unfilteredResponse.data.board?.board;
+            if (boardData) {
+              currentUser = boardData.user || currentUser;
+              currentPencilmarks = boardData.pencilmarks?.pencilmarks || currentPencilmarks;
+              autoPencilmarks = boardData.pencilmarks?.auto ?? autoPencilmarks;
+            }
+            // Loop back to try filtered techniques again
+          } catch (err) {
+            console.error('Unfiltered solver error:', err);
+            break; // Move to next puzzle on error
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Generate more practices error:', err);
+      setPracticesProgress(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    }
+
+    setIsGeneratingPractices(false);
+    if (generatePracticesAbortRef.current) {
+      setPracticesProgress('Stopped');
+    } else {
+      setPracticesProgress('Done!');
+    }
+  }, [token, networkClient, baseUrl, practiceCounts]);
 
   // Delete all practices handler
   const handleDeleteAllPractices = useCallback(async () => {
@@ -1204,9 +1446,14 @@ export default function AdminPage() {
             Stop
           </Button>
         ) : (
-          <Button onClick={handleGeneratePractices} disabled={isPracticesLoading} className="w-full">
-            Generate Practices
-          </Button>
+          <>
+            <Button onClick={handleGeneratePractices} disabled={isPracticesLoading} className="w-full">
+              Generate Practices
+            </Button>
+            <Button onClick={handleGenerateMorePractices} disabled={isPracticesLoading} variant="secondary" className="w-full">
+              Generate More Practices
+            </Button>
+          </>
         )}
         <Button onClick={handleDeleteAllPractices} variant="outline" className="w-full" disabled={isGeneratingPractices}>
           Delete All

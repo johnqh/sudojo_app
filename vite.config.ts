@@ -220,5 +220,9 @@ export default defineConfig({
     watch: {
       ignored: ['!**/node_modules/@sudobility/**'],
     },
+    fs: {
+      // Allow serving files from linked packages in parent directory
+      allow: ['..'],
+    },
   },
 });
