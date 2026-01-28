@@ -17,7 +17,7 @@
         "@revenuecat/purchases-js": "^1.22.0",
         "@sudobility/auth-components": "^1.0.7",
         "@sudobility/auth_lib": "^0.0.30",
-        "@sudobility/building_blocks": "^0.0.96",
+        "@sudobility/building_blocks": "^0.0.97",
         "@sudobility/components": "^5.0.1",
         "@sudobility/design": "^1.1.18",
         "@sudobility/devops-components": "^2.0.16",
@@ -26,7 +26,7 @@
         "@sudobility/entity_client": "^0.0.17",
         "@sudobility/subscription-components": "^1.0.24",
         "@sudobility/subscription_lib": "^0.0.12",
-        "@sudobility/sudojo_client": "^0.0.42",
+        "@sudobility/sudojo_client": "^0.0.43",
         "@sudobility/sudojo_lib": "^0.0.45",
         "@sudobility/sudojo_types": "^1.2.7",
         "@sudobility/types": "^1.9.48",
@@ -660,7 +660,7 @@
 
     "@sudobility/auth_lib": ["@sudobility/auth_lib@0.0.30", "", { "peerDependencies": { "@react-native-firebase/app": ">=18.0.0", "@react-native-firebase/auth": ">=18.0.0", "@sudobility/di": "^1.5.30", "@sudobility/di_rn": "^0.1.13", "@sudobility/di_web": "^0.1.88", "@sudobility/types": "^1.9.48", "@tanstack/react-query": "^5.0.0", "firebase": "^12.7.0", "react": "^18.0.0 || ^19.0.0" }, "optionalPeers": ["@react-native-firebase/app", "@react-native-firebase/auth", "@sudobility/di_rn", "@sudobility/di_web", "firebase"] }, "sha512-MJa7MqvLI0VoD++A7ZG/VaHagfbb/EmbRIqzRismmHJOXoyTK2P5e1KeekPml8Pw5JDggE23g9489XCPQACzVg=="],
 
-    "@sudobility/building_blocks": ["@sudobility/building_blocks@0.0.96", "", { "dependencies": { "i18next-browser-languagedetector": "^8.2.0", "i18next-http-backend": "^3.0.2" }, "peerDependencies": { "@heroicons/react": "^2.0.0", "@sudobility/components": "^5.0.1", "@sudobility/design": "^1.1.18", "@tanstack/react-query": "^5.0.0", "class-variance-authority": "^0.7.0", "clsx": "^2.0.0", "firebase": "^11.0.0 || ^12.0.0", "i18next": "^23.0.0 || ^24.0.0 || ^25.0.0", "react": "^18.0.0 || ^19.0.0", "react-dom": "^18.0.0 || ^19.0.0", "react-helmet-async": "^2.0.0", "react-i18next": "^14.0.0 || ^15.0.0 || ^16.0.0", "react-router-dom": "^6.0.0 || ^7.0.0", "tailwind-merge": "^2.0.0 || ^3.0.0" }, "optionalPeers": ["firebase"] }, "sha512-vA3SPoYPsoWGOPZGwepRn/RvWacxMvnwlymS0hekp8SOPpGWOOgx6wQae5Rj4Fja7yZm445bJzXx4e9hROWEOA=="],
+    "@sudobility/building_blocks": ["@sudobility/building_blocks@0.0.97", "", { "dependencies": { "i18next-browser-languagedetector": "^8.2.0", "i18next-http-backend": "^3.0.2" }, "peerDependencies": { "@heroicons/react": "^2.0.0", "@sudobility/components": "^5.0.1", "@sudobility/design": "^1.1.18", "@tanstack/react-query": "^5.0.0", "class-variance-authority": "^0.7.0", "clsx": "^2.0.0", "firebase": "^11.0.0 || ^12.0.0", "i18next": "^23.0.0 || ^24.0.0 || ^25.0.0", "react": "^18.0.0 || ^19.0.0", "react-dom": "^18.0.0 || ^19.0.0", "react-helmet-async": "^2.0.0", "react-i18next": "^14.0.0 || ^15.0.0 || ^16.0.0", "react-router-dom": "^6.0.0 || ^7.0.0", "tailwind-merge": "^2.0.0 || ^3.0.0" }, "optionalPeers": ["firebase"] }, "sha512-97YkzSoBEQbBg4BCZ7dDh8WCnEhpCeKU2x993gPamIKp/zKPvFSMcxfHY9NMweZsDtaoHkY4Zbtt8TnR9HVkkw=="],
 
     "@sudobility/components": ["@sudobility/components@5.0.1", "", { "optionalDependencies": { "@rollup/rollup-linux-x64-gnu": "4.52.5", "@rollup/rollup-linux-x64-musl": "4.52.5" }, "peerDependencies": { "@heroicons/react": ">=2.0.0", "@radix-ui/react-alert-dialog": ">=1.0.0", "@radix-ui/react-dialog": ">=1.0.0", "@radix-ui/react-label": ">=2.0.0", "@radix-ui/react-select": ">=2.0.0", "@radix-ui/react-slot": ">=1.0.0", "@radix-ui/react-switch": ">=1.0.0", "@radix-ui/react-tabs": ">=1.0.0", "@sudobility/design": "^1.1.18", "@sudobility/types": "^1.9.48", "class-variance-authority": ">=0.7.0", "clsx": ">=2.0.0", "i18next": ">=23.0.0", "react": ">=18.0.0", "react-dom": ">=18.0.0", "react-i18next": ">=14.0.0", "react-router-dom": ">=6.0.0", "tailwind-merge": ">=2.0.0", "web-vitals": ">=3.0.0" } }, "sha512-irJDtugSBenjmfIQ/PCSRIDIwTsqOcPxPhqXz+zt4ko/lHYe1zNxY0wOx9FFRanXep6EYMsuCyqo1TgH4NcHWQ=="],
 
@@ -678,7 +678,7 @@
 
     "@sudobility/subscription_lib": ["@sudobility/subscription_lib@0.0.12", "", { "peerDependencies": { "@revenuecat/purchases-js": "^1.0.0", "react": "^18.0.0 || ^19.0.0", "react-native-purchases": ">=7.0.0" }, "optionalPeers": ["@revenuecat/purchases-js", "react-native-purchases"] }, "sha512-JdsUEgX6d7cm75nlzT7szL9p+SwsG6g9piveIXuVx9Vw4u9EswLr+uDXqVP1YV7v+cikPx/H9k8SCASSAl1wYg=="],
 
-    "@sudobility/sudojo_client": ["@sudobility/sudojo_client@0.0.42", "", { "peerDependencies": { "@sudobility/di": "^1.5.30", "@sudobility/sudojo_types": "^1.2.7", "@sudobility/types": "^1.9.48", "@tanstack/react-query": ">=5.0.0", "react": ">=18.0.0" } }, "sha512-wqgl20KAJKMFikvD46scS945vvjS5Ov6PSbN1q7BNFxGIgnnQ/nV2fKghP/n4TkZErAAStWQUTSKl2JgFl3Lzw=="],
+    "@sudobility/sudojo_client": ["@sudobility/sudojo_client@0.0.43", "", { "peerDependencies": { "@sudobility/di": "^1.5.30", "@sudobility/sudojo_types": "^1.2.7", "@sudobility/types": "^1.9.48", "@tanstack/react-query": ">=5.0.0", "react": ">=18.0.0" } }, "sha512-JZX3WWyWuELva1sgDPMlqJ67SRdJFuWsjUyQQhP4vREqan6HNpP9GSGa2imEhZgxpDcE4hPTNO22Z7Z9mkn/Ww=="],
 
     "@sudobility/sudojo_lib": ["@sudobility/sudojo_lib@0.0.45", "", { "peerDependencies": { "@sudobility/di": "^1.5.30", "@sudobility/sudojo_client": "^0.0.42", "@sudobility/sudojo_types": "^1.2.7", "@sudobility/types": "^1.9.48", "@tanstack/react-query": ">=5.0.0", "react": ">=18.0.0", "zustand": ">=5.0.0" } }, "sha512-2nRE9TYUaV8riUAJyBetbVHJDAwkSwqo/MFS4r3X2CKFX1Vrh3Zr+boPIqVDL9UEyNBLJ7FzC2wWhPZcVH9x0g=="],
 

@@ -96,21 +96,13 @@ export default function AdminPage() {
   const iterationCountRef = useRef(0);
   const [isProcessingHint, setIsProcessingHint] = useState(false); // Prevent concurrent hint requests
   const MAX_ITERATIONS = 200;
-  const MAX_PRACTICE_ATTEMPTS = 100; // Max solver attempts per example before skipping
 
-  // Practices section state
+  // Practices section state (simplified - async loop handles the logic)
   const [practiceCounts, setPracticeCounts] = useState<TechniquePracticeCountItem[]>([]);
   const [isPracticesLoading, setIsPracticesLoading] = useState(false);
   const [isGeneratingPractices, setIsGeneratingPractices] = useState(false);
   const [practicesProgress, setPracticesProgress] = useState<string>('');
   const generatePracticesAbortRef = useRef(false);
-  const practiceIterationRef = useRef(0);
-  const [practiceTargetTechnique, setPracticeTargetTechnique] = useState<TechniqueId | null>(null);
-  const [practiceExamples, setPracticeExamples] = useState<TechniqueExample[]>([]);
-  const [practiceExampleIndex, setPracticeExampleIndex] = useState(0);
-  const [currentPracticeExample, setCurrentPracticeExample] = useState<TechniqueExample | null>(null);
-  const [isPracticeProcessingHint, setIsPracticeProcessingHint] = useState(false);
-  const practiceLocalCountsRef = useRef<Record<string, number>>({});
 
   // Use the game hooks
   const {
@@ -270,12 +262,6 @@ export default function AdminPage() {
         const data = await response.json();
         if (data.success && data.data) {
           setPracticeCounts(data.data);
-          // Initialize local counts ref
-          const countsMap: Record<string, number> = {};
-          for (const item of data.data) {
-            countsMap[item.technique_uuid] = item.count;
-          }
-          practiceLocalCountsRef.current = countsMap;
         }
       }
     } catch (error) {
@@ -844,66 +830,150 @@ export default function AdminPage() {
     [baseUrl]
   );
 
-  // Generate practices handler
+  // Generate practices handler - simple async loop
   const handleGeneratePractices = useCallback(async () => {
-    if (!token) {
+    if (!token || !networkClient) {
       setPracticesProgress('Error: Not authenticated');
       return;
     }
 
     generatePracticesAbortRef.current = false;
-    setPracticesProgress('Starting practice generation...');
     setIsGeneratingPractices(true);
 
-    // Find first technique that needs practices
-    let startTechnique: TechniquePracticeCountItem | null = null;
+    const client = createSudojoClient(networkClient, baseUrl);
+    const localCounts: Record<string, number> = {};
+
+    // Initialize local counts from current state
     for (const item of practiceCounts) {
-      if (item.count < TARGET_PER_TECHNIQUE) {
-        startTechnique = item;
-        break;
+      localCounts[item.technique_uuid] = item.count;
+    }
+
+    const MAX_ITERATIONS_PER_EXAMPLE = 100;
+
+    // Loop through techniques
+    for (const techniqueItem of practiceCounts) {
+      if (generatePracticesAbortRef.current) break;
+
+      const currentCount = localCounts[techniqueItem.technique_uuid] || 0;
+      if (currentCount >= TARGET_PER_TECHNIQUE) continue;
+
+      const techniqueId = TECHNIQUE_TITLE_TO_ID[techniqueItem.technique_title];
+      if (!techniqueId) continue;
+
+      setPracticesProgress(`Fetching examples for ${techniqueItem.technique_title}...`);
+
+      // Fetch examples for this technique
+      const examples = await fetchExamplesForTechnique(techniqueId);
+      if (examples.length === 0) {
+        setPracticesProgress(`No examples for ${techniqueItem.technique_title}, skipping...`);
+        continue;
+      }
+
+      // Loop through examples
+      for (let exampleIdx = 0; exampleIdx < examples.length; exampleIdx++) {
+        if (generatePracticesAbortRef.current) break;
+
+        const count = localCounts[techniqueItem.technique_uuid] || 0;
+        if (count >= TARGET_PER_TECHNIQUE) break;
+
+        const example = examples[exampleIdx]!;
+        setPracticesProgress(`${techniqueItem.technique_title}: Example ${exampleIdx + 1}/${examples.length} (${count}/${TARGET_PER_TECHNIQUE})`);
+
+        // Current board state - start from the example
+        let currentBoard = example.board;
+        let currentUser = '0'.repeat(81);
+        let currentPencilmarks = example.pencilmarks || ','.repeat(80);
+        let autoPencilmarks = false;
+
+        // Loop: call solver until we find the target technique or exhaust attempts
+        for (let iteration = 0; iteration < MAX_ITERATIONS_PER_EXAMPLE; iteration++) {
+          if (generatePracticesAbortRef.current) break;
+
+          try {
+            // First, try with technique filter to see if target is available
+            const filteredResponse = await client.solverSolve(token, {
+              original: currentBoard,
+              user: currentUser,
+              autoPencilmarks,
+              pencilmarks: currentPencilmarks,
+              techniques: techniqueId.toString(),
+            });
+
+            if (filteredResponse.success && filteredResponse.data?.hints?.steps?.length) {
+              // Found the target technique! Save the practice
+              const hintStep = filteredResponse.data.hints.steps[0]!;
+
+              const saveResponse = await fetch(`${baseUrl}/api/v1/practices`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                  technique_uuid: techniqueItem.technique_uuid,
+                  board: currentBoard,
+                  pencilmarks: currentPencilmarks || null,
+                  solution: example.solution,
+                  hint_data: JSON.stringify(hintStep),
+                  source_example_uuid: example.uuid,
+                }),
+              });
+
+              if (saveResponse.ok) {
+                const newCount = (localCounts[techniqueItem.technique_uuid] || 0) + 1;
+                localCounts[techniqueItem.technique_uuid] = newCount;
+
+                // Update UI
+                setPracticeCounts(prev => prev.map(p =>
+                  p.technique_uuid === techniqueItem.technique_uuid
+                    ? { ...p, count: newCount }
+                    : p
+                ));
+                setPracticesProgress(`Saved ${techniqueItem.technique_title} (${newCount}/${TARGET_PER_TECHNIQUE})`);
+              }
+              break; // Move to next example
+            }
+
+            // Target technique not found, get next available hint to progress
+            const unfilteredResponse = await client.solverSolve(token, {
+              original: currentBoard,
+              user: currentUser,
+              autoPencilmarks,
+              pencilmarks: currentPencilmarks,
+            });
+
+            if (!unfilteredResponse.success || !unfilteredResponse.data?.hints?.steps?.length) {
+              // No more hints available, move to next example
+              break;
+            }
+
+            // Apply the hint to progress the board
+            const board = unfilteredResponse.data.board?.board;
+            if (board) {
+              currentUser = board.user || currentUser;
+              currentPencilmarks = board.pencilmarks?.pencilmarks || currentPencilmarks;
+              autoPencilmarks = board.pencilmarks?.auto ?? autoPencilmarks;
+            }
+          } catch (err) {
+            console.error('Solver error:', err);
+            break; // Move to next example on error
+          }
+        }
       }
     }
 
-    if (!startTechnique) {
-      setPracticesProgress('All techniques have enough practices!');
-      setIsGeneratingPractices(false);
-      return;
+    setIsGeneratingPractices(false);
+    if (generatePracticesAbortRef.current) {
+      setPracticesProgress('Stopped');
+    } else {
+      setPracticesProgress('Done!');
     }
-
-    // Find the TechniqueId for this technique by matching title
-    const techniqueId = TECHNIQUE_TITLE_TO_ID[startTechnique.technique_title];
-    if (!techniqueId) {
-      setPracticesProgress(`Error: Unknown technique title "${startTechnique.technique_title}"`);
-      setIsGeneratingPractices(false);
-      return;
-    }
-
-    setPracticeTargetTechnique(techniqueId);
-    setPracticeExamples([]);
-    setPracticeExampleIndex(0);
-    setCurrentPracticeExample(null);
-    setIsPracticeProcessingHint(false);
-    practiceIterationRef.current = 0;
-
-    setPracticesProgress(`Fetching examples for ${startTechnique.technique_title}...`);
-    const examples = await fetchExamplesForTechnique(techniqueId);
-    if (examples.length === 0) {
-      setPracticesProgress(`No examples found for ${startTechnique.technique_title}`);
-      setIsGeneratingPractices(false);
-      return;
-    }
-
-    setPracticeExamples(examples);
-  }, [token, practiceCounts, fetchExamplesForTechnique]);
+  }, [token, networkClient, baseUrl, practiceCounts, fetchExamplesForTechnique]);
 
   // Stop generating practices
   const handleStopGeneratingPractices = useCallback(() => {
     generatePracticesAbortRef.current = true;
-    setIsGeneratingPractices(false);
-    setPracticeTargetTechnique(null);
-    setPracticeExamples([]);
-    setCurrentPracticeExample(null);
-    setPracticesProgress('Stopped');
+    setPracticesProgress('Stopping...');
   }, []);
 
   // Delete all practices handler
@@ -930,310 +1000,6 @@ export default function AdminPage() {
       setPracticesProgress(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }, [token, baseUrl, fetchPracticeCounts]);
-
-  // Effect to handle practice generation - load example and process hints
-  useEffect(() => {
-    console.log('[Practice] First effect running:', {
-      isGeneratingPractices,
-      practiceTargetTechnique,
-      practiceTargetTechniqueName: practiceTargetTechnique ? getTechniqueName(practiceTargetTechnique) : 'NONE',
-      hasCurrentExample: !!currentPracticeExample,
-      practiceExampleIndex,
-      practiceExamplesLength: practiceExamples.length,
-      currentPuzzleLength: puzzle.length,
-      currentPuzzlePreview: puzzle.substring(0, 20) + '...',
-    });
-    if (!isGeneratingPractices || generatePracticesAbortRef.current) return;
-    if (!practiceTargetTechnique) return;
-
-    // Check if current technique has enough practices
-    const currentTechniqueItem = practiceCounts.find(
-      p => TECHNIQUE_TITLE_TO_ID[p.technique_title] === practiceTargetTechnique
-    );
-    const currentCount = currentTechniqueItem
-      ? practiceLocalCountsRef.current[currentTechniqueItem.technique_uuid] || 0
-      : 0;
-
-    if (currentCount >= TARGET_PER_TECHNIQUE) {
-      // Move to next technique
-      const currentIndex = practiceCounts.findIndex(
-        p => TECHNIQUE_TITLE_TO_ID[p.technique_title] === practiceTargetTechnique
-      );
-      let nextIndex = currentIndex + 1;
-      while (nextIndex < practiceCounts.length) {
-        const nextItem = practiceCounts[nextIndex];
-        if (nextItem && (practiceLocalCountsRef.current[nextItem.technique_uuid] || 0) < TARGET_PER_TECHNIQUE) {
-          break;
-        }
-        nextIndex++;
-      }
-
-      if (nextIndex >= practiceCounts.length) {
-        setIsGeneratingPractices(false);
-        setPracticesProgress('Done!');
-        return;
-      }
-
-      const nextItem = practiceCounts[nextIndex]!;
-      const nextTechniqueId = TECHNIQUE_TITLE_TO_ID[nextItem.technique_title];
-      if (!nextTechniqueId) {
-        setIsGeneratingPractices(false);
-        setPracticesProgress('Error: Unknown technique');
-        return;
-      }
-
-      setPracticeTargetTechnique(nextTechniqueId);
-      setPracticeExamples([]);
-      setPracticeExampleIndex(0);
-      setCurrentPracticeExample(null);
-      practiceIterationRef.current = 0;
-
-      setPracticesProgress(`Fetching examples for ${nextItem.technique_title}...`);
-      fetchExamplesForTechnique(nextTechniqueId).then(examples => {
-        if (examples.length === 0) {
-          setPracticesProgress(`No examples found for ${nextItem.technique_title}`);
-        } else {
-          setPracticeExamples(examples);
-        }
-      });
-      return;
-    }
-
-    // Need to load an example if we don't have one
-    if (!currentPracticeExample && practiceExamples.length > 0) {
-      console.log('[Practice] Loading example - index:', practiceExampleIndex, 'total:', practiceExamples.length);
-      if (practiceExampleIndex >= practiceExamples.length) {
-        // No more examples, move to next technique
-        const currentIndex = practiceCounts.findIndex(
-          p => TECHNIQUE_TITLE_TO_ID[p.technique_title] === practiceTargetTechnique
-        );
-        if (currentIndex + 1 < practiceCounts.length) {
-          const nextItem = practiceCounts[currentIndex + 1]!;
-          const nextTechniqueId = TECHNIQUE_TITLE_TO_ID[nextItem.technique_title];
-          if (nextTechniqueId) {
-            setPracticeTargetTechnique(nextTechniqueId);
-            setPracticeExamples([]);
-            setPracticeExampleIndex(0);
-          }
-        } else {
-          setIsGeneratingPractices(false);
-          setPracticesProgress('Done!');
-        }
-        return;
-      }
-
-      const example = practiceExamples[practiceExampleIndex]!;
-      console.log('[Practice] Loading example:', {
-        exampleIndex: practiceExampleIndex,
-        exampleUuid: example.uuid,
-        exampleBoard: example.board.substring(0, 30) + '...',
-        exampleBoardLength: example.board.length,
-        exampleHasPencilmarks: !!example.pencilmarks,
-        examplePencilmarksPreview: example.pencilmarks?.substring(0, 50) + '...',
-        exampleSolution: example.solution?.substring(0, 30) + '...',
-        targetTechnique: practiceTargetTechnique,
-        targetTechniqueName: practiceTargetTechnique ? getTechniqueName(practiceTargetTechnique) : 'NONE',
-      });
-      setCurrentPracticeExample(example);
-      practiceIterationRef.current = 0;
-      setIsPracticeProcessingHint(false);
-      setPracticesProgress(`Loading example ${practiceExampleIndex + 1}/${practiceExamples.length}...`);
-
-      // Load the example's board state (all filled cells become "givens")
-      console.log('[Practice] Calling loadBoard with:', {
-        board: example.board.substring(0, 30) + '...',
-        solution: example.solution?.substring(0, 30) + '...',
-      });
-      loadBoard(example.board, example.solution, { scramble: false });
-      // Apply pencilmarks without modifying user input
-      // Pass empty user string ('0'.repeat(81)) since the board is already loaded as the puzzle
-      // This ensures the solver receives: original=example.board, user=all zeros
-      if (example.pencilmarks) {
-        console.log('[Practice] Calling applyHintData with pencilmarks:', example.pencilmarks.substring(0, 50) + '...');
-        applyHintData('0'.repeat(81), example.pencilmarks, false);
-      }
-      console.log('[Practice] Calling clearHint');
-      clearHint();
-    }
-  }, [isGeneratingPractices, practiceTargetTechnique, practiceCounts, practiceExamples, practiceExampleIndex, currentPracticeExample, fetchExamplesForTechnique, loadBoard, applyHintData, clearHint, puzzle]);
-
-  // Effect to handle practice hint processing
-  useEffect(() => {
-    // Compute current board state for logging
-    const currentPuzzleForLog = puzzle;
-    const currentUserInputForLog = getInputString();
-    const currentPencilmarksForLog = getPencilmarksString();
-
-    console.log('[Practice] Hint effect running:', {
-      isGeneratingPractices,
-      hasCurrentExample: !!currentPracticeExample,
-      currentExampleUuid: currentPracticeExample?.uuid?.substring(0, 8) || 'NONE',
-      hasPlay: !!play,
-      practiceTargetTechnique,
-      practiceTargetTechniqueName: practiceTargetTechnique ? getTechniqueName(practiceTargetTechnique) : 'NONE',
-      isHintLoading,
-      isPracticeProcessingHint,
-      hintTitle: hint?.title || 'NO HINT',
-      hintError: hintError || 'NO ERROR',
-      iteration: practiceIterationRef.current,
-      // Current board state being used for hint
-      puzzleLength: currentPuzzleForLog.length,
-      puzzlePreview: currentPuzzleForLog.substring(0, 30) + '...',
-      userInputLength: currentUserInputForLog.length,
-      userInputPreview: currentUserInputForLog.substring(0, 30) + '...',
-      hasPencilmarks: !!currentPencilmarksForLog,
-      pencilmarksPreview: currentPencilmarksForLog?.substring(0, 30) + '...',
-      hasToken: !!token,
-      tokenLength: token?.length || 0,
-      baseUrl,
-    });
-
-    if (!isGeneratingPractices || generatePracticesAbortRef.current) {
-      console.log('[Practice] Returning: not generating or aborted');
-      return;
-    }
-    if (!currentPracticeExample || !play || !practiceTargetTechnique) {
-      console.log('[Practice] Returning: missing example/play/technique', {
-        hasExample: !!currentPracticeExample,
-        hasPlay: !!play,
-        hasTechnique: !!practiceTargetTechnique,
-      });
-      return;
-    }
-    if (isHintLoading) {
-      console.log('[Practice] Returning: hint loading (API call in progress)');
-      return;
-    }
-    if (isPracticeProcessingHint) {
-      console.log('[Practice] Returning: processing hint (applying hint data)');
-      return;
-    }
-
-    // Check iteration limit
-    if (practiceIterationRef.current >= MAX_PRACTICE_ATTEMPTS || hintError) {
-      console.log('[Practice] Skipping to next example due to error or max iterations:', {
-        iteration: practiceIterationRef.current,
-        maxAttempts: MAX_PRACTICE_ATTEMPTS,
-        hintError: hintError,
-        hintErrorType: typeof hintError,
-      });
-      // Skip to next example
-      setPracticeExampleIndex(prev => prev + 1);
-      setCurrentPracticeExample(null);
-      clearHint();
-      return;
-    }
-
-    // If we have a hint, check if it matches target technique
-    if (hint) {
-      const hintTechniqueId = TECHNIQUE_TITLE_TO_ID[hint.title];
-
-      if (hintTechniqueId === practiceTargetTechnique) {
-        // Found matching technique! Save the current board state as a practice
-        const boardString = play.board
-          ? play.board.cells.map(c => {
-              if (c.given !== null) return String(c.given);
-              if (c.input !== null) return String(c.input);
-              return '0';
-            }).join('')
-          : '';
-        const pencilmarks = getPencilmarksString();
-
-        // Find the technique_uuid for this technique
-        const techniqueItem = practiceCounts.find(
-          p => TECHNIQUE_TITLE_TO_ID[p.technique_title] === practiceTargetTechnique
-        );
-        if (!techniqueItem) {
-          setPracticeExampleIndex(prev => prev + 1);
-          setCurrentPracticeExample(null);
-          clearHint();
-          return;
-        }
-
-        setPracticesProgress(`Saving practice for ${hint.title}...`);
-        setIsPracticeProcessingHint(true);
-
-        // Save the practice
-        fetch(`${baseUrl}/api/v1/practices`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            technique_uuid: techniqueItem.technique_uuid,
-            board: boardString,
-            pencilmarks: pencilmarks || null,
-            solution: currentPracticeExample.solution,
-            hint_data: JSON.stringify(hint),
-            source_example_uuid: currentPracticeExample.uuid,
-          }),
-        }).then(response => {
-          if (response.ok) {
-            const newCount = (practiceLocalCountsRef.current[techniqueItem.technique_uuid] || 0) + 1;
-            practiceLocalCountsRef.current[techniqueItem.technique_uuid] = newCount;
-
-            // Update UI counts
-            setPracticeCounts(prev => prev.map(p =>
-              p.technique_uuid === techniqueItem.technique_uuid
-                ? { ...p, count: newCount }
-                : p
-            ));
-
-            setPracticesProgress(`Saved practice for ${hint.title} (${newCount}/${TARGET_PER_TECHNIQUE})`);
-          }
-
-          // Move to next example
-          console.log('[Practice] Practice saved, moving to next example');
-          setPracticeExampleIndex(prev => prev + 1);
-          setCurrentPracticeExample(null);
-          setIsPracticeProcessingHint(false);
-          clearHint();
-        }).catch(err => {
-          console.error('Failed to save practice:', err);
-          setPracticeExampleIndex(prev => prev + 1);
-          setCurrentPracticeExample(null);
-          setIsPracticeProcessingHint(false);
-          clearHint();
-        });
-        return;
-      }
-
-      // Not the target technique - apply hint and continue
-      setIsPracticeProcessingHint(true);
-      const hintData = applyHint();
-      if (hintData) {
-        applyHintData(hintData.user, hintData.pencilmarks, hintData.autoPencilmarks);
-      }
-      setTimeout(() => {
-        if (!generatePracticesAbortRef.current && isGeneratingPractices) {
-          practiceIterationRef.current++;
-          setIsPracticeProcessingHint(false);
-        }
-      }, 50);
-      return;
-    }
-
-    // No hint yet, request one
-    // Note: At this point, hint is falsy (if truthy, we would have returned above)
-    // and hintError is falsy (if truthy, we would have returned at line 1042)
-    const currentPuzzle = puzzle;
-    const currentUserInput = getInputString();
-    const currentPencilmarks = getPencilmarksString();
-    console.log('[Practice] ===== REQUESTING HINT =====');
-    console.log('[Practice] Target technique:', practiceTargetTechnique, '-', getTechniqueName(practiceTargetTechnique));
-    console.log('[Practice] Example:', practiceExampleIndex + 1, '/', practiceExamples.length);
-    console.log('[Practice] Iteration:', practiceIterationRef.current + 1);
-    console.log('[Practice] Puzzle (original):', currentPuzzle);
-    console.log('[Practice] UserInput:', currentUserInput);
-    console.log('[Practice] Pencilmarks:', currentPencilmarks?.substring(0, 100) || 'NONE');
-    console.log('[Practice] Token present:', !!token, 'length:', token?.length || 0);
-    console.log('[Practice] BaseUrl:', baseUrl);
-    console.log('[Practice] Example board matches puzzle?', currentPracticeExample?.board === currentPuzzle);
-    console.log('[Practice] ===========================');
-    setPracticesProgress(`Getting hint for example ${practiceExampleIndex + 1} (attempt ${practiceIterationRef.current + 1})...`);
-    getHint();
-  }, [isGeneratingPractices, currentPracticeExample, play, hint, isHintLoading, hintError, isPracticeProcessingHint, practiceTargetTechnique, practiceCounts, practiceExampleIndex, practiceExamples, baseUrl, token, puzzle, getInputString, getPencilmarksString, applyHint, applyHintData, getHint, clearHint]);
 
   // Calculate totals
   const totalCaptured = Object.values(counts).reduce((sum, c) => sum + c, 0);
