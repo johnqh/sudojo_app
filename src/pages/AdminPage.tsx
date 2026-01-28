@@ -52,6 +52,7 @@ export default function AdminPage() {
     console.log('[AdminPage] networkClient:', !!networkClient);
     console.log('[AdminPage] baseUrl:', baseUrl);
     console.log('[AdminPage] token present:', !!token);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const [mobileViewOverride, setMobileViewOverride] = useState<'navigation' | 'content' | null>(null);
@@ -1054,7 +1055,7 @@ export default function AdminPage() {
       console.log('[Practice] Calling clearHint');
       clearHint();
     }
-  }, [isGeneratingPractices, practiceTargetTechnique, practiceCounts, practiceExamples, practiceExampleIndex, currentPracticeExample, fetchExamplesForTechnique, loadBoard, applyHintData, clearHint]);
+  }, [isGeneratingPractices, practiceTargetTechnique, practiceCounts, practiceExamples, practiceExampleIndex, currentPracticeExample, fetchExamplesForTechnique, loadBoard, applyHintData, clearHint, puzzle]);
 
   // Effect to handle practice hint processing
   useEffect(() => {

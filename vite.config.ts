@@ -31,6 +31,12 @@ export default defineConfig({
       '@sudobility/entity_client',
       '@sudobility/components',
       '@sudobility/building_blocks',
+      'firebase',
+      'firebase/app',
+      'firebase/analytics',
+      'firebase/auth',
+      'firebase/remote-config',
+      'firebase/messaging',
     ],
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -193,7 +199,18 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    include: ['react', 'react-dom', 'react-router-dom', '@tanstack/react-query', '@sudobility/components'],
+    include: [
+      'react',
+      'react-dom',
+      'react-router-dom',
+      '@tanstack/react-query',
+      '@sudobility/components',
+      'firebase/app',
+      'firebase/analytics',
+      'firebase/auth',
+      'firebase/remote-config',
+      'firebase/messaging',
+    ],
     // Exclude packages that should be lazy loaded
     exclude: ['@sudobility/sudojo_client', '@sudobility/subscription-components'],
   },
