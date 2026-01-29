@@ -1,0 +1,25 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "TEAM_ID.com.sudojo.app",
+        "paths": [
+          "/*/daily",
+          "/*/play",
+          "/*/play/*",
+          "/*/techniques",
+          "/*/techniques/*",
+          "/*/settings",
+          "/*/privacy",
+          "/*/terms"
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": [
+      "TEAM_ID.com.sudojo.app"
+    ]
+  }
+}

@@ -152,14 +152,6 @@ export default defineConfig({
             return 'revenuecat';
           }
 
-          // Subscription packages - lazy loaded with RevenueCat
-          if (
-            id.includes('node_modules/@sudobility/subscription-components') ||
-            id.includes('node_modules/@sudobility/subscription_lib')
-          ) {
-            return 'subscription';
-          }
-
           // i18next
           if (id.includes('node_modules/i18next')) {
             return 'i18n';
